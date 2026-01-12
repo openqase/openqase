@@ -19,15 +19,10 @@ export type AuditLogEntry = {
 export default async function AuditLogPage() {
   const supabase = await createServiceRoleSupabaseClient()
 
-  // Fetch audit log entries with user email
+  // Fetch audit log entries
   const { data: auditLogs, error } = await supabase
     .from('deletion_audit_log')
-    .select(`
-      *,
-      user_email:performed_by (
-        email
-      )
-    `)
+    .select('*')
     .order('performed_at', { ascending: false })
     .limit(1000)
 
@@ -35,11 +30,24 @@ export default async function AuditLogPage() {
     console.error('Error fetching audit logs:', error)
   }
 
-  // Flatten user email into the audit log entries
-  const flattenedLogs = (auditLogs || []).map((log: any) => ({
+  // Fetch user emails for performed_by users
+  const userIds = [...new Set(auditLogs?.map(log => log.performed_by).filter(Boolean) || [])]
+  const userEmails: Record<string, string> = {}
+
+  if (userIds.length > 0) {
+    const { data: users } = await supabase.auth.admin.listUsers()
+    users?.users.forEach(user => {
+      if (user.id) {
+        userEmails[user.id] = user.email || 'Unknown'
+      }
+    })
+  }
+
+  // Add user_email to each log entry
+  const logsWithEmails = (auditLogs || []).map(log => ({
     ...log,
-    user_email: log.user_email?.email || 'Unknown'
+    user_email: log.performed_by ? (userEmails[log.performed_by] || 'Unknown') : 'Unknown'
   }))
 
-  return <AuditLogClient data={flattenedLogs} />
+  return <AuditLogClient data={logsWithEmails} />
 }

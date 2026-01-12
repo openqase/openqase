@@ -6,20 +6,28 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServiceRoleSupabaseClient()
 
-    // Fetch audit log entries with user email
+    // Fetch audit log entries
     const { data: auditLogs, error } = await supabase
       .from('deletion_audit_log')
-      .select(`
-        *,
-        user_email:performed_by (
-          email
-        )
-      `)
+      .select('*')
       .order('performed_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching audit logs:', error)
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
+    }
+
+    // Fetch user emails for performed_by users
+    const userIds = [...new Set(auditLogs?.map(log => log.performed_by).filter(Boolean) || [])]
+    const userEmails: Record<string, string> = {}
+
+    if (userIds.length > 0) {
+      const { data: users } = await supabase.auth.admin.listUsers()
+      users?.users.forEach(user => {
+        if (user.id) {
+          userEmails[user.id] = user.email || 'Unknown'
+        }
+      })
     }
 
     // Convert to CSV
@@ -32,7 +40,7 @@ export async function POST(request: Request) {
 
     // Data rows
     for (const log of auditLogs || []) {
-      const userEmail = (log as any).user_email?.email || 'Unknown'
+      const userEmail = log.performed_by ? (userEmails[log.performed_by] || 'Unknown') : 'Unknown'
       const contentType = log.content_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
       const contentName = log.content_name || 'Untitled'
       const action = log.action.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
