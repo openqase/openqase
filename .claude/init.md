@@ -110,6 +110,15 @@ const { data } = await supabase.from('case_studies').select('*');
 
 ## Important Conventions
 
+### Git Workflow (CRITICAL)
+- 🚨 **NEVER push to `main` without explicit user approval**
+- 🚨 **ALWAYS ask before making commits** - explain what will be committed
+- ✅ Work on `develop` branch by default
+- ✅ Ask permission before pushing to any branch
+- ✅ Explain changes before committing
+- ❌ Never force push
+- ❌ Never bypass branch protection (even if technically possible)
+
 ### DO:
 - ✅ Use unified content fetchers for public pages
 - ✅ Preserve static generation patterns
@@ -118,6 +127,7 @@ const { data } = await supabase.from('case_studies').select('*');
 - ✅ Follow soft delete patterns (use `deleted_at` field)
 - ✅ Use TypeScript strictly
 - ✅ Check for breaking changes to static generation
+- ✅ Ask before committing or pushing code
 
 ### DON'T:
 - ❌ Make admin routes static
@@ -127,6 +137,8 @@ const { data } = await supabase.from('case_studies').select('*');
 - ❌ Add unnecessary dependencies
 - ❌ Break the 30-second build time
 - ❌ Skip RLS policy updates
+- ❌ Push to main without permission
+- ❌ Commit without asking first
 
 ## Common Gotchas
 

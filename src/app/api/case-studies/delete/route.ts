@@ -1,49 +1,53 @@
-import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { createServiceRoleSupabaseClient, createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
+import { deleteContentItem } from '@/utils/content-management'
 
 export async function POST(request: NextRequest) {
   try {
     const { id, ids } = await request.json()
-    
+
     if (!id && !ids) {
       return NextResponse.json({ error: 'ID or IDs are required' }, { status: 400 })
     }
 
-    const supabase = createServiceRoleSupabaseClient()
-    
-    // Test if we can query the database at all
-    const { data: testQuery, error: testError } = await supabase
-      .from('case_studies')
-      .select('id')
-      .limit(1)
-    
-    if (testError) {
-      console.error('Cannot even query case_studies table:', testError)
-      return NextResponse.json({ error: `Database connection issue: ${testError.message}` }, { status: 500 })
-    }
-    
-    console.log('Database connection works, found case study:', testQuery)
-    
+    // Get current user for audit logging (using server client with cookies)
+    const userClient = await createServerSupabaseClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    const userId = user?.id || null
+
     // Handle both single and bulk delete
     const idsToDelete = ids ? ids : [id]
-    
+
+    // Define relationship configs for case studies
+    const relationshipConfigs = [
+      { junctionTable: 'case_study_industry_relations', contentIdField: 'case_study_id', relatedIdField: 'industry_id', relatedTable: 'industries' },
+      { junctionTable: 'case_study_persona_relations', contentIdField: 'case_study_id', relatedIdField: 'persona_id', relatedTable: 'personas' },
+      { junctionTable: 'algorithm_case_study_relations', contentIdField: 'case_study_id', relatedIdField: 'algorithm_id', relatedTable: 'algorithms' },
+      { junctionTable: 'case_study_quantum_software_relations', contentIdField: 'case_study_id', relatedIdField: 'quantum_software_id', relatedTable: 'quantum_software' },
+      { junctionTable: 'case_study_quantum_hardware_relations', contentIdField: 'case_study_id', relatedIdField: 'quantum_hardware_id', relatedTable: 'quantum_hardware' },
+      { junctionTable: 'case_study_quantum_company_relations', contentIdField: 'case_study_id', relatedIdField: 'quantum_company_id', relatedTable: 'quantum_companies' },
+      { junctionTable: 'case_study_partner_company_relations', contentIdField: 'case_study_id', relatedIdField: 'partner_company_id', relatedTable: 'partner_companies' },
+    ]
+
     const errors: string[] = []
     for (const contentId of idsToDelete) {
-      console.log('Calling soft_delete_content with:', { table_name: 'case_studies', content_id: contentId })
-      const { error } = await supabase.rpc('soft_delete_content', {
-        table_name: 'case_studies',
-        content_id: contentId
+      const { success, error } = await deleteContentItem({
+        contentType: 'case_studies',
+        id: contentId,
+        relationshipConfigs,
+        hardDelete: false,
+        deletedBy: userId
       })
-      
-      if (error) {
+
+      if (!success && error) {
         console.error(`Error soft deleting case study ${contentId}:`, error)
         errors.push(`${contentId}: ${error.message}`)
       }
     }
 
     if (errors.length > 0) {
-      return NextResponse.json({ 
-        error: `Failed to delete some case studies: ${errors.join(', ')}` 
+      return NextResponse.json({
+        error: `Failed to delete some case studies: ${errors.join(', ')}`
       }, { status: 500 })
     }
 

@@ -607,6 +607,42 @@ export type Database = {
           },
         ]
       }
+      deletion_audit_log: {
+        Row: {
+          id: string
+          content_type: string
+          content_id: string
+          content_name: string | null
+          action: string
+          performed_by: string
+          performed_at: string
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          content_type: string
+          content_id: string
+          content_name?: string | null
+          action: string
+          performed_by: string
+          performed_at?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          content_type?: string
+          content_id?: string
+          content_name?: string | null
+          action?: string
+          performed_by?: string
+          performed_at?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
       industries: {
         Row: {
           created_at: string | null

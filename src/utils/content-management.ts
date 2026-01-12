@@ -1,6 +1,7 @@
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
 import { PostgrestError } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/nextjs';
 
 /**
  * Content types supported by the CMS
@@ -281,49 +282,90 @@ export async function deleteContentItem({
   
   // Soft delete implementation
   try {
+    // Step 0: Fetch content before deletion for audit snapshot
+    let contentSnapshot = null;
+    let contentName = null;
+    try {
+      const { data: contentData } = await serviceClient
+        .from(contentType)
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (contentData) {
+        contentSnapshot = contentData;
+        // Extract content name from common fields
+        const data = contentData as any;
+        contentName = data.title || data.name || null;
+      }
+    } catch (snapshotError) {
+      // Non-critical: continue with deletion even if snapshot fails
+      console.error('Failed to capture content snapshot:', snapshotError);
+    }
+
     // Step 1: Soft delete relationships in junction tables
     for (const config of relationshipConfigs) {
       const { junctionTable, contentIdField } = config;
-      
+
       // Update junction table entries with deleted_at timestamp
       const { error: relDeleteError } = await serviceClient
         .from(junctionTable as any)
-        .update({ 
+        .update({
           deleted_at: new Date().toISOString()
         })
         .eq(contentIdField, id)
         .is('deleted_at', null); // Only update if not already deleted
-        
+
       if (relDeleteError) {
         console.error(`Error soft deleting relationships in ${junctionTable}:`, relDeleteError);
         // Continue - non-critical error
       }
     }
-    
+
     // Step 2: Soft delete the main content item
     const { error: deleteError } = await serviceClient
       .from(contentType)
-      .update({ 
+      .update({
         deleted_at: new Date().toISOString(),
         deleted_by: deletedBy,
         published: false // Immediately unpublish when soft deleted
       })
       .eq('id', id);
-      
+
     // Step 3: Log the deletion for audit trail
-    // TODO: Add deletion_audit_log table to database and types
-    // if (!deleteError && deletedBy) {
-    //   await serviceClient
-    //     .from('deletion_audit_log')
-    //     .insert({
-    //       content_type: contentType,
-    //       content_id: id,
-    //       action: 'soft_delete',
-    //       performed_by: deletedBy,
-    //       performed_at: new Date().toISOString()
-    //     });
-    // }
-      
+    if (!deleteError && deletedBy) {
+      try {
+        await serviceClient
+          .from('deletion_audit_log')
+          .insert({
+            content_type: contentType,
+            content_id: id,
+            content_name: contentName,
+            action: 'soft_delete',
+            performed_by: deletedBy,
+            performed_at: new Date().toISOString(),
+            metadata: {
+              content_snapshot: contentSnapshot,
+              relationship_configs: relationshipConfigs.length
+            } as any
+          });
+      } catch (auditError) {
+        // Don't fail the delete if audit logging fails
+        console.error('Failed to log deletion to audit trail:', auditError);
+        Sentry.captureException(auditError, {
+          tags: {
+            operation: 'audit_log',
+            action: 'soft_delete',
+            content_type: contentType
+          },
+          extra: {
+            content_id: id,
+            content_name: contentName
+          }
+        });
+      }
+    }
+
     return { success: !deleteError, error: deleteError };
   } catch (error) {
     console.error('Soft delete failed:', error);
@@ -382,19 +424,42 @@ export async function recoverContentItem({
     }
     
     // Step 3: Log the recovery for audit trail
-    // TODO: Add deletion_audit_log table to database and types
-    // if (recoveredBy) {
-    //   await serviceClient
-    //     .from('deletion_audit_log')
-    //     .insert({
-    //       content_type: contentType,
-    //       content_id: id,
-    //       action: 'restore',
-    //       performed_by: recoveredBy,
-    //       performed_at: new Date().toISOString()
-    //     });
-    // }
-    
+    if (recoveredBy) {
+      // Extract content name from recovered data
+      const recoveredData = data as any;
+      const contentName = recoveredData.title || recoveredData.name || null;
+
+      try {
+        await serviceClient
+          .from('deletion_audit_log')
+          .insert({
+            content_type: contentType,
+            content_id: id,
+            content_name: contentName,
+            action: 'restore',
+            performed_by: recoveredBy,
+            performed_at: new Date().toISOString(),
+            metadata: {
+              relationship_configs: relationshipConfigs.length
+            } as any
+          });
+      } catch (auditError) {
+        // Don't fail the restore if audit logging fails
+        console.error('Failed to log restore to audit trail:', auditError);
+        Sentry.captureException(auditError, {
+          tags: {
+            operation: 'audit_log',
+            action: 'restore',
+            content_type: contentType
+          },
+          extra: {
+            content_id: id,
+            content_name: contentName
+          }
+        });
+      }
+    }
+
     return { success: true, data };
   } catch (error) {
     console.error('Recovery failed:', error);
