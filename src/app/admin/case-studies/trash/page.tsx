@@ -18,7 +18,12 @@ export default async function TrashPage() {
 
     const { data: deletedItems, error } = await supabase
       .from('case_studies')
-      .select('*')
+      .select(`
+        *,
+        deleted_by_user:deleted_by (
+          email
+        )
+      `)
       .not('deleted_at', 'is', null)
       .order('deleted_at', { ascending: false })
 
@@ -27,7 +32,13 @@ export default async function TrashPage() {
       return <div>Error loading trash: {error.message}</div>
     }
 
-    return <TrashClient data={deletedItems || []} />
+    // Flatten the deleted_by_user data
+    const flattenedItems = (deletedItems || []).map((item: any) => ({
+      ...item,
+      deleted_by_email: item.deleted_by_user?.email || 'Unknown'
+    }))
+
+    return <TrashClient data={flattenedItems || []} />
   } catch (err) {
     console.error('Unexpected error in TrashPage:', err)
     return <div>Unexpected error loading trash</div>

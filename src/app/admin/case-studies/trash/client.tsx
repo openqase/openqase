@@ -59,6 +59,15 @@ const createColumns = (
     )
   },
   {
+    accessorKey: 'deleted_by_email',
+    header: 'Deleted By',
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {(row.original as any).deleted_by_email || 'Unknown'}
+      </span>
+    )
+  },
+  {
     accessorKey: 'actions',
     header: '',
     cell: ({ row }) => {
