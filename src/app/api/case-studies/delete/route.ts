@@ -1,4 +1,4 @@
-import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+import { createServiceRoleSupabaseClient, createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { deleteContentItem } from '@/utils/content-management'
 
@@ -10,10 +10,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ID or IDs are required' }, { status: 400 })
     }
 
-    // Get current user for audit logging
-    // Note: Using service role client, so we need to get user from request headers if needed
-    // For now, we'll log deletions without user attribution in API routes
-    const userId = null // TODO: Get from auth headers if needed
+    // Get current user for audit logging (using server client with cookies)
+    const userClient = await createServerSupabaseClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    const userId = user?.id || null
 
     // Handle both single and bulk delete
     const idsToDelete = ids ? ids : [id]
