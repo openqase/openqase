@@ -1,0 +1,312 @@
+# OpenQASE Content Quality Standards
+# Shared between batch audit tool (#104) and admin editorial validator (#138)
+
+# Case Studies
+case_studies:
+  # Required fields (must be present to publish)
+  required_fields:
+    title:
+      type: string
+      min_length: 10
+      max_length: 200
+
+    description:
+      type: string
+      min_length: 100
+      max_length: 250
+      guidance: "1-2 sentence summary explaining what and why"
+
+    main_content:
+      type: string
+      min_length: 500
+      guidance: "Detailed case study narrative with problem, approach, and results"
+
+    year:
+      type: number
+      min: 2010
+      max: 2030
+      guidance: "Year when the case study occurred"
+
+    slug:
+      type: string
+      pattern: "^[a-z0-9-]+$"
+      guidance: "URL-safe slug"
+
+  # Required relationships (must have at least one)
+  required_relationships:
+    algorithms:
+      min: 1
+      guidance: "Which quantum algorithms were used"
+      score_weight: 20
+
+    industries:
+      min: 1
+      guidance: "Relevant industry sectors"
+      score_weight: 20
+
+    quantum_companies:
+      min: 1
+      guidance: "Primary quantum computing company involved"
+      score_weight: 20
+
+  # Recommended relationships (improve quality score)
+  recommended_relationships:
+    personas:
+      min: 1
+      score_bonus: 10
+      guidance: "Target audience roles (CTO, Research Scientist, etc.)"
+
+    partner_companies:
+      min: 1
+      score_bonus: 5
+      guidance: "Enterprise partner companies"
+
+    quantum_hardware:
+      min: 1
+      score_bonus: 5
+      guidance: "Quantum hardware platform used"
+
+    quantum_software:
+      min: 1
+      score_bonus: 5
+      guidance: "Quantum software/SDKs used"
+
+  # Supporting content (improves quality score)
+  supporting_content:
+    academic_references:
+      min: 1
+      score_bonus: 15
+      guidance: "Citations to papers, research, or technical documentation"
+
+    resource_links:
+      min: 1
+      score_bonus: 10
+      guidance: "External links to press releases, blog posts, documentation"
+
+  # Content quality indicators
+  quality_indicators:
+    # Positive signals (increase score)
+    positive_signals:
+      quantified_results:
+        score_bonus: 10
+        patterns:
+          - '\d+%'  # Percentages: "30% improvement"
+          - '\d+x'  # Multipliers: "10x faster"
+          - '\$\d+' # Monetary: "$2M cost savings"
+          - '\d+ (days|weeks|months|hours)' # Time: "6 months faster"
+        guidance: "Include measurable outcomes when available"
+
+      specific_dates:
+        score_bonus: 5
+        patterns:
+          - '\d{4}' # Year mentioned in content
+          - '(January|February|March|April|May|June|July|August|September|October|November|December)'
+        guidance: "Include specific dates and timelines"
+
+      technical_depth:
+        score_bonus: 10
+        keywords:
+          - "qubit"
+          - "quantum circuit"
+          - "entanglement"
+          - "superposition"
+          - "quantum gate"
+          - "quantum volume"
+          - "fidelity"
+          - "error rate"
+        min_matches: 3
+        guidance: "Include technical details appropriate for target audience"
+
+    # Negative signals (AI slop / low quality)
+    negative_signals:
+      generic_marketing:
+        score_penalty: -5
+        phrases:
+          - "cutting-edge"
+          - "revolutionary"
+          - "groundbreaking"
+          - "game-changing"
+          - "paradigm shift"
+          - "next-generation"
+          - "state-of-the-art"
+          - "world-class"
+        max_occurrences: 1
+        guidance: "Avoid generic marketing language - use specific details instead"
+
+      vague_outcomes:
+        score_penalty: -10
+        phrases:
+          - "showed promise"
+          - "explored potential"
+          - "investigated possibilities"
+          - "considered applications"
+          - "demonstrated feasibility"
+          - "proved viability"
+        max_occurrences: 2
+        guidance: "Use specific outcomes instead of vague language"
+
+      weasel_words:
+        score_penalty: -5
+        phrases:
+          - "may help"
+          - "could improve"
+          - "might enable"
+          - "potentially"
+          - "possibly"
+          - "arguably"
+          - "in theory"
+        max_occurrences: 2
+        guidance: "Be confident and specific about what was achieved"
+
+  # Content structure recommendations
+  content_structure:
+    sections:
+      - name: "Problem Statement"
+        keywords: ["problem", "challenge", "issue", "limitation"]
+        recommended: true
+
+      - name: "Quantum Approach"
+        keywords: ["quantum", "algorithm", "implementation", "approach"]
+        required: true
+
+      - name: "Results/Outcomes"
+        keywords: ["result", "outcome", "achievement", "impact", "improvement"]
+        recommended: true
+
+      - name: "Technical Details"
+        keywords: ["hardware", "software", "circuit", "qubits"]
+        recommended: true
+
+  # Scoring system
+  scoring:
+    # Base score from required fields (40 points)
+    required_fields_weight: 40
+
+    # Relationships (40 points)
+    required_relationships_weight: 30
+    recommended_relationships_weight: 10
+
+    # Quality indicators (20 points)
+    supporting_content_weight: 10
+    quality_signals_weight: 10
+
+    # Thresholds
+    thresholds:
+      excellent: 90
+      good: 70
+      needs_work: 50
+      poor: 0
+
+    # Publishing gate
+    publish_threshold: 50
+
+    # Grade labels
+    labels:
+      excellent: "✅ Excellent - High-quality content"
+      good: "⚠️ Good - Ready to publish with minor improvements"
+      needs_work: "🔶 Needs Work - Requires significant improvements"
+      poor: "❌ Poor - Cannot publish"
+
+# Algorithms (future)
+algorithms:
+  required_fields:
+    name:
+      type: string
+      min_length: 5
+      max_length: 100
+
+    description:
+      type: string
+      min_length: 100
+      max_length: 300
+
+    main_content:
+      type: string
+      min_length: 300
+
+  required_relationships:
+    industries:
+      min: 1
+
+  supporting_content:
+    academic_references:
+      min: 1
+      score_bonus: 20
+
+    use_cases:
+      min: 1
+      score_bonus: 10
+
+# Blog Posts (future)
+blog_posts:
+  required_fields:
+    title:
+      type: string
+      min_length: 10
+      max_length: 100
+
+    description:
+      type: string
+      min_length: 100
+      max_length: 200
+
+    content:
+      type: string
+      min_length: 500
+
+    author:
+      type: string
+      required: true
+
+  recommended_relationships:
+    related_case_studies:
+      min: 1
+      score_bonus: 10
+
+# Global quality standards (apply to all content types)
+global:
+  links:
+    # Check for broken links
+    validate_urls: true
+
+    # Internal links should be relative
+    prefer_relative_links: true
+
+  formatting:
+    # Markdown validation
+    valid_markdown: true
+
+    # No HTML in markdown (unless explicitly allowed)
+    allow_html: false
+
+  metadata:
+    # All content should have created_at
+    require_timestamps: true
+
+    # Track who created/modified
+    require_authorship: true
+
+# Audit reporting settings
+audit:
+  # How many case studies to show in "needs work" list
+  needs_work_limit: 10
+
+  # How many to show in "excellent" list
+  excellent_limit: 5
+
+  # Export formats
+  export_formats:
+    - json
+    - csv
+    - markdown
+
+  # Comparison mode (track quality over time)
+  enable_historical_comparison: true
+
+  # Alert thresholds
+  alerts:
+    # Warn if average score drops below
+    min_average_score: 80
+
+    # Warn if more than N case studies score below threshold
+    max_poor_count: 5
