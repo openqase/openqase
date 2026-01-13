@@ -12,7 +12,11 @@
     "migrate:content": "ts-node scripts/migrate-mdx-to-db.ts",
     "setup-admin": "tsx scripts/setup-admin.ts",
     "test-performance": "node scripts/page-load-performance.js",
-    "enable-dev-mode": "node scripts/enable-dev-mode.js"
+    "enable-dev-mode": "node scripts/enable-dev-mode.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.2",
@@ -56,16 +60,23 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.0.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.21",
     "chalk": "^5.4.1",
     "eslint": "^9",
     "eslint-config-next": "^16.1.1",
     "eslint-plugin-security": "^3.0.1",
     "gray-matter": "^4.0.3",
+    "happy-dom": "^20.1.0",
     "postcss": "^8",
     "supabase": "^2.72.0",
     "tailwindcss": "^3.4.17",
@@ -73,6 +84,7 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.2",
     "typescript": "^5",
+    "vitest": "^3.2.4",
     "webpack-bundle-analyzer": "^5.1.1",
     "zod": "^3.25.63"
   }

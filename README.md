@@ -90,6 +90,20 @@ supabase db pull
 npm run build
 ```
 
+### Testing
+```bash
+# Run tests in watch mode (recommended for development)
+npm run test
+
+# Run tests once (CI/CD)
+npm run test:run
+
+# Open Vitest UI (visual test runner)
+npm run test:ui
+```
+
+See [Testing Guide](./docs/testing-guide.md) for detailed testing patterns and best practices.
+
 ## 📚 Documentation
 
 ### Getting Started
@@ -102,6 +116,7 @@ npm run build
 - **[OpenAPI Specification](./docs/openapi.yaml)** - Swagger/Postman compatible specification
 - **[Unified Content Fetching](./docs/unified-content-fetching.md)** - Server-side content API system
 - **[API Architecture](./docs/api-architecture.md)** - Architectural patterns and best practices
+- **[Testing Guide](./docs/testing-guide.md)** - Vitest setup, testing patterns, and best practices
 
 ### Architecture & Features
 - **[API & Relationships Architecture](./docs/api-relationships-architecture.md)** - How content types connect
