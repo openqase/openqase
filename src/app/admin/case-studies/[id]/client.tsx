@@ -19,6 +19,7 @@ import { toast } from '@/components/ui/use-toast';
 import { saveCaseStudy, publishCaseStudy, unpublishCaseStudy } from './actions';
 import { validateContent as validateContentSpelling, type ContentIssue } from '@/lib/content-validation';
 import { ContentValidationWarnings } from '@/components/admin/ContentValidationWarnings';
+import { SearchReferencesModal } from '@/components/admin/SearchReferencesModal';
 
 
 interface CaseStudyFormProps {
@@ -69,6 +70,7 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
   });
   const [isDirty, setIsDirty] = useState(false);
   const [validationIssues, setValidationIssues] = useState<ContentIssue[]>([]);
+  const [showSearchReferencesModal, setShowSearchReferencesModal] = useState(false);
 
   // Run validation whenever values change
   useEffect(() => {
@@ -156,8 +158,47 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     const newText = currentText ? `${currentText}\n${template}` : template;
     handleChange('academic_references', newText);
   };
-  
-  
+
+  // Handle opening search references modal
+  const handleSearchReferences = () => {
+    setShowSearchReferencesModal(true);
+  };
+
+  // Handle references selected from modal
+  const handleReferencesSelected = (references: string[]) => {
+    // Get current academic_references value
+    const currentRefs = values.academic_references || '';
+
+    // Determine next citation number
+    const existingNumbers = (currentRefs.match(/\[\^(\d+)\]/g) || [])
+      .map((match: string) => parseInt(match.match(/\d+/)?.[0] || '0'))
+      .sort((a: number, b: number) => b - a);
+
+    let nextNumber = existingNumbers.length > 0 ? existingNumbers[0] + 1 : 1;
+
+    // Format new references with citation numbers
+    const formattedRefs = references.map(ref => {
+      const formatted = `[^${nextNumber}]: ${ref}`;
+      nextNumber++;
+      return formatted;
+    }).join('\n\n');
+
+    // Append to existing references with separator
+    const separator = currentRefs.trim() ? '\n\n--- Search Results ---\n\n' : '';
+    const newValue = currentRefs.trim() + separator + formattedRefs;
+
+    // Update form state
+    handleChange('academic_references', newValue);
+
+    // Show success toast
+    toast({
+      title: 'References Added',
+      description: `Added ${references.length} reference(s) to the form`,
+      duration: 3000,
+    });
+  };
+
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -556,6 +597,15 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
                 >
                   🌐 Website Template
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSearchReferences}
+                  className="text-xs"
+                >
+                  🔍 Search for References
+                </Button>
               </div>
               
               <Textarea
@@ -656,6 +706,14 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
             />
           </CardContent>
         </Card>
+
+        {/* Search References Modal */}
+        <SearchReferencesModal
+          open={showSearchReferencesModal}
+          onOpenChange={setShowSearchReferencesModal}
+          caseStudyId={caseStudy?.id || ''}
+          onReferencesSelected={handleReferencesSelected}
+        />
       </form>
     </div>
   );
