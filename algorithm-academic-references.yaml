@@ -1,0 +1,240 @@
+# Algorithm Academic Reference Mappings
+# Foundational papers for quantum algorithms used in OpenQASE case studies
+
+quantum-approximate-optimization-algorithm:
+  name: "Quantum Approximate Optimization Algorithm (QAOA)"
+  references:
+    - title: "A Quantum Approximate Optimization Algorithm"
+      authors: "Edward Farhi, Jeffrey Goldstone, Sam Gutmann"
+      year: 2014
+      arxiv: "1411.4028"
+      url: "https://arxiv.org/abs/1411.4028"
+
+    - title: "Quantum Approximate Optimization of Non-Planar Graph Problems on a Planar Superconducting Processor"
+      authors: "Matthew P. Harrigan et al."
+      year: 2021
+      arxiv: "2004.04197"
+      doi: "10.1038/s41567-020-01105-y"
+      url: "https://www.nature.com/articles/s41567-020-01105-y"
+
+variational-quantum-eigensolver:
+  name: "Variational Quantum Eigensolver (VQE)"
+  references:
+    - title: "A variational eigenvalue solver on a photonic quantum processor"
+      authors: "Alberto Peruzzo, Jarrod McClean, Peter Shadbolt, et al."
+      year: 2014
+      arxiv: "1304.3061"
+      doi: "10.1038/ncomms5213"
+      url: "https://www.nature.com/articles/ncomms5213"
+
+    - title: "The theory of variational hybrid quantum-classical algorithms"
+      authors: "Jarrod R. McClean, Jonathan Romero, Ryan Babbush, Alan Aspuru-Guzik"
+      year: 2016
+      arxiv: "1509.04279"
+      doi: "10.1088/1367-2630/18/2/023023"
+      url: "https://iopscience.iop.org/article/10.1088/1367-2630/18/2/023023"
+
+quantum-error-correction:
+  name: "Quantum Error Correction (QEC)"
+  references:
+    - title: "Scheme for reducing decoherence in quantum computer memory"
+      authors: "Peter W. Shor"
+      year: 1995
+      doi: "10.1103/PhysRevA.52.R2493"
+      url: "https://journals.aps.org/pra/abstract/10.1103/PhysRevA.52.R2493"
+
+    - title: "Good quantum error-correcting codes exist"
+      authors: "A. Robert Calderbank, Peter W. Shor"
+      year: 1996
+      arxiv: "quant-ph/9512032"
+      doi: "10.1103/PhysRevA.54.1098"
+      url: "https://journals.aps.org/pra/abstract/10.1103/PhysRevA.54.1098"
+
+quantum-annealing:
+  name: "Quantum Annealing (QA)"
+  references:
+    - title: "Quantum Annealing in the Transverse Ising Model"
+      authors: "T. Kadowaki, H. Nishimori"
+      year: 1998
+      arxiv: "cond-mat/9804280"
+      doi: "10.1103/PhysRevE.58.5355"
+      url: "https://journals.aps.org/pre/abstract/10.1103/PhysRevE.58.5355"
+
+    - title: "Quantum annealing with manufactured spins"
+      authors: "M. W. Johnson et al."
+      year: 2011
+      doi: "10.1038/nature10012"
+      url: "https://www.nature.com/articles/nature10012"
+
+quantum-support-vector-machine:
+  name: "Quantum Support Vector Machine (QSVM)"
+  references:
+    - title: "Quantum algorithms for supervised and unsupervised machine learning"
+      authors: "Seth Lloyd, Masoud Mohseni, Patrick Rebentrost"
+      year: 2013
+      arxiv: "1307.0411"
+      url: "https://arxiv.org/abs/1307.0411"
+
+    - title: "Supervised learning with quantum-enhanced feature spaces"
+      authors: "Vojtěch Havlíček et al."
+      year: 2019
+      doi: "10.1038/s41586-019-0980-2"
+      url: "https://www.nature.com/articles/s41586-019-0980-2"
+
+quantum-k-means-clustering:
+  name: "Quantum K-Means Clustering"
+  references:
+    - title: "Quantum algorithms for data clustering"
+      authors: "Seth Lloyd, Masoud Mohseni, Patrick Rebentrost"
+      year: 2013
+      arxiv: "1307.0411"
+      url: "https://arxiv.org/abs/1307.0411"
+
+quantum-amplitude-amplification:
+  name: "Quantum Amplitude Amplification (QAA)"
+  references:
+    - title: "Quantum Amplitude Amplification and Estimation"
+      authors: "Gilles Brassard, Peter Høyer, Michele Mosca, Alain Tapp"
+      year: 2000
+      arxiv: "quant-ph/0005055"
+      doi: "10.1090/conm/305/05215"
+      url: "https://arxiv.org/abs/quant-ph/0005055"
+
+quantum-fourier-transform:
+  name: "Quantum Fourier Transform (QFT)"
+  references:
+    - title: "Polynomial-Time Algorithms for Prime Factorization and Discrete Logarithms on a Quantum Computer"
+      authors: "Peter W. Shor"
+      year: 1997
+      arxiv: "quant-ph/9508027"
+      doi: "10.1137/S0097539795293172"
+      url: "https://epubs.siam.org/doi/10.1137/S0097539795293172"
+      note: "QFT is a key component of Shor's algorithm"
+
+quantum-principal-component-analysis:
+  name: "Quantum Principal Component Analysis (QPCA)"
+  references:
+    - title: "Quantum principal component analysis"
+      authors: "Seth Lloyd, Masoud Mohseni, Patrick Rebentrost"
+      year: 2014
+      doi: "10.1038/nphys3029"
+      url: "https://www.nature.com/articles/nphys3029"
+
+quantum-phase-estimation:
+  name: "Quantum Phase Estimation (QPE)"
+  references:
+    - title: "Quantum Computation and Quantum Information"
+      authors: "Michael A. Nielsen, Isaac L. Chuang"
+      year: 2010
+      isbn: "978-1107002173"
+      note: "Comprehensive textbook covering QPE (Chapter 5)"
+
+    - title: "Quantum algorithms for quantum chemistry and quantum materials science"
+      authors: "Bela Bauer et al."
+      year: 2020
+      arxiv: "2001.03685"
+      doi: "10.1021/acs.chemrev.0c00620"
+      url: "https://pubs.acs.org/doi/10.1021/acs.chemrev.0c00620"
+
+quantum-boltzmann-machines:
+  name: "Quantum Boltzmann Machines"
+  references:
+    - title: "Quantum Boltzmann Machine"
+      authors: "Mohammad H. Amin, Evgeny Andriyash, Jason Rolfe, Bohdan Kulchytskyy, Roger Melko"
+      year: 2018
+      arxiv: "1601.02036"
+      doi: "10.1103/PhysRevX.8.021050"
+      url: "https://journals.aps.org/prx/abstract/10.1103/PhysRevX.8.021050"
+
+quantum-gradient-descent:
+  name: "Quantum Gradient Descent (QGD)"
+  references:
+    - title: "Quantum gradient descent and Newton's method for constrained polynomial optimization"
+      authors: "Patrick Rebentrost, Maria Schuld, Leonard Wossnig, Francesco Petruccione, Seth Lloyd"
+      year: 2019
+      arxiv: "1612.01789"
+      doi: "10.1088/1367-2630/ab2a9e"
+      url: "https://iopscience.iop.org/article/10.1088/1367-2630/ab2a9e"
+
+grovers-algorithm:
+  name: "Grover's Algorithm"
+  references:
+    - title: "A fast quantum mechanical algorithm for database search"
+      authors: "Lov K. Grover"
+      year: 1996
+      arxiv: "quant-ph/9605043"
+      doi: "10.1145/237814.237866"
+      url: "https://dl.acm.org/doi/10.1145/237814.237866"
+
+harrow-hassidim-lloyd:
+  name: "Harrow-Hassidim-Lloyd (HHL)"
+  references:
+    - title: "Quantum Algorithm for Linear Systems of Equations"
+      authors: "Aram W. Harrow, Avinatan Hassidim, Seth Lloyd"
+      year: 2009
+      arxiv: "0811.3171"
+      doi: "10.1103/PhysRevLett.103.150502"
+      url: "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.103.150502"
+
+quantum-walk-algorithm:
+  name: "Quantum Walk Algorithm"
+  references:
+    - title: "Quantum random walks"
+      authors: "Aharonov, Y., Davidovich, L., Zagury, N."
+      year: 1993
+      doi: "10.1103/PhysRevA.48.1687"
+      url: "https://journals.aps.org/pra/abstract/10.1103/PhysRevA.48.1687"
+
+    - title: "Quantum walks and search algorithms"
+      authors: "Andris Ambainis"
+      year: 2008
+      arxiv: "quant-ph/0403120"
+      doi: "10.1007/978-3-540-73545-8_11"
+      url: "https://arxiv.org/abs/quant-ph/0403120"
+
+bernstein-vazirani-algorithm:
+  name: "Bernstein-Vazirani Algorithm"
+  references:
+    - title: "Quantum Complexity Theory"
+      authors: "Ethan Bernstein, Umesh Vazirani"
+      year: 1997
+      doi: "10.1137/S0097539796300921"
+      url: "https://epubs.siam.org/doi/10.1137/S0097539796300921"
+
+deutsch-jozsa:
+  name: "Deutsch-Jozsa Algorithm"
+  references:
+    - title: "Rapid solution of problems by quantum computation"
+      authors: "David Deutsch, Richard Jozsa"
+      year: 1992
+      doi: "10.1098/rspa.1992.0167"
+      url: "https://royalsocietypublishing.org/doi/10.1098/rspa.1992.0167"
+
+quantum-counting-algorithm:
+  name: "Quantum Counting Algorithm (QCA)"
+  references:
+    - title: "Quantum Amplitude Amplification and Estimation"
+      authors: "Gilles Brassard, Peter Høyer, Michele Mosca, Alain Tapp"
+      year: 2000
+      arxiv: "quant-ph/0005055"
+      url: "https://arxiv.org/abs/quant-ph/0005055"
+      note: "Quantum counting is a variant of amplitude amplification"
+
+shors-algorithm:
+  name: "Shor's Algorithm"
+  references:
+    - title: "Polynomial-Time Algorithms for Prime Factorization and Discrete Logarithms on a Quantum Computer"
+      authors: "Peter W. Shor"
+      year: 1997
+      arxiv: "quant-ph/9508027"
+      doi: "10.1137/S0097539795293172"
+      url: "https://epubs.siam.org/doi/10.1137/S0097539795293172"
+
+simons-algorithm:
+  name: "Simon's Algorithm"
+  references:
+    - title: "On the Power of Quantum Computation"
+      authors: "Daniel R. Simon"
+      year: 1997
+      doi: "10.1137/S0097539796298637"
+      url: "https://epubs.siam.org/doi/10.1137/S0097539796298637"
