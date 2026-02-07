@@ -56,50 +56,7 @@ export const contentMetadataConfig = {
 export type ContentType = keyof typeof contentMetadataConfig;
 
 /**
- * Hook to get metadata for a content item based on content type and view mode
- * 
- * @param contentType - The type of content ('case-studies', 'algorithms', etc.)
- * @param item - The content item
- * @param viewMode - Current view mode ('grid' or 'list')
- * @returns Array of metadata strings/numbers, filtered to remove null values
- */
-export function useContentMetadata(
-  contentType: ContentType,
-  item: any,
-  viewMode: ViewMode
-): Array<string | number> {
-  const config = contentMetadataConfig[contentType];
-  
-  if (!config) {
-    console.warn(`No metadata configuration found for content type: ${contentType}`);
-    return [];
-  }
-  
-  // Only show metadata in list view (grid view shows no metadata by default)
-  if (viewMode !== 'list') {
-    return [];
-  }
-  
-  // Get the appropriate extractor (list for list view, fallback to list if grid not defined)
-  const extractor = config.list;
-  
-  if (!extractor) {
-    return [];
-  }
-  
-  try {
-    // Extract metadata and filter out null/undefined values
-    return extractor(item).filter((value): value is string | number => 
-      value !== null && value !== undefined
-    );
-  } catch (error) {
-    console.warn(`Error extracting metadata for ${contentType}:`, error);
-    return [];
-  }
-}
-
-/**
- * Get metadata for a content item (non-hook version for use in components)
+ * Get metadata for a content item based on content type and view mode
  * 
  * @param contentType - The type of content
  * @param item - The content item

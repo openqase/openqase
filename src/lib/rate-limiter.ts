@@ -210,26 +210,4 @@ export function applyRateLimit(
   return rateLimiter.checkLimit(identifier, config.limit, config.windowMs);
 }
 
-/**
- * Create rate limit headers for HTTP response
- * @param result - Rate limit check result
- * @returns Headers object
- */
-export function createRateLimitHeaders(result: {
-  remaining: number;
-  resetTime: number;
-  retryAfter?: number;
-}) {
-  const headers: Record<string, string> = {
-    'X-RateLimit-Remaining': result.remaining.toString(),
-    'X-RateLimit-Reset': Math.ceil(result.resetTime / 1000).toString(),
-  };
-
-  if (result.retryAfter) {
-    headers['Retry-After'] = result.retryAfter.toString();
-  }
-
-  return headers;
-}
-
 export { rateLimiter }; 

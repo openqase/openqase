@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reorganized README.md documentation links for better discoverability
 - Moved planning documents to docs/archive/
 - Cleaned up TODO comments and created tracking issues (#129, #130, #131, #132)
+- **Code Quality**: Consolidated 4 duplicate relationship query functions into generic parameterized implementation
+- **Code Quality**: Removed dead code — unused test file, legacy validation module, unused components (InteractiveJourney, PathDiagram, AuthErrorBoundary, ContentErrorBoundary), unused utility functions
+- **Dependencies**: Updated all minor/patch dependencies; replaced radix-ui meta-package with individual component packages
 
 ### Fixed
 - Added \`SET search_path = ''\` to SECURITY DEFINER functions to prevent search_path attacks

@@ -2,164 +2,106 @@
 
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 
-/**
- * Get quantum software related to a company through shared case studies
- */
-export async function getRelatedQuantumSoftware(caseStudyIds: string[]) {
-  if (!caseStudyIds || caseStudyIds.length === 0) return [];
-  
-  const supabase = await createServiceRoleSupabaseClient();
-  
-  // First get the software IDs from the junction table
-  const { data: relations, error: relError } = await supabase
-    .from('case_study_quantum_software_relations')
-    .select('quantum_software_id')
-    .in('case_study_id', caseStudyIds);
-  
-  if (relError || !relations || relations.length === 0) {
-    console.error('Error fetching software relations:', relError);
-    return [];
-  }
-  
-  const softwareIds = [...new Set(relations.map(r => r.quantum_software_id).filter(id => id !== null))] as string[];
-  
-  // Then fetch the software details
-  const { data, error } = await supabase
-    .from('quantum_software')
-    .select(`
-      id,
-      name,
-      slug,
-      description
-    `)
-    .in('id', softwareIds);
-  
-  if (error) {
-    console.error('Error fetching quantum software:', error);
-    return [];
-  }
-  
-  return data || [];
+interface RelatedEntity {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+}
+
+interface RelatedPartnerCompany extends RelatedEntity {
+  industry: string | null;
+}
+
+interface RelatedQuantumCompany extends RelatedEntity {
+  company_type: string | null;
 }
 
 /**
- * Get quantum hardware related to a company through shared case studies
+ * Generic function to get related entities through a junction table.
+ * Replaces 4 near-identical functions with a single parameterized implementation.
  */
-export async function getRelatedQuantumHardware(caseStudyIds: string[]) {
+async function getRelatedEntities<T = Record<string, unknown>>(
+  caseStudyIds: string[],
+  config: {
+    junctionTable: string;
+    foreignKey: string;
+    targetTable: string;
+    selectFields: string;
+    label: string;
+  }
+): Promise<T[]> {
   if (!caseStudyIds || caseStudyIds.length === 0) return [];
-  
+
   const supabase = await createServiceRoleSupabaseClient();
-  
-  // First get the hardware IDs from the junction table
+
+  // Get related IDs from the junction table
   const { data: relations, error: relError } = await supabase
-    .from('case_study_quantum_hardware_relations')
-    .select('quantum_hardware_id')
+    .from(config.junctionTable as any)
+    .select(config.foreignKey)
     .in('case_study_id', caseStudyIds);
-  
+
   if (relError || !relations || relations.length === 0) {
-    console.error('Error fetching hardware relations:', relError);
+    if (relError) console.error(`Error fetching ${config.label} relations:`, relError);
     return [];
   }
-  
-  const hardwareIds = [...new Set(relations.map(r => r.quantum_hardware_id).filter(id => id !== null))] as string[];
-  
-  // Then fetch the hardware details
+
+  const ids = [...new Set(
+    relations.map((r: any) => r[config.foreignKey]).filter((id: unknown) => id !== null)
+  )] as string[];
+
+  if (ids.length === 0) return [];
+
+  // Fetch the entity details
   const { data, error } = await supabase
-    .from('quantum_hardware')
-    .select(`
-      id,
-      name,
-      slug,
-      description
-    `)
-    .in('id', hardwareIds);
-  
+    .from(config.targetTable as any)
+    .select(config.selectFields)
+    .in('id', ids);
+
   if (error) {
-    console.error('Error fetching quantum hardware:', error);
+    console.error(`Error fetching ${config.label}:`, error);
     return [];
   }
-  
-  return data || [];
+
+  return (data as T[]) || [];
 }
 
-/**
- * Get partner companies related to a quantum company through shared case studies
- */
-export async function getRelatedPartnerCompanies(caseStudyIds: string[]) {
-  if (!caseStudyIds || caseStudyIds.length === 0) return [];
-  
-  const supabase = await createServiceRoleSupabaseClient();
-  
-  // First get the partner company IDs from the junction table
-  const { data: relations, error: relError } = await supabase
-    .from('case_study_partner_company_relations')
-    .select('partner_company_id')
-    .in('case_study_id', caseStudyIds);
-  
-  if (relError || !relations || relations.length === 0) {
-    console.error('Error fetching partner relations:', relError);
-    return [];
-  }
-  
-  const partnerIds = [...new Set(relations.map(r => r.partner_company_id).filter(id => id !== null))] as string[];
-  
-  // Then fetch the partner details
-  const { data, error } = await supabase
-    .from('partner_companies')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      industry
-    `)
-    .in('id', partnerIds);
-  
-  if (error) {
-    console.error('Error fetching partner companies:', error);
-    return [];
-  }
-  
-  return data || [];
+export async function getRelatedQuantumSoftware(caseStudyIds: string[]): Promise<RelatedEntity[]> {
+  return getRelatedEntities<RelatedEntity>(caseStudyIds, {
+    junctionTable: 'case_study_quantum_software_relations',
+    foreignKey: 'quantum_software_id',
+    targetTable: 'quantum_software',
+    selectFields: 'id, name, slug, description',
+    label: 'quantum software',
+  });
 }
 
-/**
- * Get quantum companies related to a partner company through shared case studies
- */
-export async function getRelatedQuantumCompanies(caseStudyIds: string[]) {
-  if (!caseStudyIds || caseStudyIds.length === 0) return [];
-  
-  const supabase = await createServiceRoleSupabaseClient();
-  
-  // First get the quantum company IDs from the junction table
-  const { data: relations, error: relError } = await supabase
-    .from('case_study_quantum_company_relations')
-    .select('quantum_company_id')
-    .in('case_study_id', caseStudyIds);
-  
-  if (relError || !relations || relations.length === 0) {
-    console.error('Error fetching quantum company relations:', relError);
-    return [];
-  }
-  
-  const companyIds = [...new Set(relations.map(r => r.quantum_company_id).filter(id => id !== null))] as string[];
-  
-  // Then fetch the company details
-  const { data, error } = await supabase
-    .from('quantum_companies')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      company_type
-    `)
-    .in('id', companyIds);
-  
-  if (error) {
-    console.error('Error fetching quantum companies:', error);
-    return [];
-  }
-  
-  return data || [];
+export async function getRelatedQuantumHardware(caseStudyIds: string[]): Promise<RelatedEntity[]> {
+  return getRelatedEntities<RelatedEntity>(caseStudyIds, {
+    junctionTable: 'case_study_quantum_hardware_relations',
+    foreignKey: 'quantum_hardware_id',
+    targetTable: 'quantum_hardware',
+    selectFields: 'id, name, slug, description',
+    label: 'quantum hardware',
+  });
+}
+
+export async function getRelatedPartnerCompanies(caseStudyIds: string[]): Promise<RelatedPartnerCompany[]> {
+  return getRelatedEntities<RelatedPartnerCompany>(caseStudyIds, {
+    junctionTable: 'case_study_partner_company_relations',
+    foreignKey: 'partner_company_id',
+    targetTable: 'partner_companies',
+    selectFields: 'id, name, slug, description, industry',
+    label: 'partner companies',
+  });
+}
+
+export async function getRelatedQuantumCompanies(caseStudyIds: string[]): Promise<RelatedQuantumCompany[]> {
+  return getRelatedEntities<RelatedQuantumCompany>(caseStudyIds, {
+    junctionTable: 'case_study_quantum_company_relations',
+    foreignKey: 'quantum_company_id',
+    targetTable: 'quantum_companies',
+    selectFields: 'id, name, slug, description, company_type',
+    label: 'quantum companies',
+  });
 }
