@@ -343,7 +343,7 @@ export class DualNewsletterService {
     const unsubscribeUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/newsletter/unsubscribe?token=${unsubscribeData?.unsubscribe_token}`
 
     return await this.resend.emails.send({
-      from: 'david@openqase.com',
+      from: process.env.RESEND_FROM_EMAIL || 'david@openqase.com',
       to: [email],
       subject: 'Welcome to OpenQase Newsletter! 🚀',
       html: `

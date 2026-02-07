@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Fixed SECURITY DEFINER functions (recover_content, soft_delete_content)
 - Database migration applied to production
+- **API Authorization**: Added defense-in-depth auth checks to case study delete, permanent-delete, and restore routes
+- **Input Validation**: Wired up Zod schema validation to all CRUD API routes (algorithms, case studies, blog posts, industries, personas)
+- **Search Injection**: Sanitized search term input in PostgREST filter to prevent query manipulation
+- **Preview Mode**: Removed hardcoded fallback secret; preview mode now requires `PREVIEW_SECRET` env var in production
+- **Email Config**: Sender email now configurable via `RESEND_FROM_EMAIL` env var
+- **Dependencies**: Resolved all npm audit vulnerabilities (tar, next, diff)
 
 ## [0.5.0] - 2026-01-05
 

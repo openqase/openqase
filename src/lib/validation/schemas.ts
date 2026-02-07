@@ -78,6 +78,7 @@ export const blogPostSchema = z.object({
   published: z.boolean().default(false),
   featured: z.boolean().default(false),
   author: z.string().max(100, 'Author name must be less than 100 characters').optional().nullable(),
+  featured_image: z.string().max(500, 'Featured image URL must be less than 500 characters').optional().nullable(),
   published_at: z.string().datetime('Invalid date format').optional().nullable(),
   tags: stringArraySchema,
   category: z.string().max(100, 'Category must be less than 100 characters').optional().nullable()
@@ -91,6 +92,8 @@ export const algorithmSchema = z.object({
   description: descriptionSchema,
   main_content: contentSchema,
   published: z.boolean().default(false),
+  quantum_advantage: z.string().max(10000, 'Quantum advantage must be less than 10,000 characters').optional().nullable(),
+  use_cases: stringArraySchema,
   complexity: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional().nullable(),
   quantum_volume_required: z.number().int().min(1).optional().nullable(),
   classical_preprocessing: z.boolean().default(false),
@@ -104,16 +107,18 @@ export const industrySchema = z.object({
   slug: slugSchema,
   description: descriptionSchema,
   main_content: contentSchema,
+  icon: z.string().max(100, 'Icon must be less than 100 characters').optional().nullable(),
   published: z.boolean().default(false)
 });
 
-// Persona validation schema  
+// Persona validation schema
 export const personaSchema = z.object({
   id: z.string().uuid('Invalid ID format').optional().nullable(),
   name: titleSchema,
   slug: slugSchema,
   description: descriptionSchema,
   main_content: contentSchema,
+  role: z.string().max(200, 'Role must be less than 200 characters').optional().nullable(),
   published: z.boolean().default(false),
   experience_level: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional().nullable(),
   technical_background: z.string().max(200).optional().nullable()

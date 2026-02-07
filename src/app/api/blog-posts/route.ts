@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { 
-  fetchContentItems, 
-  fetchContentItem, 
-  saveContentItem, 
+import {
+  fetchContentItems,
+  fetchContentItem,
+  saveContentItem,
   deleteContentItem,
   updatePublishedStatus,
   RELATIONSHIP_CONFIGS
 } from '@/utils/content-management';
+import { blogPostSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 // Define the content type for this API route
 const CONTENT_TYPE = 'blog_posts';
@@ -156,7 +157,16 @@ export async function POST(request: Request) {
       published,
       featured
     };
-    
+
+    // Validate input
+    const validation = blogPostSchema.safeParse({ ...data, id });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: formatValidationErrors(validation.error) },
+        { status: 400 }
+      );
+    }
+
     // Prepare relationships
     const relationships = [];
     

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  fetchContentItems, 
-  fetchContentItem, 
-  saveContentItem, 
+import {
+  fetchContentItems,
+  fetchContentItem,
+  saveContentItem,
   deleteContentItem,
   updatePublishedStatus
 } from '@/utils/content-management';
+import { industrySchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 // Define the content type for this API route
 const CONTENT_TYPE = 'industries';
@@ -102,7 +103,16 @@ export async function POST(request: Request) {
       icon,
       published
     };
-    
+
+    // Validate input
+    const validation = industrySchema.safeParse({ ...data, id });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: formatValidationErrors(validation.error) },
+        { status: 400 }
+      );
+    }
+
     // Save the industry
     const { data: savedItem, error } = await saveContentItem({
       contentType: CONTENT_TYPE as any,

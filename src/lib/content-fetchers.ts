@@ -595,6 +595,19 @@ export async function fetchSearchData(
 
 
 /**
+ * Sanitize a search term for use in PostgREST filter strings.
+ * Strips characters that could break or manipulate .or() filter syntax,
+ * and enforces a maximum length.
+ */
+function sanitizeSearchTerm(term: string): string {
+  return term
+    .replace(/[,.()"\\]/g, ' ')  // Strip PostgREST filter metacharacters
+    .replace(/\s+/g, ' ')        // Collapse multiple spaces
+    .trim()
+    .slice(0, 200);              // Enforce max length
+}
+
+/**
  * Search content across multiple types
  * Simple implementation for basic search functionality
  */
@@ -603,14 +616,19 @@ export async function searchContent<T>(
   searchTerm: string,
   options: { preview?: boolean; limit?: number } = {}
 ): Promise<{ contentType: ContentType; items: T[] }[]> {
+  const sanitized = sanitizeSearchTerm(searchTerm);
+  if (!sanitized) {
+    return contentTypes.map(contentType => ({ contentType, items: [] }));
+  }
+
   const supabase = createServiceRoleSupabaseClient();
-  
+
   const results = await Promise.all(
     contentTypes.map(async (contentType) => {
       let query = supabase
         .from(contentType)
         .select('*')
-        .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,main_content.ilike.%${searchTerm}%`);
+        .or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%,main_content.ilike.%${sanitized}%`);
 
       if (!options.preview) {
         query = query.eq('published', true);

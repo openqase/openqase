@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin()
+    if (auth.error) return auth.error
+
     const body = await request.json()
     const { id, ids } = body
 

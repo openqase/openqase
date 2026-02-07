@@ -8,6 +8,7 @@ import {
   RELATIONSHIP_CONFIGS
 } from '@/utils/content-management';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
+import { caseStudySchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 // Define the content type for this API route
 const CONTENT_TYPE = 'case_studies';
@@ -438,7 +439,16 @@ export async function POST(request: Request) {
       quantum_software: quantumSoftware,
       published
     };
-    
+
+    // Validate input
+    const validation = caseStudySchema.safeParse({ ...data, id, algorithms, industries, personas });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: formatValidationErrors(validation.error) },
+        { status: 400 }
+      );
+    }
+
     // Prepare relationships
     const relationships = [];
     
