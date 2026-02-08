@@ -307,50 +307,42 @@ export async function GET(request: NextRequest) {
     });
 
     
-    // Fetch relationships for each case study
+    // Fetch relationships for all case studies in batch (avoids N+1 queries)
     if (data && data.length > 0) {
       try {
         const serviceClient = await createServiceRoleSupabaseClient();
-        
-        for (const item of data) {
-          // Fetch industries
-          const { data: industryRelations } = await serviceClient
+        const caseStudyIds = data.map((item: any) => item.id);
+
+        // 3 batch queries instead of 3 × N sequential queries
+        const [industryResult, algorithmResult, personaResult] = await Promise.all([
+          serviceClient
             .from('case_study_industry_relations')
-            .select(`
-              industry_id,
-              industries:industries(id, slug, name)
-            `)
-            .eq('case_study_id', item.id);
-            
-          if (industryRelations) {
-            (item as any).related_industries = industryRelations.map((rel: any) => rel.industries).filter(Boolean);
-          }
-          
-          // Fetch algorithms
-          const { data: algorithmRelations } = await serviceClient
+            .select('case_study_id, industries:industries(id, slug, name)')
+            .in('case_study_id', caseStudyIds),
+          serviceClient
             .from('algorithm_case_study_relations')
-            .select(`
-              algorithm_id,
-              algorithms:algorithms(id, slug, name)
-            `)
-            .eq('case_study_id', item.id);
-            
-          if (algorithmRelations) {
-            (item as any).related_algorithms = algorithmRelations.map((rel: any) => rel.algorithms).filter(Boolean);
-          }
-          
-          // Fetch personas
-          const { data: personaRelations } = await serviceClient
+            .select('case_study_id, algorithms:algorithms(id, slug, name)')
+            .in('case_study_id', caseStudyIds),
+          serviceClient
             .from('case_study_persona_relations')
-            .select(`
-              persona_id,
-              personas:personas(id, slug, name)
-            `)
-            .eq('case_study_id', item.id);
-            
-          if (personaRelations) {
-            (item as any).related_personas = personaRelations.map((rel: any) => rel.personas).filter(Boolean);
-          }
+            .select('case_study_id, personas:personas(id, slug, name)')
+            .in('case_study_id', caseStudyIds),
+        ]);
+
+        // Group results by case study ID
+        for (const item of data) {
+          (item as any).related_industries = (industryResult.data || [])
+            .filter((rel: any) => rel.case_study_id === item.id)
+            .map((rel: any) => rel.industries)
+            .filter(Boolean);
+          (item as any).related_algorithms = (algorithmResult.data || [])
+            .filter((rel: any) => rel.case_study_id === item.id)
+            .map((rel: any) => rel.algorithms)
+            .filter(Boolean);
+          (item as any).related_personas = (personaResult.data || [])
+            .filter((rel: any) => rel.case_study_id === item.id)
+            .map((rel: any) => rel.personas)
+            .filter(Boolean);
         }
       } catch (serviceRoleError) {
         console.error('[CaseStudies API] Error creating service role client:', serviceRoleError);

@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code Quality**: Consolidated 4 duplicate relationship query functions into generic parameterized implementation
 - **Code Quality**: Removed dead code — unused test file, legacy validation module, unused components (InteractiveJourney, PathDiagram, AuthErrorBoundary, ContentErrorBoundary), unused utility functions
 - **Dependencies**: Updated all minor/patch dependencies; replaced radix-ui meta-package with individual component packages
+- **Performance**: Fixed N+1 query pattern in case-studies API — batch queries reduce 30+ sequential calls to 3 parallel ones
+- **Performance**: Parallelized 14 sequential database queries in admin case study edit page with `Promise.all()`
+- **Performance**: Added `React.cache()` to deduplicate content fetches shared between `generateMetadata()` and page components across 9 dynamic pages
+- **Performance**: Added `React.memo` to search result components; replaced `useEffect`+state with `useMemo` in RelationshipSelector
+- **Performance**: Converted contact page from client to server component (removed unnecessary `'use client'`)
 
 ### Fixed
 - Added \`SET search_path = ''\` to SECURITY DEFINER functions to prevent search_path attacks

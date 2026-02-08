@@ -1,21 +1,7 @@
-'use client'
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Github, Twitter } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from "@/components/ui/button"
 
 export default function ContactPage() {
-  const openTallyForm = () => {
-    window.open('https://tally.so/r/wap82b', '_blank', 'width=700,height=800,scrollbars=yes,resizable=yes');
-  };
-
   return (
     <main className="min-h-screen">
       <div className="container-outer section-spacing">
@@ -43,13 +29,14 @@ export default function ContactPage() {
                   Fill out our contact form and we'll get back to you as soon as possible.
                 </p>
               </div>
-              <Button 
-                onClick={openTallyForm}
-                className="w-full py-4 text-base font-medium"
-                size="lg"
+              <Link
+                href="https://tally.so/r/wap82b"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center w-full py-4 text-base font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Open Contact Form →
-              </Button>
+              </Link>
             </div>
 
             {/* Community Links */}

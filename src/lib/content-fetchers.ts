@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 
 // Define content types
@@ -210,13 +211,15 @@ function filterRelationships(data: any, contentType: ContentType, preview: boole
  * - Filters relationships in JavaScript to prevent null pointer exceptions
  * - Supports preview mode for unpublished content access
  */
-export async function getStaticContentWithRelationships<T>(
+// Memoized fetcher — deduplicates calls within a single React render tree
+// so generateMetadata() and the page component share one database query.
+const _getStaticContentWithRelationships = cache(async (
   contentType: ContentType,
   slug: string,
-  options: { preview?: boolean } = {}
-): Promise<T | null> {
+  preview: boolean
+) => {
   const supabase = createServiceRoleSupabaseClient();
-  
+
   const selectQuery = RELATIONSHIP_MAPS[contentType];
   let query = supabase
     .from(contentType)
@@ -224,7 +227,7 @@ export async function getStaticContentWithRelationships<T>(
     .eq('slug', slug);
 
   // Only filter main content by published status if not in preview mode
-  if (!options.preview) {
+  if (!preview) {
     query = query.eq('published', true);
   }
 
@@ -236,9 +239,16 @@ export async function getStaticContentWithRelationships<T>(
   }
 
   // Filter relationships to handle mixed published/unpublished content
-  const filteredData = filterRelationships(data, contentType, options.preview);
-  
-  return filteredData as T;
+  return filterRelationships(data, contentType, preview);
+});
+
+export async function getStaticContentWithRelationships<T>(
+  contentType: ContentType,
+  slug: string,
+  options: { preview?: boolean } = {}
+): Promise<T | null> {
+  const result = await _getStaticContentWithRelationships(contentType, slug, options.preview ?? false);
+  return result as T | null;
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { memo, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import Link from 'next/link';
 import { Search, ArrowRight } from 'lucide-react';
 import { useGlobalSearch, GroupedSearchResults, SearchResult } from '@/hooks/useGlobalSearch';
@@ -29,7 +29,7 @@ interface SearchResultGroupProps {
 }
 
 // Individual search result item component
-function SearchResultItem({ result, onSelect }: SearchResultItemProps) {
+const SearchResultItem = memo(function SearchResultItem({ result, onSelect }: SearchResultItemProps) {
   const { item } = result;
   
   // Determine the link path based on content type
@@ -93,10 +93,10 @@ function SearchResultItem({ result, onSelect }: SearchResultItemProps) {
       </div>
     </Link>
   );
-}
+});
 
 // Search result group component
-function SearchResultGroup({ title, results, maxResults = 3, onSelect }: SearchResultGroupProps) {
+const SearchResultGroup = memo(function SearchResultGroup({ title, results, maxResults = 3, onSelect }: SearchResultGroupProps) {
   if (results.length === 0) return null;
 
   const displayResults = results.slice(0, maxResults);
@@ -125,7 +125,7 @@ function SearchResultGroup({ title, results, maxResults = 3, onSelect }: SearchR
       </div>
     </div>
   );
-}
+});
 
 // Main search component
 const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
