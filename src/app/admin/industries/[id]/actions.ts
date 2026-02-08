@@ -30,7 +30,11 @@ export async function saveIndustry(values: IndustryFormData): Promise<TablesInse
     }
     
     revalidatePath('/admin/industries');
-    
+    revalidatePath('/paths/industry');
+    if (data?.slug) {
+      revalidatePath(`/paths/industry/${data.slug}`);
+    }
+
     // Return the saved data
     return data;
   } catch (error: unknown) {
@@ -43,15 +47,21 @@ export async function saveIndustry(values: IndustryFormData): Promise<TablesInse
 export async function publishIndustry(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('industries')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/industries');
+    revalidatePath('/paths/industry');
+    if (data?.slug) {
+      revalidatePath(`/paths/industry/${data.slug}`);
+    }
   } catch (error: unknown) {
     console.error("Error publishing industry:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to publish industry";
@@ -62,15 +72,21 @@ export async function publishIndustry(id: string): Promise<void> {
 export async function unpublishIndustry(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('industries')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/industries');
+    revalidatePath('/paths/industry');
+    if (data?.slug) {
+      revalidatePath(`/paths/industry/${data.slug}`);
+    }
   } catch (error: unknown) {
     console.error("Error unpublishing industry:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to unpublish industry";

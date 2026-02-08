@@ -46,16 +46,21 @@ export async function savePartnerCompany(values: any): Promise<any> {
 export async function publishPartnerCompany(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('partner_companies')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/partner-companies');
     revalidatePath('/paths/partner-companies');
+    if (data?.slug) {
+      revalidatePath(`/paths/partner-companies/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error publishing partner company:", error);
     throw new Error(error.message || "Failed to publish partner company");
@@ -65,16 +70,21 @@ export async function publishPartnerCompany(id: string): Promise<void> {
 export async function unpublishPartnerCompany(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('partner_companies')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/partner-companies');
     revalidatePath('/paths/partner-companies');
+    if (data?.slug) {
+      revalidatePath(`/paths/partner-companies/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error unpublishing partner company:", error);
     throw new Error(error.message || "Failed to unpublish partner company");

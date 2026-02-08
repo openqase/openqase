@@ -92,15 +92,21 @@ export async function savePersona(values: PersonaFormData): Promise<PersonaData>
 export async function publishPersona(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('personas')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/personas');
+    revalidatePath('/paths/persona');
+    if (data?.slug) {
+      revalidatePath(`/paths/persona/${data.slug}`);
+    }
   } catch (error: unknown) {
     console.error("Error publishing persona:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to publish persona";
@@ -111,15 +117,21 @@ export async function publishPersona(id: string): Promise<void> {
 export async function unpublishPersona(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('personas')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/personas');
+    revalidatePath('/paths/persona');
+    if (data?.slug) {
+      revalidatePath(`/paths/persona/${data.slug}`);
+    }
   } catch (error: unknown) {
     console.error("Error unpublishing persona:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to unpublish persona";

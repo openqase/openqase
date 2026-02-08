@@ -46,16 +46,21 @@ export async function saveQuantumSoftware(values: any): Promise<any> {
 export async function publishQuantumSoftware(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quantum_software')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/quantum-software');
     revalidatePath('/paths/quantum-software');
+    if (data?.slug) {
+      revalidatePath(`/paths/quantum-software/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error publishing quantum software:", error);
     throw new Error(error.message || "Failed to publish quantum software");
@@ -65,16 +70,21 @@ export async function publishQuantumSoftware(id: string): Promise<void> {
 export async function unpublishQuantumSoftware(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quantum_software')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/quantum-software');
     revalidatePath('/paths/quantum-software');
+    if (data?.slug) {
+      revalidatePath(`/paths/quantum-software/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error unpublishing quantum software:", error);
     throw new Error(error.message || "Failed to unpublish quantum software");

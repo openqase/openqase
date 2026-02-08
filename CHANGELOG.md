@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Performance**: Converted contact page from client to server component (removed unnecessary `'use client'`)
 
 ### Fixed
+- **Revalidation**: Fixed missing `revalidatePath()` calls in publish/unpublish server actions for algorithms, industries, blog posts, personas, quantum software, quantum hardware, quantum companies, and partner companies — content changes now immediately invalidate affected public pages
+- **ISR Safety Net**: Added `revalidate = 3600` to all 9 dynamic content pages to catch cross-entity staleness within 1 hour
+- **CLAUDE.md**: Restored project guidelines file accidentally removed in prior security cleanup; added revalidation architecture documentation
+
+### Fixed
 - Added \`SET search_path = ''\` to SECURITY DEFINER functions to prevent search_path attacks
 - Removed legacy TEXT[] field references from codebase
 

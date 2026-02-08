@@ -61,8 +61,12 @@ export async function saveBlogPost(values: BlogPostFormData): Promise<TablesInse
     }
     
     revalidatePath('/admin/blog');
+    revalidatePath('/blog');
     revalidatePath('/'); // Revalidate homepage since it shows featured blog posts
-    
+    if (data?.slug) {
+      revalidatePath(`/blog/${data.slug}`);
+    }
+
     // Return the saved data
     return data;
   } catch (error: unknown) {
@@ -75,16 +79,22 @@ export async function saveBlogPost(values: BlogPostFormData): Promise<TablesInse
 export async function publishBlogPost(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('blog_posts')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/blog');
-    revalidatePath('/'); // Revalidate homepage since it shows featured blog posts
+    revalidatePath('/blog');
+    revalidatePath('/');
+    if (data?.slug) {
+      revalidatePath(`/blog/${data.slug}`);
+    }
   } catch (error: unknown) {
     console.error("Error publishing blog post:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to publish blog post";
@@ -95,16 +105,22 @@ export async function publishBlogPost(id: string): Promise<void> {
 export async function unpublishBlogPost(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('blog_posts')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/blog');
-    revalidatePath('/'); // Revalidate homepage since it shows featured blog posts
+    revalidatePath('/blog');
+    revalidatePath('/');
+    if (data?.slug) {
+      revalidatePath(`/blog/${data.slug}`);
+    }
   } catch (error: unknown) {
     console.error("Error unpublishing blog post:", error);
     const errorMessage = error instanceof Error ? error.message : "Failed to unpublish blog post";

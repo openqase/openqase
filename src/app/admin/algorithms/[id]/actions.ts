@@ -122,15 +122,21 @@ export async function saveAlgorithm(values: any): Promise<any> {
 export async function publishAlgorithm(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('algorithms')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/algorithms');
+    revalidatePath('/paths/algorithm');
+    if (data?.slug) {
+      revalidatePath(`/paths/algorithm/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error publishing algorithm:", error);
     throw new Error(error.message || "Failed to publish algorithm");
@@ -140,15 +146,21 @@ export async function publishAlgorithm(id: string): Promise<void> {
 export async function unpublishAlgorithm(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('algorithms')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/algorithms');
+    revalidatePath('/paths/algorithm');
+    if (data?.slug) {
+      revalidatePath(`/paths/algorithm/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error unpublishing algorithm:", error);
     throw new Error(error.message || "Failed to unpublish algorithm");
