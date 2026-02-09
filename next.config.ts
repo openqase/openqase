@@ -74,9 +74,24 @@ const nextConfig: NextConfig = {
   
   // Simple optimizations only
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion'],
   },
   
+  // Bundle analyzer (run with ANALYZE=true npm run build)
+  ...(process.env.ANALYZE === 'true' && {
+    webpack: (config: any) => {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          reportFilename: '../analyze/client.html',
+          openAnalyzer: true,
+        })
+      );
+      return config;
+    },
+  }),
+
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   // Enable TypeScript checking during build
   typescript: {

@@ -1,67 +1,27 @@
 // src/components/ui/card.tsx
-"use client"
 
 import * as React from "react";
-import { motion } from "framer-motion";
 
-interface BaseCardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   fixedHeight?: boolean;
   height?: number;
   className?: string;
 }
 
-interface StaticCardProps extends BaseCardProps, React.HTMLAttributes<HTMLDivElement> {
-  animated?: false;
-}
-
-// ARCHITECTURAL DECISION: Event Handler Exclusion for Motion Component Compatibility
-// ================================================================================
-// Framer Motion's event handlers have different signatures than standard HTML events:
-// - HTML onDrag: (event: DragEvent) => void  
-// - Motion onDrag: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void
-// - HTML onAnimationStart: (event: AnimationEvent) => void
-// - Motion onAnimationStart: (definition: AnimationDefinition) => void
-//
-// Solution: Exclude conflicting event props to prevent TypeScript errors while
-// maintaining all other HTML attributes (className, onClick, etc.)
-// This follows the industry standard pattern used by React-Aria, Emotion, and other libraries.
-interface AnimatedCardProps extends BaseCardProps, Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'onAnimationEnd'> {
-  animated: true;
-}
-
-type CardProps = StaticCardProps | AnimatedCardProps;
-
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, fixedHeight = false, height = 210, animated = false, ...props }, ref) => {
-    const baseClassName = `relative rounded-lg border border-border bg-card shadow-md 
+  ({ className, fixedHeight = false, height = 210, ...props }, ref) => {
+    const baseClassName = `relative rounded-lg border border-border bg-card shadow-md
       transition-all duration-200 hover:shadow-lg hover:border-primary
       ${fixedHeight ? 'flex flex-col' : ''} ${className || ""}`;
-    
+
     const style = fixedHeight ? { height: `${height}px` } : undefined;
 
-    if (animated) {
-      const { animated: _, ...motionProps } = props as AnimatedCardProps;
-      return (
-        <motion.div
-          ref={ref}
-          className={baseClassName}
-          style={style}
-          whileHover={{ 
-            y: -1,
-            transition: { duration: 0.2, ease: "easeOut" }
-          }}
-          {...motionProps}
-        />
-      );
-    }
-
-    const { animated: _, ...divProps } = props as StaticCardProps;
     return (
       <div
         ref={ref}
         className={baseClassName}
         style={style}
-        {...divProps}
+        {...props}
       />
     );
   }
@@ -130,4 +90,4 @@ const CardFooter = React.forwardRef<
 ));
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }; 
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };

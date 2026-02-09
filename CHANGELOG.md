@@ -8,9 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Type Safety**: Centralized ~48 `as any` casts into `fromTable()` helper for untyped Supabase tables, replacing scattered casts across 7 files
+- **Type Safety**: Converted all 18 `catch (error: any)` patterns to `catch (error: unknown)` with proper `instanceof Error` checks across 6 admin action files
+- **Type Safety**: Replaced remaining non-`.from()` `as any` casts with `Record<string, unknown>` and proper type annotations
 - **Type Safety**: Removed ~25 `as any` casts from API routes, newsletter services, and utility files by adding proper type annotations (`ContentType`, `RelationshipConfig`, `PerformanceNavigationTiming`, `DbCaseStudy`)
 - **Type Safety**: Added `newsletter_subscriptions` table definition to Supabase database types, enabling type-safe newsletter queries
+- **Bundle Size**: Removed framer-motion (42KB gzipped) from Card component — the `animated` prop was unused dead code pulling a heavy dependency into 30+ pages
+- **Bundle Size**: Added framer-motion to `optimizePackageImports` for better tree-shaking where still used
+- **Bundle Size**: Wired up `webpack-bundle-analyzer` for `build:analyze` script
 - **Code Quality**: Removed dead code files (`content-management-example.ts`, `api/template/route.ts`)
+- **Code Quality**: Removed duplicate `cn()` utility from design-system.ts (canonical version is in utils.ts)
 
 ### Added
 - **Testing Infrastructure**: Vitest test framework with 138 unit tests covering form validation, redirect security, UK spelling patterns, Zod schemas, and content validation
