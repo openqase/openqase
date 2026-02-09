@@ -5,15 +5,27 @@ import {
   saveContentItem,
   deleteContentItem,
   updatePublishedStatus,
-  RELATIONSHIP_CONFIGS
+  RELATIONSHIP_CONFIGS,
+  ContentType,
+  RelationshipConfig
 } from '@/utils/content-management';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
+import { caseStudySchema, formatValidationErrors } from '@/lib/validation/schemas';
+import type { Database } from '@/types/supabase';
 
 // Define the content type for this API route
-const CONTENT_TYPE = 'case_studies';
+const CONTENT_TYPE: ContentType = 'case_studies';
+
+// Extended case study type with relationship arrays
+type CaseStudyRow = Database['public']['Tables']['case_studies']['Row'];
+type CaseStudyWithRelations = CaseStudyRow & {
+  related_industries?: { id: string; slug: string; name: string }[];
+  related_algorithms?: { id: string; slug: string; name: string }[];
+  related_personas?: { id: string; slug: string; name: string }[];
+};
 
 // Define relationship configurations for case studies
-const RELATIONSHIP_CONFIG = {
+const RELATIONSHIP_CONFIG: Record<string, RelationshipConfig> = {
   algorithms: {
     junctionTable: 'algorithm_case_study_relations',
     contentIdField: 'case_study_id',
@@ -49,12 +61,12 @@ export async function GET(request: NextRequest) {
     // Handle single case study request
     if (slug) {
       const { data, error } = await fetchContentItem({
-        contentType: CONTENT_TYPE as any,
+        contentType: CONTENT_TYPE,
         identifier: slug,
         identifierType: 'slug',
         includeUnpublished,
         includeRelationships: Object.values(RELATIONSHIP_CONFIG).map(config => ({
-          relationshipConfig: config as any,
+          relationshipConfig: config,
           fields: 'id, slug, name, title'
         }))
       });
@@ -109,15 +121,15 @@ export async function GET(request: NextRequest) {
         }
         
         if (relations && relations.length > 0) {
-          const caseStudyIds = relations.map((relation: any) => relation.case_study_id);
-          
+          const caseStudyIds = relations.map((relation) => relation.case_study_id);
+
           // If we already have an ID filter, we need to find the intersection
           if (filters.id) {
             filters.id = filters.id.filter((id: string) => caseStudyIds.includes(id));
           } else {
             filters.id = caseStudyIds;
           }
-          
+
           // If the intersection is empty, return empty result
           if (filters.id.length === 0) {
             return NextResponse.json({
@@ -168,10 +180,10 @@ export async function GET(request: NextRequest) {
         
         // Get case studies related to this industry using the junction table
         const { data: relations, error: relationsError } = await serviceClient
-          .from('case_study_industry_relations' as any)
+          .from('case_study_industry_relations')
           .select('case_study_id')
           .eq('industry_id', industryData.id);
-          
+
         if (relationsError) {
           console.error('Error finding case study relations:', relationsError);
           return NextResponse.json(
@@ -179,9 +191,9 @@ export async function GET(request: NextRequest) {
             { status: 500 }
           );
         }
-        
+
         if (relations && relations.length > 0) {
-          const caseStudyIds = relations.map((relation: any) => relation.case_study_id);
+          const caseStudyIds = relations.map((relation) => relation.case_study_id);
           filters.id = caseStudyIds;
         } else {
           // No matching case studies, return empty result
@@ -221,10 +233,10 @@ export async function GET(request: NextRequest) {
         
         // Get case studies related to this persona using the junction table
         const { data: relations, error: relationsError } = await serviceClient
-          .from('case_study_persona_relations' as any)
+          .from('case_study_persona_relations')
           .select('case_study_id')
           .eq('persona_id', personaData.id);
-          
+
         if (relationsError) {
           console.error('Error finding case study relations:', relationsError);
           return NextResponse.json(
@@ -232,9 +244,9 @@ export async function GET(request: NextRequest) {
             { status: 500 }
           );
         }
-        
+
         if (relations && relations.length > 0) {
-          const caseStudyIds = relations.map((relation: any) => relation.case_study_id);
+          const caseStudyIds = relations.map((relation) => relation.case_study_id);
           
           // If we already have an ID filter, we need to find the intersection
           if (filters.id) {
@@ -294,7 +306,7 @@ export async function GET(request: NextRequest) {
     const searchFields = search ? ['title', 'description', 'main_content'] : undefined;
 
     const { data, error, count } = await fetchContentItems({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       includeUnpublished,
       page,
       pageSize,
@@ -306,50 +318,43 @@ export async function GET(request: NextRequest) {
     });
 
     
-    // Fetch relationships for each case study
+    // Fetch relationships for all case studies in batch (avoids N+1 queries)
     if (data && data.length > 0) {
       try {
         const serviceClient = await createServiceRoleSupabaseClient();
-        
-        for (const item of data) {
-          // Fetch industries
-          const { data: industryRelations } = await serviceClient
+        const caseStudyIds = data.map((item) => item.id);
+
+        // 3 batch queries instead of 3 × N sequential queries
+        const [industryResult, algorithmResult, personaResult] = await Promise.all([
+          serviceClient
             .from('case_study_industry_relations')
-            .select(`
-              industry_id,
-              industries:industries(id, slug, name)
-            `)
-            .eq('case_study_id', item.id);
-            
-          if (industryRelations) {
-            (item as any).related_industries = industryRelations.map((rel: any) => rel.industries).filter(Boolean);
-          }
-          
-          // Fetch algorithms
-          const { data: algorithmRelations } = await serviceClient
+            .select('case_study_id, industries:industries(id, slug, name)')
+            .in('case_study_id', caseStudyIds),
+          serviceClient
             .from('algorithm_case_study_relations')
-            .select(`
-              algorithm_id,
-              algorithms:algorithms(id, slug, name)
-            `)
-            .eq('case_study_id', item.id);
-            
-          if (algorithmRelations) {
-            (item as any).related_algorithms = algorithmRelations.map((rel: any) => rel.algorithms).filter(Boolean);
-          }
-          
-          // Fetch personas
-          const { data: personaRelations } = await serviceClient
+            .select('case_study_id, algorithms:algorithms(id, slug, name)')
+            .in('case_study_id', caseStudyIds),
+          serviceClient
             .from('case_study_persona_relations')
-            .select(`
-              persona_id,
-              personas:personas(id, slug, name)
-            `)
-            .eq('case_study_id', item.id);
-            
-          if (personaRelations) {
-            (item as any).related_personas = personaRelations.map((rel: any) => rel.personas).filter(Boolean);
-          }
+            .select('case_study_id, personas:personas(id, slug, name)')
+            .in('case_study_id', caseStudyIds),
+        ]);
+
+        // Group results by case study ID
+        for (const item of data) {
+          const extItem = item as CaseStudyWithRelations;
+          extItem.related_industries = (industryResult.data || [])
+            .filter((rel) => rel.case_study_id === item.id)
+            .map((rel) => rel.industries as unknown as { id: string; slug: string; name: string })
+            .filter(Boolean);
+          extItem.related_algorithms = (algorithmResult.data || [])
+            .filter((rel) => rel.case_study_id === item.id)
+            .map((rel) => rel.algorithms as unknown as { id: string; slug: string; name: string })
+            .filter(Boolean);
+          extItem.related_personas = (personaResult.data || [])
+            .filter((rel) => rel.case_study_id === item.id)
+            .map((rel) => rel.personas as unknown as { id: string; slug: string; name: string })
+            .filter(Boolean);
         }
       } catch (serviceRoleError) {
         console.error('[CaseStudies API] Error creating service role client:', serviceRoleError);
@@ -438,34 +443,43 @@ export async function POST(request: Request) {
       quantum_software: quantumSoftware,
       published
     };
-    
+
+    // Validate input
+    const validation = caseStudySchema.safeParse({ ...data, id, algorithms, industries, personas });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: formatValidationErrors(validation.error) },
+        { status: 400 }
+      );
+    }
+
     // Prepare relationships
     const relationships = [];
     
     if (algorithms.length > 0) {
       relationships.push({
-        relationshipConfig: RELATIONSHIP_CONFIG.algorithms as any,
+        relationshipConfig: RELATIONSHIP_CONFIG.algorithms,
         relatedIds: algorithms
       });
     }
     
     if (industries.length > 0) {
       relationships.push({
-        relationshipConfig: RELATIONSHIP_CONFIG.industries as any,
+        relationshipConfig: RELATIONSHIP_CONFIG.industries,
         relatedIds: industries
       });
     }
     
     if (personas.length > 0) {
       relationships.push({
-        relationshipConfig: RELATIONSHIP_CONFIG.personas as any,
+        relationshipConfig: RELATIONSHIP_CONFIG.personas,
         relatedIds: personas
       });
     }
     
     // Save the case study
     const { data: savedItem, error } = await saveContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       data,
       id,
       relationships
@@ -506,9 +520,9 @@ export async function DELETE(request: NextRequest) {
     const relationshipConfigs = Object.values(RELATIONSHIP_CONFIG);
     
     const { success, error } = await deleteContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id,
-      relationshipConfigs: relationshipConfigs as any[]
+      relationshipConfigs
     });
     
     if (!success) {
@@ -580,7 +594,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     const { data, error } = await updatePublishedStatus({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id,
       published
     });

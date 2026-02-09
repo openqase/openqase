@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { 
-  fetchContentItems, 
-  fetchContentItem, 
-  saveContentItem, 
+import {
+  fetchContentItems,
+  fetchContentItem,
+  saveContentItem,
   deleteContentItem,
   updatePublishedStatus,
-  RELATIONSHIP_CONFIGS
+  RELATIONSHIP_CONFIGS,
+  ContentType,
+  RelationshipConfig
 } from '@/utils/content-management';
+import { blogPostSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 // Define the content type for this API route
-const CONTENT_TYPE = 'blog_posts';
+const CONTENT_TYPE: ContentType = 'blog_posts';
 
 // Define relationship configurations for blog posts
-const RELATIONSHIP_CONFIG = {
+const RELATIONSHIP_CONFIG: Record<string, RelationshipConfig> = {
   relatedPosts: {
     junctionTable: 'blog_post_relations',
     contentIdField: 'blog_post_id',
@@ -37,12 +40,12 @@ export async function GET(request: NextRequest) {
     // Handle single blog post request
     if (slug) {
       const { data, error } = await fetchContentItem({
-        contentType: CONTENT_TYPE as any,
+        contentType: CONTENT_TYPE,
         identifier: slug,
         identifierType: 'slug',
         includeUnpublished,
         includeRelationships: Object.values(RELATIONSHIP_CONFIG).map(config => ({
-          relationshipConfig: config as any,
+          relationshipConfig: config,
           fields: 'id, slug, title, description'
         }))
       });
@@ -81,7 +84,7 @@ export async function GET(request: NextRequest) {
     }
     
     const { data, error, count } = await fetchContentItems({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       includeUnpublished,
       page,
       pageSize,
@@ -156,20 +159,29 @@ export async function POST(request: Request) {
       published,
       featured
     };
-    
+
+    // Validate input
+    const validation = blogPostSchema.safeParse({ ...data, id });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: formatValidationErrors(validation.error) },
+        { status: 400 }
+      );
+    }
+
     // Prepare relationships
     const relationships = [];
     
     if (relatedPosts.length > 0) {
       relationships.push({
-        relationshipConfig: RELATIONSHIP_CONFIG.relatedPosts as any,
+        relationshipConfig: RELATIONSHIP_CONFIG.relatedPosts,
         relatedIds: relatedPosts
       });
     }
     
     // Save the blog post
     const { data: savedItem, error } = await saveContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       data,
       id,
       relationships
@@ -210,9 +222,9 @@ export async function DELETE(request: NextRequest) {
     const relationshipConfigs = Object.values(RELATIONSHIP_CONFIG);
     
     const { success, error } = await deleteContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id,
-      relationshipConfigs: relationshipConfigs as any[]
+      relationshipConfigs
     });
     
     if (!success) {
@@ -259,7 +271,7 @@ export async function PATCH(request: NextRequest) {
     // If updating published status
     if (published !== undefined) {
       const { data, error } = await updatePublishedStatus({
-        contentType: CONTENT_TYPE as any,
+        contentType: CONTENT_TYPE,
         id,
         published
       });
@@ -280,7 +292,7 @@ export async function PATCH(request: NextRequest) {
     // If updating featured status
     if (featured !== undefined) {
       const { data, error } = await saveContentItem({
-        contentType: CONTENT_TYPE as any,
+        contentType: CONTENT_TYPE,
         id,
         data: { featured }
       });

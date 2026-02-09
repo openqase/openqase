@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 
 // Define content types
@@ -210,13 +211,15 @@ function filterRelationships(data: any, contentType: ContentType, preview: boole
  * - Filters relationships in JavaScript to prevent null pointer exceptions
  * - Supports preview mode for unpublished content access
  */
-export async function getStaticContentWithRelationships<T>(
+// Memoized fetcher — deduplicates calls within a single React render tree
+// so generateMetadata() and the page component share one database query.
+const _getStaticContentWithRelationships = cache(async (
   contentType: ContentType,
   slug: string,
-  options: { preview?: boolean } = {}
-): Promise<T | null> {
+  preview: boolean
+) => {
   const supabase = createServiceRoleSupabaseClient();
-  
+
   const selectQuery = RELATIONSHIP_MAPS[contentType];
   let query = supabase
     .from(contentType)
@@ -224,7 +227,7 @@ export async function getStaticContentWithRelationships<T>(
     .eq('slug', slug);
 
   // Only filter main content by published status if not in preview mode
-  if (!options.preview) {
+  if (!preview) {
     query = query.eq('published', true);
   }
 
@@ -236,9 +239,16 @@ export async function getStaticContentWithRelationships<T>(
   }
 
   // Filter relationships to handle mixed published/unpublished content
-  const filteredData = filterRelationships(data, contentType, options.preview);
-  
-  return filteredData as T;
+  return filterRelationships(data, contentType, preview);
+});
+
+export async function getStaticContentWithRelationships<T>(
+  contentType: ContentType,
+  slug: string,
+  options: { preview?: boolean } = {}
+): Promise<T | null> {
+  const result = await _getStaticContentWithRelationships(contentType, slug, options.preview ?? false);
+  return result as T | null;
 }
 
 /**
@@ -595,6 +605,19 @@ export async function fetchSearchData(
 
 
 /**
+ * Sanitize a search term for use in PostgREST filter strings.
+ * Strips characters that could break or manipulate .or() filter syntax,
+ * and enforces a maximum length.
+ */
+function sanitizeSearchTerm(term: string): string {
+  return term
+    .replace(/[,.()"\\]/g, ' ')  // Strip PostgREST filter metacharacters
+    .replace(/\s+/g, ' ')        // Collapse multiple spaces
+    .trim()
+    .slice(0, 200);              // Enforce max length
+}
+
+/**
  * Search content across multiple types
  * Simple implementation for basic search functionality
  */
@@ -603,14 +626,19 @@ export async function searchContent<T>(
   searchTerm: string,
   options: { preview?: boolean; limit?: number } = {}
 ): Promise<{ contentType: ContentType; items: T[] }[]> {
+  const sanitized = sanitizeSearchTerm(searchTerm);
+  if (!sanitized) {
+    return contentTypes.map(contentType => ({ contentType, items: [] }));
+  }
+
   const supabase = createServiceRoleSupabaseClient();
-  
+
   const results = await Promise.all(
     contentTypes.map(async (contentType) => {
       let query = supabase
         .from(contentType)
         .select('*')
-        .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,main_content.ilike.%${searchTerm}%`);
+        .or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%,main_content.ilike.%${sanitized}%`);
 
       if (!options.preview) {
         query = query.eq('published', true);

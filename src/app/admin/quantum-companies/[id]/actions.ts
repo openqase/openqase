@@ -46,16 +46,21 @@ export async function saveQuantumCompany(values: any): Promise<any> {
 export async function publishQuantumCompany(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quantum_companies')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/quantum-companies');
     revalidatePath('/paths/quantum-companies');
+    if (data?.slug) {
+      revalidatePath(`/paths/quantum-companies/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error publishing quantum company:", error);
     throw new Error(error.message || "Failed to publish quantum company");
@@ -65,16 +70,21 @@ export async function publishQuantumCompany(id: string): Promise<void> {
 export async function unpublishQuantumCompany(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quantum_companies')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/quantum-companies');
     revalidatePath('/paths/quantum-companies');
+    if (data?.slug) {
+      revalidatePath(`/paths/quantum-companies/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error unpublishing quantum company:", error);
     throw new Error(error.message || "Failed to unpublish quantum company");

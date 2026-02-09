@@ -167,10 +167,17 @@ export class DualNewsletterService {
       database?: any
     }
   }> {
-    const result = {
+    const result: {
+      subscribed: boolean;
+      status: string;
+      services: {
+        beehiiv?: any;
+        database?: any;
+      };
+    } = {
       subscribed: false,
       status: 'not_subscribed',
-      services: {} as any
+      services: {}
     }
 
     // Check Beehiiv status
@@ -246,7 +253,11 @@ export class DualNewsletterService {
     resend?: boolean
     database?: boolean
   }> {
-    const results: any = {}
+    const results: {
+      beehiiv?: boolean;
+      resend?: boolean;
+      database?: boolean;
+    } = {}
 
     if (this.beehiiv) {
       results.beehiiv = await this.beehiiv.testConnection()
@@ -264,7 +275,7 @@ export class DualNewsletterService {
     if (this.config.syncToDatabase) {
       try {
         const supabase = await createServerSupabaseClient()
-        const { error } = await (supabase as any).from('newsletter_subscriptions').select('id').limit(1)
+        const { error } = await supabase.from('newsletter_subscriptions').select('id').limit(1)
         results.database = !error
       } catch (error) {
         results.database = false
@@ -279,7 +290,7 @@ export class DualNewsletterService {
    */
   private async checkDatabaseSubscription(email: string) {
     const supabase = await createServerSupabaseClient()
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('newsletter_subscriptions')
       .select('id, status, metadata, subscription_date')
       .eq('email', email)
@@ -301,7 +312,7 @@ export class DualNewsletterService {
 
     if (exists) {
       // Update existing subscription
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('newsletter_subscriptions')
         .update({ 
           status,
@@ -313,7 +324,7 @@ export class DualNewsletterService {
       if (error) throw error
     } else {
       // Create new subscription
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('newsletter_subscriptions')
         .insert({
           email,
@@ -334,7 +345,7 @@ export class DualNewsletterService {
     }
 
     const supabase = await createServerSupabaseClient()
-    const { data: unsubscribeData } = await (supabase as any)
+    const { data: unsubscribeData } = await supabase
       .from('newsletter_subscriptions')
       .select('unsubscribe_token')
       .eq('email', email)
@@ -343,7 +354,7 @@ export class DualNewsletterService {
     const unsubscribeUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/newsletter/unsubscribe?token=${unsubscribeData?.unsubscribe_token}`
 
     return await this.resend.emails.send({
-      from: 'david@openqase.com',
+      from: process.env.RESEND_FROM_EMAIL || 'david@openqase.com',
       to: [email],
       subject: 'Welcome to OpenQase Newsletter! 🚀',
       html: `

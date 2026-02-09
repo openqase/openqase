@@ -49,117 +49,52 @@ export default async function EditCaseStudyPage({ params }: CaseStudyPageProps) 
   let partnerCompanies: string[] = []
   
   if (!isNew && caseStudy) {
-    // Fetch algorithm relationships
-    const { data: algorithmRelations } = await supabase
-      .from('algorithm_case_study_relations')
-      .select('algorithm_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (algorithmRelations) {
-      algorithms = algorithmRelations.map(relation => relation.algorithm_id as string)
-    }
-    
-    // Fetch industry relationships
-    const { data: industryRelations } = await supabase
-      .from('case_study_industry_relations' as any)
-      .select('industry_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (industryRelations) {
-      industries = industryRelations.map((relation: any) => relation.industry_id)
-    }
-    
-    // Fetch persona relationships
-    const { data: personaRelations } = await supabase
-      .from('case_study_persona_relations' as any)
-      .select('persona_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (personaRelations) {
-      personas = personaRelations.map((relation: any) => relation.persona_id)
-    }
-    
-    // Fetch quantum software relationships
-    const { data: quantumSoftwareRelations } = await supabase
-      .from('case_study_quantum_software_relations' as any)
-      .select('quantum_software_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (quantumSoftwareRelations) {
-      quantumSoftware = quantumSoftwareRelations.map((relation: any) => relation.quantum_software_id)
-    }
-    
-    // Fetch quantum hardware relationships
-    const { data: quantumHardwareRelations } = await supabase
-      .from('case_study_quantum_hardware_relations' as any)
-      .select('quantum_hardware_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (quantumHardwareRelations) {
-      quantumHardware = quantumHardwareRelations.map((relation: any) => relation.quantum_hardware_id)
-    }
-    
-    // Fetch quantum company relationships
-    const { data: quantumCompanyRelations } = await supabase
-      .from('case_study_quantum_company_relations' as any)
-      .select('quantum_company_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (quantumCompanyRelations) {
-      quantumCompanies = quantumCompanyRelations.map((relation: any) => relation.quantum_company_id)
-    }
-    
-    // Fetch partner company relationships
-    const { data: partnerCompanyRelations } = await supabase
-      .from('case_study_partner_company_relations' as any)
-      .select('partner_company_id')
-      .eq('case_study_id', caseStudy.id)
-    
-    if (partnerCompanyRelations) {
-      partnerCompanies = partnerCompanyRelations.map((relation: any) => relation.partner_company_id)
-    }
+    // Fetch all relationships in parallel
+    const [
+      { data: algorithmRelations },
+      { data: industryRelations },
+      { data: personaRelations },
+      { data: quantumSoftwareRelations },
+      { data: quantumHardwareRelations },
+      { data: quantumCompanyRelations },
+      { data: partnerCompanyRelations },
+    ] = await Promise.all([
+      supabase.from('algorithm_case_study_relations').select('algorithm_id').eq('case_study_id', caseStudy.id),
+      supabase.from('case_study_industry_relations' as any).select('industry_id').eq('case_study_id', caseStudy.id),
+      supabase.from('case_study_persona_relations' as any).select('persona_id').eq('case_study_id', caseStudy.id),
+      supabase.from('case_study_quantum_software_relations' as any).select('quantum_software_id').eq('case_study_id', caseStudy.id),
+      supabase.from('case_study_quantum_hardware_relations' as any).select('quantum_hardware_id').eq('case_study_id', caseStudy.id),
+      supabase.from('case_study_quantum_company_relations' as any).select('quantum_company_id').eq('case_study_id', caseStudy.id),
+      supabase.from('case_study_partner_company_relations' as any).select('partner_company_id').eq('case_study_id', caseStudy.id),
+    ])
+
+    if (algorithmRelations) algorithms = algorithmRelations.map(relation => relation.algorithm_id as string)
+    if (industryRelations) industries = (industryRelations as any[]).map(relation => relation.industry_id)
+    if (personaRelations) personas = (personaRelations as any[]).map(relation => relation.persona_id)
+    if (quantumSoftwareRelations) quantumSoftware = (quantumSoftwareRelations as any[]).map(relation => relation.quantum_software_id)
+    if (quantumHardwareRelations) quantumHardware = (quantumHardwareRelations as any[]).map(relation => relation.quantum_hardware_id)
+    if (quantumCompanyRelations) quantumCompanies = (quantumCompanyRelations as any[]).map(relation => relation.quantum_company_id)
+    if (partnerCompanyRelations) partnerCompanies = (partnerCompanyRelations as any[]).map(relation => relation.partner_company_id)
   }
 
-  // Fetch related data for dropdowns
-  const { data: allIndustries } = await supabase
-    .from('industries')
-    .select('id, slug, name')
-    .order('name')
-
-  const { data: allAlgorithms } = await supabase
-    .from('algorithms')
-    .select('id, slug, name')
-    .order('name')
-
-  const { data: allPersonas } = await supabase
-    .from('personas')
-    .select('id, slug, name')
-    .order('name')
-
-  // Fetch quantum entities for dropdowns
-  const { data: allQuantumSoftware } = await supabase
-    .from('quantum_software')
-    .select('id, slug, name')
-    .eq('published', true)
-    .order('name')
-
-  const { data: allQuantumHardware } = await supabase
-    .from('quantum_hardware')
-    .select('id, slug, name')
-    .eq('published', true)
-    .order('name')
-
-  const { data: allQuantumCompanies } = await supabase
-    .from('quantum_companies')
-    .select('id, slug, name')
-    .eq('published', true)
-    .order('name')
-
-  const { data: allPartnerCompanies } = await supabase
-    .from('partner_companies')
-    .select('id, slug, name')
-    .eq('published', true)
-    .order('name')
+  // Fetch all dropdown data in parallel
+  const [
+    { data: allIndustries },
+    { data: allAlgorithms },
+    { data: allPersonas },
+    { data: allQuantumSoftware },
+    { data: allQuantumHardware },
+    { data: allQuantumCompanies },
+    { data: allPartnerCompanies },
+  ] = await Promise.all([
+    supabase.from('industries').select('id, slug, name').order('name'),
+    supabase.from('algorithms').select('id, slug, name').order('name'),
+    supabase.from('personas').select('id, slug, name').order('name'),
+    supabase.from('quantum_software').select('id, slug, name').eq('published', true).order('name'),
+    supabase.from('quantum_hardware').select('id, slug, name').eq('published', true).order('name'),
+    supabase.from('quantum_companies').select('id, slug, name').eq('published', true).order('name'),
+    supabase.from('partner_companies').select('id, slug, name').eq('published', true).order('name'),
+  ])
 
   if (!isNew && !caseStudy) {
     notFound()

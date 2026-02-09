@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Type Safety**: Removed ~25 `as any` casts from API routes, newsletter services, and utility files by adding proper type annotations (`ContentType`, `RelationshipConfig`, `PerformanceNavigationTiming`, `DbCaseStudy`)
+- **Type Safety**: Added `newsletter_subscriptions` table definition to Supabase database types, enabling type-safe newsletter queries
+- **Code Quality**: Removed dead code files (`content-management-example.ts`, `api/template/route.ts`)
+
 ### Added
 - Comprehensive API reference documentation (905 lines) covering all 26 endpoints
 - OpenAPI 3.0.3 specification for Swagger/Postman compatibility
@@ -30,6 +35,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reorganized README.md documentation links for better discoverability
 - Moved planning documents to docs/archive/
 - Cleaned up TODO comments and created tracking issues (#129, #130, #131, #132)
+- **Code Quality**: Consolidated 4 duplicate relationship query functions into generic parameterized implementation
+- **Code Quality**: Removed dead code — unused test file, legacy validation module, unused components (InteractiveJourney, PathDiagram, AuthErrorBoundary, ContentErrorBoundary), unused utility functions
+- **Dependencies**: Updated all minor/patch dependencies; replaced radix-ui meta-package with individual component packages
+- **Performance**: Fixed N+1 query pattern in case-studies API — batch queries reduce 30+ sequential calls to 3 parallel ones
+- **Performance**: Parallelized 14 sequential database queries in admin case study edit page with `Promise.all()`
+- **Performance**: Added `React.cache()` to deduplicate content fetches shared between `generateMetadata()` and page components across 9 dynamic pages
+- **Performance**: Added `React.memo` to search result components; replaced `useEffect`+state with `useMemo` in RelationshipSelector
+- **Performance**: Converted contact page from client to server component (removed unnecessary `'use client'`)
+
+### Fixed
+- **Revalidation**: Fixed missing `revalidatePath()` calls in publish/unpublish server actions for algorithms, industries, blog posts, personas, quantum software, quantum hardware, quantum companies, and partner companies — content changes now immediately invalidate affected public pages
+- **ISR Safety Net**: Added `revalidate = 3600` to all 9 dynamic content pages to catch cross-entity staleness within 1 hour
+- **CLAUDE.md**: Restored project guidelines file accidentally removed in prior security cleanup; added revalidation architecture documentation
 
 ### Fixed
 - Added \`SET search_path = ''\` to SECURITY DEFINER functions to prevent search_path attacks
@@ -38,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Fixed SECURITY DEFINER functions (recover_content, soft_delete_content)
 - Database migration applied to production
+- **API Authorization**: Added defense-in-depth auth checks to case study delete, permanent-delete, and restore routes
+- **Input Validation**: Wired up Zod schema validation to all CRUD API routes (algorithms, case studies, blog posts, industries, personas)
+- **Search Injection**: Sanitized search term input in PostgREST filter to prevent query manipulation
+- **Preview Mode**: Removed hardcoded fallback secret; preview mode now requires `PREVIEW_SECRET` env var in production
+- **Email Config**: Sender email now configurable via `RESEND_FROM_EMAIL` env var
+- **Dependencies**: Resolved all npm audit vulnerabilities (tar, next, diff)
 
 ## [0.5.0] - 2026-01-05
 

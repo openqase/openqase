@@ -107,7 +107,7 @@ export async function DELETE(request: Request) {
     const supabase = await createServerSupabaseClient()
 
     // Find subscription by token and update status
-    const { data: subscription, error: selectError } = await (supabase as any)
+    const { data: subscription, error: selectError } = await supabase
       .from('newsletter_subscriptions')
       .select('id, email, status')
       .eq('unsubscribe_token', token)
@@ -164,7 +164,7 @@ export async function GET(request: Request) {
     const supabase = await createServerSupabaseClient()
 
     // Find subscription by token
-    const { data: subscription, error: selectError } = await (supabase as any)
+    const { data: subscription, error: selectError } = await supabase
       .from('newsletter_subscriptions')
       .select('email, status')
       .eq('unsubscribe_token', token)

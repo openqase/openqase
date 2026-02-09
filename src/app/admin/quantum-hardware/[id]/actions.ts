@@ -46,16 +46,21 @@ export async function saveQuantumHardware(values: any): Promise<any> {
 export async function publishQuantumHardware(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quantum_hardware')
       .update({ published: true })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/quantum-hardware');
     revalidatePath('/paths/quantum-hardware');
+    if (data?.slug) {
+      revalidatePath(`/paths/quantum-hardware/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error publishing quantum hardware:", error);
     throw new Error(error.message || "Failed to publish quantum hardware");
@@ -65,16 +70,21 @@ export async function publishQuantumHardware(id: string): Promise<void> {
 export async function unpublishQuantumHardware(id: string): Promise<void> {
   try {
     const supabase = createServiceRoleSupabaseClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('quantum_hardware')
       .update({ published: false })
-      .eq('id', id);
-    
+      .eq('id', id)
+      .select('slug')
+      .single();
+
     if (error) {
       throw error;
     }
     revalidatePath('/admin/quantum-hardware');
     revalidatePath('/paths/quantum-hardware');
+    if (data?.slug) {
+      revalidatePath(`/paths/quantum-hardware/${data.slug}`);
+    }
   } catch (error: any) {
     console.error("Error unpublishing quantum hardware:", error);
     throw new Error(error.message || "Failed to unpublish quantum hardware");

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Check, ChevronsUpDown, X, Search, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,26 +75,20 @@ export function RelationshipSelector({
 }: RelationshipSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [filteredItems, setFilteredItems] = useState(items);
-  
-  // Update filtered items when search value changes
-  useEffect(() => {
-    if (searchValue) {
-      setFilteredItems(
-        items.filter(item =>
-          String(item[itemLabelKey])
-            .toLowerCase()
-            .includes(searchValue.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredItems(items);
-    }
+
+  // Memoize filtered items — only recomputes when search, items, or label key changes
+  const filteredItems = useMemo(() => {
+    if (!searchValue) return items;
+    const lower = searchValue.toLowerCase();
+    return items.filter(item =>
+      String(item[itemLabelKey]).toLowerCase().includes(lower)
+    );
   }, [searchValue, items, itemLabelKey]);
-  
-  // Get data for selected items
-  const selectedItemsData = items.filter(item =>
-    selectedItems.includes(item[itemValueKey])
+
+  // Memoize selected items data — only recomputes when selection changes
+  const selectedItemsData = useMemo(() =>
+    items.filter(item => selectedItems.includes(item[itemValueKey])),
+    [items, selectedItems, itemValueKey]
   );
   
   const handleSelect = (value: string) => {
