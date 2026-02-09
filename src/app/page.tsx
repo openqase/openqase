@@ -19,7 +19,7 @@ import { AutoSchema } from '@/components/AutoSchema';
 import SearchCard from '@/components/SearchCard';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { getBuildTimeContentList, fetchSearchData, getStaticContentList } from '@/lib/content-fetchers';
-import type { BlogPost } from '@/lib/types';
+import type { BlogPost, DbCaseStudy } from '@/lib/types';
 import { draftMode } from 'next/headers';
 
 // Force this page to be statically generated at build time
@@ -70,7 +70,7 @@ export default async function HomePage() {
 
   // Type the blog posts and latest case studies properly
   const blogPosts = blogPostsData as BlogPost[];
-  const latestCaseStudies = latestCaseStudiesData as any[];
+  const latestCaseStudies = latestCaseStudiesData as DbCaseStudy[];
 
   // Primary content stats
   const primaryStats: CategoryStats[] = [

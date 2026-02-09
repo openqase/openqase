@@ -83,7 +83,7 @@ export const measurePageLoad = () => {
   if (typeof window === 'undefined') return;
 
   window.addEventListener('load', () => {
-    const navigation = performance.getEntriesByType('navigation')[0] as any;
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     if (navigation) {
       console.log('🌐 [PERF] Page Load Metrics:');
       console.log(`   - DNS Lookup: ${navigation.domainLookupEnd - navigation.domainLookupStart}ms`);

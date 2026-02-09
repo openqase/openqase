@@ -4,12 +4,13 @@ import {
   fetchContentItem,
   saveContentItem,
   deleteContentItem,
-  updatePublishedStatus
+  updatePublishedStatus,
+  ContentType
 } from '@/utils/content-management';
 import { personaSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 // Define the content type for this API route
-const CONTENT_TYPE = 'personas';
+const CONTENT_TYPE: ContentType = 'personas';
 
 /**
  * GET handler for fetching personas
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Handle single persona request
     if (slug) {
       const { data, error } = await fetchContentItem({
-        contentType: CONTENT_TYPE as any,
+        contentType: CONTENT_TYPE,
         identifier: slug,
         identifierType: 'slug',
         includeUnpublished
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
     
     const { data, error, count } = await fetchContentItems({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       includeUnpublished,
       page,
       pageSize,
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
 
     // Save the persona
     const { data: savedItem, error } = await saveContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       data,
       id
     });
@@ -165,7 +166,7 @@ export async function DELETE(request: NextRequest) {
     }
     
     const { success, error } = await deleteContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id
     });
     
@@ -211,7 +212,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     const { data, error } = await updatePublishedStatus({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id,
       published
     });

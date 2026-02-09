@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Type Safety**: Removed ~25 `as any` casts from API routes, newsletter services, and utility files by adding proper type annotations (`ContentType`, `RelationshipConfig`, `PerformanceNavigationTiming`, `DbCaseStudy`)
+- **Type Safety**: Added `newsletter_subscriptions` table definition to Supabase database types, enabling type-safe newsletter queries
+- **Code Quality**: Removed dead code files (`content-management-example.ts`, `api/template/route.ts`)
+
 ### Added
 - Comprehensive API reference documentation (905 lines) covering all 26 endpoints
 - OpenAPI 3.0.3 specification for Swagger/Postman compatibility

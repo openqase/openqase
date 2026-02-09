@@ -11,22 +11,24 @@ import {
   saveContentItem,
   deleteContentItem,
   updatePublishedStatus,
-  RELATIONSHIP_CONFIGS
+  RELATIONSHIP_CONFIGS,
+  ContentType,
+  RelationshipConfig
 } from '@/utils/content-management';
 import { algorithmSchema, formatValidationErrors } from '@/lib/validation/schemas';
 
 // Define the content type for this API route
-const CONTENT_TYPE = 'algorithms';
+const CONTENT_TYPE: ContentType = 'algorithms';
 
 // Define relationship configurations for this content type
-const RELATIONSHIP_CONFIG: Record<string, any> = {
+const RELATIONSHIP_CONFIG: Record<string, RelationshipConfig> = {
   caseStudies: RELATIONSHIP_CONFIGS.algorithms.caseStudies
 };
 
 /**
  * Extract form data for algorithms
  */
-function extractFormData(formData: FormData): Record<string, any> {
+function extractFormData(formData: FormData): Record<string, unknown> {
   const name = formData.get('name') as string;
   const slug = formData.get('slug') as string;
   const description = formData.get('description') as string || null;
@@ -53,11 +55,11 @@ function extractFormData(formData: FormData): Record<string, any> {
  * Extract relationships from form data
  */
 function extractRelationships(formData: FormData): Array<{
-  relationshipConfig: any;
+  relationshipConfig: RelationshipConfig;
   relatedIds: string[];
 }> {
   const relationships: Array<{
-    relationshipConfig: any;
+    relationshipConfig: RelationshipConfig;
     relatedIds: string[];
   }> = [];
   
@@ -87,12 +89,12 @@ export async function GET(request: NextRequest) {
     // Handle single algorithm request
     if (slug) {
       const { data, error } = await fetchContentItem({
-        contentType: CONTENT_TYPE as any,
+        contentType: CONTENT_TYPE,
         identifier: slug,
         identifierType: 'slug',
         includeUnpublished,
         includeRelationships: Object.values(RELATIONSHIP_CONFIG).map(config => ({
-          relationshipConfig: config as any,
+          relationshipConfig: config,
           fields: 'id, slug, title, description'
         }))
       });
@@ -121,7 +123,7 @@ export async function GET(request: NextRequest) {
     }
     
     const { data, error, count } = await fetchContentItems({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       includeUnpublished,
       page,
       pageSize,
@@ -179,7 +181,7 @@ export async function POST(request: Request) {
 
     // Save the algorithm
     const { data: savedItem, error } = await saveContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       data,
       id,
       relationships
@@ -218,9 +220,9 @@ export async function DELETE(request: NextRequest) {
     }
     
     const { success, error } = await deleteContentItem({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id,
-      relationshipConfigs: Object.values(RELATIONSHIP_CONFIG) as any[]
+      relationshipConfigs: Object.values(RELATIONSHIP_CONFIG)
     });
     
     if (!success) {
@@ -265,7 +267,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     const { data, error } = await updatePublishedStatus({
-      contentType: CONTENT_TYPE as any,
+      contentType: CONTENT_TYPE,
       id,
       published
     });
