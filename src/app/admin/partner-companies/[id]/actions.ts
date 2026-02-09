@@ -37,9 +37,10 @@ export async function savePartnerCompany(values: any): Promise<any> {
     }
     
     return data;
-  } catch (error: any) {
-    console.error("Error saving partner company:", error);
-    throw new Error(error.message || "Failed to save partner company");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error saving partner company:", message);
+    throw new Error(message || "Failed to save partner company");
   }
 }
 
@@ -61,9 +62,10 @@ export async function publishPartnerCompany(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/partner-companies/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error publishing partner company:", error);
-    throw new Error(error.message || "Failed to publish partner company");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error publishing partner company:", message);
+    throw new Error(message || "Failed to publish partner company");
   }
 }
 
@@ -85,8 +87,9 @@ export async function unpublishPartnerCompany(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/partner-companies/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error unpublishing partner company:", error);
-    throw new Error(error.message || "Failed to unpublish partner company");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error unpublishing partner company:", message);
+    throw new Error(message || "Failed to unpublish partner company");
   }
 }

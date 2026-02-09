@@ -37,9 +37,10 @@ export async function saveQuantumHardware(values: any): Promise<any> {
     }
     
     return data;
-  } catch (error: any) {
-    console.error("Error saving quantum hardware:", error);
-    throw new Error(error.message || "Failed to save quantum hardware");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error saving quantum hardware:", message);
+    throw new Error(message || "Failed to save quantum hardware");
   }
 }
 
@@ -61,9 +62,10 @@ export async function publishQuantumHardware(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/quantum-hardware/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error publishing quantum hardware:", error);
-    throw new Error(error.message || "Failed to publish quantum hardware");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error publishing quantum hardware:", message);
+    throw new Error(message || "Failed to publish quantum hardware");
   }
 }
 
@@ -85,8 +87,9 @@ export async function unpublishQuantumHardware(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/quantum-hardware/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error unpublishing quantum hardware:", error);
-    throw new Error(error.message || "Failed to unpublish quantum hardware");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error unpublishing quantum hardware:", message);
+    throw new Error(message || "Failed to unpublish quantum hardware");
   }
 }

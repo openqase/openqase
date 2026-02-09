@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 import type { Database } from '@/types/supabase'
 import { notFound } from 'next/navigation'
 import { CaseStudyForm } from './client'
@@ -60,21 +61,21 @@ export default async function EditCaseStudyPage({ params }: CaseStudyPageProps) 
       { data: partnerCompanyRelations },
     ] = await Promise.all([
       supabase.from('algorithm_case_study_relations').select('algorithm_id').eq('case_study_id', caseStudy.id),
-      supabase.from('case_study_industry_relations' as any).select('industry_id').eq('case_study_id', caseStudy.id),
-      supabase.from('case_study_persona_relations' as any).select('persona_id').eq('case_study_id', caseStudy.id),
-      supabase.from('case_study_quantum_software_relations' as any).select('quantum_software_id').eq('case_study_id', caseStudy.id),
-      supabase.from('case_study_quantum_hardware_relations' as any).select('quantum_hardware_id').eq('case_study_id', caseStudy.id),
-      supabase.from('case_study_quantum_company_relations' as any).select('quantum_company_id').eq('case_study_id', caseStudy.id),
-      supabase.from('case_study_partner_company_relations' as any).select('partner_company_id').eq('case_study_id', caseStudy.id),
+      fromTable(supabase, 'case_study_industry_relations').select('industry_id').eq('case_study_id', caseStudy.id),
+      fromTable(supabase, 'case_study_persona_relations').select('persona_id').eq('case_study_id', caseStudy.id),
+      fromTable(supabase, 'case_study_quantum_software_relations').select('quantum_software_id').eq('case_study_id', caseStudy.id),
+      fromTable(supabase, 'case_study_quantum_hardware_relations').select('quantum_hardware_id').eq('case_study_id', caseStudy.id),
+      fromTable(supabase, 'case_study_quantum_company_relations').select('quantum_company_id').eq('case_study_id', caseStudy.id),
+      fromTable(supabase, 'case_study_partner_company_relations').select('partner_company_id').eq('case_study_id', caseStudy.id),
     ])
 
     if (algorithmRelations) algorithms = algorithmRelations.map(relation => relation.algorithm_id as string)
-    if (industryRelations) industries = (industryRelations as any[]).map(relation => relation.industry_id)
-    if (personaRelations) personas = (personaRelations as any[]).map(relation => relation.persona_id)
-    if (quantumSoftwareRelations) quantumSoftware = (quantumSoftwareRelations as any[]).map(relation => relation.quantum_software_id)
-    if (quantumHardwareRelations) quantumHardware = (quantumHardwareRelations as any[]).map(relation => relation.quantum_hardware_id)
-    if (quantumCompanyRelations) quantumCompanies = (quantumCompanyRelations as any[]).map(relation => relation.quantum_company_id)
-    if (partnerCompanyRelations) partnerCompanies = (partnerCompanyRelations as any[]).map(relation => relation.partner_company_id)
+    if (industryRelations) industries = (industryRelations as Record<string, string>[]).map(relation => relation.industry_id)
+    if (personaRelations) personas = (personaRelations as Record<string, string>[]).map(relation => relation.persona_id)
+    if (quantumSoftwareRelations) quantumSoftware = (quantumSoftwareRelations as Record<string, string>[]).map(relation => relation.quantum_software_id)
+    if (quantumHardwareRelations) quantumHardware = (quantumHardwareRelations as Record<string, string>[]).map(relation => relation.quantum_hardware_id)
+    if (quantumCompanyRelations) quantumCompanies = (quantumCompanyRelations as Record<string, string>[]).map(relation => relation.quantum_company_id)
+    if (partnerCompanyRelations) partnerCompanies = (partnerCompanyRelations as Record<string, string>[]).map(relation => relation.partner_company_id)
   }
 
   // Fetch all dropdown data in parallel
@@ -101,7 +102,7 @@ export default async function EditCaseStudyPage({ params }: CaseStudyPageProps) 
   }
 
   // If editing, add the relationship IDs to the case study data
-  let caseStudyWithRelations = caseStudy;
+  let caseStudyWithRelations: Record<string, unknown> | null = caseStudy;
   if (!isNew && caseStudy) {
     caseStudyWithRelations = {
       ...caseStudy,
@@ -112,7 +113,7 @@ export default async function EditCaseStudyPage({ params }: CaseStudyPageProps) 
       quantum_hardware: quantumHardware,
       quantum_companies: quantumCompanies,
       partner_companies: partnerCompanies
-    } as any;
+    };
   }
 
   return (

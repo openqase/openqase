@@ -37,9 +37,10 @@ export async function saveQuantumSoftware(values: any): Promise<any> {
     }
     
     return data;
-  } catch (error: any) {
-    console.error("Error saving quantum software:", error);
-    throw new Error(error.message || "Failed to save quantum software");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error saving quantum software:", message);
+    throw new Error(message || "Failed to save quantum software");
   }
 }
 
@@ -61,9 +62,10 @@ export async function publishQuantumSoftware(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/quantum-software/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error publishing quantum software:", error);
-    throw new Error(error.message || "Failed to publish quantum software");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error publishing quantum software:", message);
+    throw new Error(message || "Failed to publish quantum software");
   }
 }
 
@@ -85,8 +87,9 @@ export async function unpublishQuantumSoftware(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/quantum-software/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error unpublishing quantum software:", error);
-    throw new Error(error.message || "Failed to unpublish quantum software");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error unpublishing quantum software:", message);
+    throw new Error(message || "Failed to unpublish quantum software");
   }
 }

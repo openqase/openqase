@@ -37,9 +37,10 @@ export async function saveQuantumCompany(values: any): Promise<any> {
     }
     
     return data;
-  } catch (error: any) {
-    console.error("Error saving quantum company:", error);
-    throw new Error(error.message || "Failed to save quantum company");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error saving quantum company:", message);
+    throw new Error(message || "Failed to save quantum company");
   }
 }
 
@@ -61,9 +62,10 @@ export async function publishQuantumCompany(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/quantum-companies/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error publishing quantum company:", error);
-    throw new Error(error.message || "Failed to publish quantum company");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error publishing quantum company:", message);
+    throw new Error(message || "Failed to publish quantum company");
   }
 }
 
@@ -85,8 +87,9 @@ export async function unpublishQuantumCompany(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/quantum-companies/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error unpublishing quantum company:", error);
-    throw new Error(error.message || "Failed to unpublish quantum company");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error unpublishing quantum company:", message);
+    throw new Error(message || "Failed to unpublish quantum company");
   }
 }

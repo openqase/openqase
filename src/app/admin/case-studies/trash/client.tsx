@@ -7,7 +7,9 @@ import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useState } from 'react'
-import type { CaseStudy } from './page'
+import type { CaseStudy as BaseCaseStudy } from './page'
+
+type CaseStudy = BaseCaseStudy & { deleted_by_email?: string }
 
 const createColumns = (
   selectedItems: Set<string>,
@@ -63,7 +65,7 @@ const createColumns = (
     header: 'Deleted By',
     cell: ({ row }) => (
       <span className="text-sm text-muted-foreground">
-        {(row.original as any).deleted_by_email || 'Unknown'}
+        {row.original.deleted_by_email || 'Unknown'}
       </span>
     )
   },

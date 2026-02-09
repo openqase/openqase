@@ -1,6 +1,7 @@
 'use server';
 
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
+import { fromTable } from '@/lib/supabase-untyped';
 import { revalidatePath } from 'next/cache';
 
 export async function saveAlgorithm(values: any): Promise<any> {
@@ -28,8 +29,7 @@ export async function saveAlgorithm(values: any): Promise<any> {
     }
     
     // Handle case study relationships (delete and re-create)
-    const caseStudyError = await supabase
-      .from('algorithm_case_study_relations' as any)
+    const caseStudyError = await fromTable(supabase, 'algorithm_case_study_relations')
       .delete()
       .eq('algorithm_id', data?.id);
 
@@ -42,8 +42,7 @@ export async function saveAlgorithm(values: any): Promise<any> {
     if (values.related_case_studies && values.related_case_studies.length > 0) {
         // Insert relationships with IDs
         for (const caseStudyId of values.related_case_studies) {
-            const insertError = await supabase
-                .from('algorithm_case_study_relations' as any)
+            const insertError = await fromTable(supabase, 'algorithm_case_study_relations')
                 .insert({ algorithm_id: data?.id, case_study_id: caseStudyId });
 
             if (insertError && insertError.error) {
@@ -54,8 +53,7 @@ export async function saveAlgorithm(values: any): Promise<any> {
     }
 
     // Handle industry relationships (delete and re-create)
-    const industryError = await supabase
-      .from('algorithm_industry_relations' as any)
+    const industryError = await fromTable(supabase, 'algorithm_industry_relations')
       .delete()
       .eq('algorithm_id', data?.id);
 
@@ -68,8 +66,7 @@ export async function saveAlgorithm(values: any): Promise<any> {
     if (values.related_industries && values.related_industries.length > 0) {
         // Insert relationships with IDs
         for (const industryId of values.related_industries) {
-            const insertError = await supabase
-                .from('algorithm_industry_relations' as any)
+            const insertError = await fromTable(supabase, 'algorithm_industry_relations')
                 .insert({ algorithm_id: data?.id, industry_id: industryId });
 
             if (insertError && insertError.error) {
@@ -80,8 +77,7 @@ export async function saveAlgorithm(values: any): Promise<any> {
     }
 
     // Handle persona relationships (delete and re-create)
-    const personaError = await supabase
-      .from('persona_algorithm_relations' as any)
+    const personaError = await fromTable(supabase, 'persona_algorithm_relations')
       .delete()
       .eq('algorithm_id', data?.id);
 
@@ -94,8 +90,7 @@ export async function saveAlgorithm(values: any): Promise<any> {
     if (values.related_personas && values.related_personas.length > 0) {
         // Insert relationships with IDs
         for (const personaId of values.related_personas) {
-            const insertError = await supabase
-                .from('persona_algorithm_relations' as any)
+            const insertError = await fromTable(supabase, 'persona_algorithm_relations')
                 .insert({ algorithm_id: data?.id, persona_id: personaId });
 
             if (insertError && insertError.error) {
@@ -113,9 +108,10 @@ export async function saveAlgorithm(values: any): Promise<any> {
     
     // Return the saved data
     return data;
-  } catch (error: any) {
-    console.error("Error saving algorithm:", error);
-    throw new Error(error.message || "Failed to save algorithm");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error saving algorithm:", message);
+    throw new Error(message || "Failed to save algorithm");
   }
 }
 
@@ -137,9 +133,10 @@ export async function publishAlgorithm(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/algorithm/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error publishing algorithm:", error);
-    throw new Error(error.message || "Failed to publish algorithm");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error publishing algorithm:", message);
+    throw new Error(message || "Failed to publish algorithm");
   }
 }
 
@@ -161,8 +158,9 @@ export async function unpublishAlgorithm(id: string): Promise<void> {
     if (data?.slug) {
       revalidatePath(`/paths/algorithm/${data.slug}`);
     }
-  } catch (error: any) {
-    console.error("Error unpublishing algorithm:", error);
-    throw new Error(error.message || "Failed to unpublish algorithm");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error unpublishing algorithm:", message);
+    throw new Error(message || "Failed to unpublish algorithm");
   }
 }

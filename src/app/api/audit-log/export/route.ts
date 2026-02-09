@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       }
 
       // Include metadata summary (not full snapshot to keep CSV readable)
-      const metadata = log.metadata as any
+      const metadata = log.metadata as Record<string, unknown> | null
       const metadataSummary = metadata?.content_snapshot
         ? 'Snapshot available'
         : 'No snapshot'
