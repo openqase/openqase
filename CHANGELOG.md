@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code Quality**: Removed dead code files (`content-management-example.ts`, `api/template/route.ts`)
 
 ### Added
+- **Testing Infrastructure**: Vitest test framework with 138 unit tests covering form validation, redirect security, UK spelling patterns, Zod schemas, and content validation
+- **CI/CD**: GitHub Actions workflow running lint, build, and test on push/PR to main and develop
 - Comprehensive API reference documentation (905 lines) covering all 26 endpoints
 - OpenAPI 3.0.3 specification for Swagger/Postman compatibility
 - Complete environment variables guide with security best practices

@@ -109,6 +109,9 @@ export const validators = {
     if (Array.isArray(value)) {
       return value.length > 0;
     }
+    if (typeof value === 'number') {
+      return !isNaN(value);
+    }
     return !!value;
   },
   

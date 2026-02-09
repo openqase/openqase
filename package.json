@@ -12,7 +12,9 @@
     "migrate:content": "ts-node scripts/migrate-mdx-to-db.ts",
     "setup-admin": "tsx scripts/setup-admin.ts",
     "test-performance": "node scripts/page-load-performance.js",
-    "enable-dev-mode": "node scripts/enable-dev-mode.js"
+    "enable-dev-mode": "node scripts/enable-dev-mode.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -64,6 +66,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^5.1.3",
     "autoprefixer": "^10.4.21",
     "chalk": "^5.4.1",
     "eslint": "^9",
@@ -77,6 +80,7 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.2",
     "typescript": "^5",
+    "vitest": "^4.0.18",
     "webpack-bundle-analyzer": "^5.1.1",
     "zod": "^3.25.63"
   }
