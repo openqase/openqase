@@ -12,7 +12,10 @@
     "migrate:content": "ts-node scripts/migrate-mdx-to-db.ts",
     "setup-admin": "tsx scripts/setup-admin.ts",
     "test-performance": "node scripts/page-load-performance.js",
-    "enable-dev-mode": "node scripts/enable-dev-mode.js"
+    "enable-dev-mode": "node scripts/enable-dev-mode.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -42,14 +45,12 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.24.11",
     "lucide-react": "^0.563.0",
     "markdown-it": "^14.1.0",
     "next": "^16.1.1",
     "next-themes": "^0.4.6",
-    "prism-react-renderer": "^2.4.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "resend": "^6.6.0",
@@ -64,6 +65,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^5.1.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.21",
     "chalk": "^5.4.1",
     "eslint": "^9",
@@ -77,7 +80,8 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.2",
     "typescript": "^5",
+    "vitest": "^4.0.18",
     "webpack-bundle-analyzer": "^5.1.1",
-    "zod": "^3.25.63"
+    "zod": "^4.3.6"
   }
 }

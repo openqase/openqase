@@ -7,7 +7,6 @@ import type { AuditLogEntry } from './page'
 import { useState, useMemo } from 'react'
 import { AdminListFilters } from '@/components/admin/AdminListFilters'
 import { Download, FileText } from 'lucide-react'
-import { format } from 'date-fns'
 
 interface AuditLogClientProps {
   data: AuditLogEntry[]
@@ -62,7 +61,9 @@ export function AuditLogClient({ data }: AuditLogClientProps) {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `audit-log-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.csv`
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        a.download = `audit-log-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.csv`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -109,7 +110,7 @@ export function AuditLogClient({ data }: AuditLogClientProps) {
       header: 'Date & Time',
       cell: ({ row }) => (
         <div className="text-sm">
-          {format(new Date(row.original.performed_at), 'MMM d, yyyy h:mm a')}
+          {new Date(row.original.performed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
         </div>
       ),
     },

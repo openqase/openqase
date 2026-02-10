@@ -2,15 +2,49 @@ import { ReactNode } from 'react';
 import { ArrowLeft, Users, Cpu, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import type { Json } from '@/types/supabase';
+
+interface RelatedEntity {
+  id: string;
+  name: string;
+  slug?: string | null;
+}
+
+interface IndustryRelation { industries: RelatedEntity | null }
+interface AlgorithmRelation { algorithms: RelatedEntity | null }
+interface PersonaRelation { personas: RelatedEntity | null }
+interface PartnerCompanyRelation { partner_companies: RelatedEntity | null }
+interface QuantumCompanyRelation { quantum_companies: RelatedEntity | null }
+interface QuantumHardwareRelation { quantum_hardware: RelatedEntity | null }
+interface QuantumSoftwareRelation { quantum_software: RelatedEntity | null }
+
+interface ResourceLink {
+  url: string;
+  label?: string;
+  order: number;
+}
+
+interface CaseStudyWithRelations {
+  year?: number;
+  resource_links?: Json;
+  case_study_industry_relations?: IndustryRelation[];
+  algorithm_case_study_relations?: AlgorithmRelation[];
+  case_study_persona_relations?: PersonaRelation[];
+  case_study_partner_company_relations?: PartnerCompanyRelation[];
+  case_study_quantum_company_relations?: QuantumCompanyRelation[];
+  case_study_quantum_hardware_relations?: QuantumHardwareRelation[];
+  case_study_quantum_software_relations?: QuantumSoftwareRelation[];
+}
 
 // Helper function to render clickable links for related content
 function renderEntityLinks(
-  entities: Array<{ id: string; name: string; slug?: string | null }> | undefined,
+  entities: Array<RelatedEntity | null> | undefined,
   basePath: string,
   title: string,
   icon?: React.ReactNode
 ) {
-  if (!entities || entities.length === 0) return null;
+  const filtered = entities?.filter((e): e is RelatedEntity => e !== null);
+  if (!filtered || filtered.length === 0) return null;
 
   return (
     <div>
@@ -19,7 +53,7 @@ function renderEntityLinks(
         {title}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {entities.map((entity) => {
+        {filtered.map((entity) => {
           if (entity.slug) {
             return (
               <Link key={entity.id} href={`/paths/${basePath}/${entity.slug}`}>
@@ -47,7 +81,7 @@ interface ProfessionalCaseStudyLayoutProps {
   children: ReactNode;
   backLinkText?: string;
   backLinkHref?: string;
-  caseStudy: any;
+  caseStudy: CaseStudyWithRelations;
 }
 
 export default function ProfessionalCaseStudyLayout({
@@ -110,13 +144,13 @@ export default function ProfessionalCaseStudyLayout({
                 )}
 
                 {renderEntityLinks(
-                  caseStudy.case_study_partner_company_relations?.map((rel: any) => rel.partner_companies).filter(Boolean),
+                  caseStudy.case_study_partner_company_relations?.map((rel: PartnerCompanyRelation) => rel.partner_companies),
                   'partner-companies',
                   'Partner Companies'
                 )}
 
                 {renderEntityLinks(
-                  caseStudy.case_study_quantum_company_relations?.map((rel: any) => rel.quantum_companies).filter(Boolean),
+                  caseStudy.case_study_quantum_company_relations?.map((rel: QuantumCompanyRelation) => rel.quantum_companies),
                   'quantum-companies',
                   'Quantum Companies'
                 )}
@@ -128,14 +162,14 @@ export default function ProfessionalCaseStudyLayout({
               <h3 className="text-lg font-semibold mb-4 text-foreground">Technical Details</h3>
               <div className="space-y-4">
                 {renderEntityLinks(
-                  caseStudy.case_study_quantum_hardware_relations?.map((rel: any) => rel.quantum_hardware).filter(Boolean),
+                  caseStudy.case_study_quantum_hardware_relations?.map((rel: QuantumHardwareRelation) => rel.quantum_hardware),
                   'quantum-hardware',
                   'Quantum Hardware',
                   <Cpu className="h-3 w-3" />
                 )}
 
                 {renderEntityLinks(
-                  caseStudy.case_study_quantum_software_relations?.map((rel: any) => rel.quantum_software).filter(Boolean),
+                  caseStudy.case_study_quantum_software_relations?.map((rel: QuantumSoftwareRelation) => rel.quantum_software),
                   'quantum-software',
                   'Quantum Software'
                 )}
@@ -151,13 +185,13 @@ export default function ProfessionalCaseStudyLayout({
                   <div className="flex flex-wrap gap-1.5">
                     {(() => {
                       if (caseStudy.case_study_industry_relations && caseStudy.case_study_industry_relations.length > 0) {
-                        const naIndustry = caseStudy.case_study_industry_relations.find((rel: any) => rel.industries?.slug === 'not-applicable');
+                        const naIndustry = caseStudy.case_study_industry_relations.find((rel: IndustryRelation) => rel.industries?.slug === 'not-applicable');
                         if (naIndustry && naIndustry.industries) {
                           return <span className="text-xs text-muted-foreground">Not Applicable</span>;
                         }
-                        const actualIndustries = caseStudy.case_study_industry_relations.filter((rel: any) => rel.industries?.slug !== 'not-applicable');
+                        const actualIndustries = caseStudy.case_study_industry_relations.filter((rel: IndustryRelation) => rel.industries?.slug !== 'not-applicable');
                         if (actualIndustries.length > 0) {
-                          return actualIndustries.map((relation: any) =>
+                          return actualIndustries.map((relation: IndustryRelation) =>
                             relation.industries ? (
                               <Link key={relation.industries.id} href={`/paths/industry/${relation.industries?.slug}`}>
                                 <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
@@ -178,13 +212,13 @@ export default function ProfessionalCaseStudyLayout({
                   <div className="flex flex-wrap gap-1.5">
                     {(() => {
                       if (caseStudy.algorithm_case_study_relations && caseStudy.algorithm_case_study_relations.length > 0) {
-                        const naAlgorithm = caseStudy.algorithm_case_study_relations.find((rel: any) => rel.algorithms?.slug === 'not-applicable');
+                        const naAlgorithm = caseStudy.algorithm_case_study_relations.find((rel: AlgorithmRelation) => rel.algorithms?.slug === 'not-applicable');
                         if (naAlgorithm && naAlgorithm.algorithms) {
                           return <span className="text-xs text-muted-foreground">Not Applicable</span>;
                         }
-                        const actualAlgorithms = caseStudy.algorithm_case_study_relations.filter((rel: any) => rel.algorithms?.slug !== 'not-applicable');
+                        const actualAlgorithms = caseStudy.algorithm_case_study_relations.filter((rel: AlgorithmRelation) => rel.algorithms?.slug !== 'not-applicable');
                         if (actualAlgorithms.length > 0) {
-                          return actualAlgorithms.map((relation: any) =>
+                          return actualAlgorithms.map((relation: AlgorithmRelation) =>
                             relation.algorithms ? (
                               <Link key={relation.algorithms.id} href={`/paths/algorithm/${relation.algorithms?.slug}`}>
                                 <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
@@ -205,13 +239,13 @@ export default function ProfessionalCaseStudyLayout({
                   <div className="flex flex-wrap gap-1.5">
                     {(() => {
                       if (caseStudy.case_study_persona_relations && caseStudy.case_study_persona_relations.length > 0) {
-                        const naPersona = caseStudy.case_study_persona_relations.find((rel: any) => rel.personas?.slug === 'not-applicable');
+                        const naPersona = caseStudy.case_study_persona_relations.find((rel: PersonaRelation) => rel.personas?.slug === 'not-applicable');
                         if (naPersona && naPersona.personas) {
                           return <span className="text-xs text-muted-foreground">Not Applicable</span>;
                         }
-                        const actualPersonas = caseStudy.case_study_persona_relations.filter((rel: any) => rel.personas?.slug !== 'not-applicable');
+                        const actualPersonas = caseStudy.case_study_persona_relations.filter((rel: PersonaRelation) => rel.personas?.slug !== 'not-applicable');
                         if (actualPersonas.length > 0) {
-                          return actualPersonas.map((relation: any) =>
+                          return actualPersonas.map((relation: PersonaRelation) =>
                             relation.personas ? (
                               <Link key={relation.personas.id} href={`/paths/persona/${relation.personas?.slug}`}>
                                 <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
@@ -237,7 +271,7 @@ export default function ProfessionalCaseStudyLayout({
                   Additional Resources
                 </h3>
                 <div className="space-y-2">
-                  {(caseStudy.resource_links as Array<{url: string, label?: string, order: number}>)
+                  {(caseStudy.resource_links as unknown as ResourceLink[])
                     .sort((a, b) => a.order - b.order)
                     .map((link, index) => (
                       <a 

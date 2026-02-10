@@ -7,12 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Test Coverage**: Added 93 new unit tests across 5 files covering cache (LRU, TTL, cache-aside, wrap), SEO schema generators, markdown processing, content metadata extraction, and quantum dictionary
+- **Coverage Tooling**: Added `test:coverage` script with v8 provider and 80% threshold on tested files
+
 ### Changed
+- **Dependencies**: Updated `@types/node` (patch), `framer-motion` (minor), `supabase` CLI (patch) to latest within semver range
+- **Bundle Size**: Removed unused `prism-react-renderer` dependency (~5-10KB)
+- **Bundle Size**: Deleted unused `organic-shapes.tsx` component (dead code with framer-motion dependency)
+- **Bundle Size**: Replaced `date-fns` with native `Intl.DateTimeFormat` across 4 files, removing the dependency entirely
+- **Bundle Size**: Deleted unused `AuthForm.tsx` component (never imported, pulled in `@supabase/auth-ui-react`)
+- **Type Safety**: Added `TablesInsert<>` types to 5 server action files (algorithms, quantum-hardware, quantum-software, quantum-companies, partner-companies), replacing `any` params and return types
+- **Type Safety**: Typed case study layout component with `CaseStudyWithRelations` interface, replacing `caseStudy: any` and 12 `(rel: any)` casts
+- **Type Safety**: Replaced `baseSchema: any` with `Record<string, unknown>` in schema.ts
+
+### Changed
+- **Type Safety**: Centralized ~48 `as any` casts into `fromTable()` helper for untyped Supabase tables, replacing scattered casts across 7 files
+- **Type Safety**: Converted all 18 `catch (error: any)` patterns to `catch (error: unknown)` with proper `instanceof Error` checks across 6 admin action files
+- **Type Safety**: Replaced remaining non-`.from()` `as any` casts with `Record<string, unknown>` and proper type annotations
 - **Type Safety**: Removed ~25 `as any` casts from API routes, newsletter services, and utility files by adding proper type annotations (`ContentType`, `RelationshipConfig`, `PerformanceNavigationTiming`, `DbCaseStudy`)
 - **Type Safety**: Added `newsletter_subscriptions` table definition to Supabase database types, enabling type-safe newsletter queries
+- **Bundle Size**: Removed framer-motion (42KB gzipped) from Card component — the `animated` prop was unused dead code pulling a heavy dependency into 30+ pages
+- **Bundle Size**: Added framer-motion to `optimizePackageImports` for better tree-shaking where still used
+- **Bundle Size**: Wired up `webpack-bundle-analyzer` for `build:analyze` script
 - **Code Quality**: Removed dead code files (`content-management-example.ts`, `api/template/route.ts`)
+- **Code Quality**: Removed duplicate `cn()` utility from design-system.ts (canonical version is in utils.ts)
 
 ### Added
+- **Testing Infrastructure**: Vitest test framework with 138 unit tests covering form validation, redirect security, UK spelling patterns, Zod schemas, and content validation
+- **CI/CD**: GitHub Actions workflow running lint, build, and test on push/PR to main and develop
 - Comprehensive API reference documentation (905 lines) covering all 26 endpoints
 - OpenAPI 3.0.3 specification for Swagger/Postman compatibility
 - Complete environment variables guide with security best practices

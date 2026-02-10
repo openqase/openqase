@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@/lib/supabase-server';
+import { fromTable } from '@/lib/supabase-untyped';
 
 // Define content types
 export type ContentType = 'case_studies' | 'algorithms' | 'personas' | 'industries' | 'blog_posts' | 'quantum_software' | 'quantum_hardware' | 'quantum_companies' | 'partner_companies';
@@ -358,8 +359,7 @@ export async function getRelatedContent<T>(
   }
 
   // First, get the related IDs from the junction table
-  const { data: relations, error: relationsError } = await supabase
-    .from(junctionConfig.table as any)
+  const { data: relations, error: relationsError } = await fromTable(supabase, junctionConfig.table)
     .select(junctionConfig.targetField)
     .eq(junctionConfig.sourceField, sourceId);
 

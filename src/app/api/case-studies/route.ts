@@ -10,6 +10,7 @@ import {
   RelationshipConfig
 } from '@/utils/content-management';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
+import { fromTable } from '@/lib/supabase-untyped';
 import { caseStudySchema, formatValidationErrors } from '@/lib/validation/schemas';
 import type { Database } from '@/types/supabase';
 
@@ -666,8 +667,7 @@ async function handleBulkDelete(ids: string[]) {
     ];
     
     for (const table of relationshipTables) {
-      await serviceClient
-        .from(table as any)
+      await fromTable(serviceClient, table)
         .delete()
         .in('case_study_id', ids);
     }

@@ -1,6 +1,7 @@
 'use server'
 
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
+import { fromTable } from '@/lib/supabase-untyped';
 
 interface RelatedEntity {
   id: string;
@@ -36,8 +37,7 @@ async function getRelatedEntities<T = Record<string, unknown>>(
   const supabase = await createServiceRoleSupabaseClient();
 
   // Get related IDs from the junction table
-  const { data: relations, error: relError } = await supabase
-    .from(config.junctionTable as any)
+  const { data: relations, error: relError } = await fromTable(supabase, config.junctionTable)
     .select(config.foreignKey)
     .in('case_study_id', caseStudyIds);
 
@@ -53,8 +53,7 @@ async function getRelatedEntities<T = Record<string, unknown>>(
   if (ids.length === 0) return [];
 
   // Fetch the entity details
-  const { data, error } = await supabase
-    .from(config.targetTable as any)
+  const { data, error } = await fromTable(supabase, config.targetTable)
     .select(config.selectFields)
     .in('id', ids);
 

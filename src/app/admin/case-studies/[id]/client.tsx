@@ -193,11 +193,11 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           description: 'Case study saved successfully',
           duration: 3000,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         const submitTime = Date.now() - submitStartTime;
-        
+
         // Show specific error message if available
-        const errorMessage = error?.message || 'An unknown error occurred while saving';
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while saving';
         
         toast({
           variant: 'destructive',
@@ -249,10 +249,10 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           description: 'Case study is now published and visible to users',
           duration: 3000,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         const publishTime = Date.now() - publishStartTime;
-        
-        const errorMessage = error?.message || 'An unknown error occurred while publishing';
+
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while publishing';
         
         toast({
           variant: 'destructive',
@@ -288,10 +288,10 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           description: 'Case study is now unpublished and hidden from users',
           duration: 3000,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         const unpublishTime = Date.now() - unpublishStartTime;
-        
-        const errorMessage = error?.message || 'An unknown error occurred while unpublishing';
+
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while unpublishing';
         
         toast({
           variant: 'destructive',

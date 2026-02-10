@@ -1,5 +1,6 @@
 import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
+import { fromTable } from '@/lib/supabase-untyped';
 import { PostgrestError } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
 
@@ -130,8 +131,7 @@ export async function fetchContentItem({
       const { relationshipConfig, fields = '*' } = relationship;
       const { junctionTable, contentIdField, relatedIdField, relatedTable } = relationshipConfig;
       
-      const { data: relations, error: relationsError } = await serviceClient
-        .from(junctionTable as any)
+      const { data: relations, error: relationsError } = await fromTable(serviceClient, junctionTable)
         .select(`
           ${relatedIdField},
           ${relatedTable}:${relatedTable}(${fields})
@@ -141,7 +141,7 @@ export async function fetchContentItem({
       if (!relationsError && relations) {
         // Extract the related items
         const relatedItems = relations.map(relation => relation[relatedTable as keyof typeof relation]);
-        (item as any)[`related_${relatedTable}`] = relatedItems;
+        (item as Record<string, unknown>)[`related_${relatedTable}`] = relatedItems;
       }
     }
   }
@@ -176,19 +176,18 @@ export async function saveContentItem({
   };
   
   // Create or update the content item
+  // Uses fromTable because contentType is dynamic and itemData is a generic Record
   if (id) {
     // Update existing item
-    result = await serviceClient
-      .from(contentType)
-      .update(itemData as any)
+    result = await fromTable(serviceClient, contentType)
+      .update(itemData)
       .eq('id', id)
       .select('*')
       .single();
   } else {
     // Create new item
-    result = await serviceClient
-      .from(contentType)
-      .insert(itemData as any)
+    result = await fromTable(serviceClient, contentType)
+      .insert(itemData)
       .select('*')
       .single();
   }
@@ -206,8 +205,7 @@ export async function saveContentItem({
       const { junctionTable, contentIdField, relatedIdField } = relationshipConfig;
       
       // First delete existing relationships
-      const { error: deleteError } = await serviceClient
-        .from(junctionTable as any)
+      const { error: deleteError } = await fromTable(serviceClient, junctionTable)
         .delete()
         .eq(contentIdField, savedItem.id);
         
@@ -222,9 +220,8 @@ export async function saveContentItem({
           [relatedIdField]: relatedId
         }));
         
-        const { error: insertError } = await serviceClient
-          .from(junctionTable as any)
-          .insert(relationInserts as any);
+        const { error: insertError } = await fromTable(serviceClient, junctionTable)
+          .insert(relationInserts);
           
         if (insertError) {
           console.error(`Error inserting relationships in ${junctionTable}:`, insertError);
@@ -260,11 +257,10 @@ export async function deleteContentItem({
     for (const config of relationshipConfigs) {
       const { junctionTable, contentIdField } = config;
       
-      const { error: relDeleteError } = await serviceClient
-        .from(junctionTable as any)
+      const { error: relDeleteError } = await fromTable(serviceClient, junctionTable)
         .delete()
         .eq(contentIdField, id);
-        
+
       if (relDeleteError) {
         console.error(`Error deleting relationships in ${junctionTable}:`, relDeleteError);
         // Continue with deletion even if relationship deletion fails
@@ -295,8 +291,8 @@ export async function deleteContentItem({
       if (contentData) {
         contentSnapshot = contentData;
         // Extract content name from common fields
-        const data = contentData as any;
-        contentName = data.title || data.name || null;
+        const record = contentData as Record<string, unknown>;
+        contentName = (record.title as string) || (record.name as string) || null;
       }
     } catch (snapshotError) {
       // Non-critical: continue with deletion even if snapshot fails
@@ -308,8 +304,7 @@ export async function deleteContentItem({
       const { junctionTable, contentIdField } = config;
 
       // Update junction table entries with deleted_at timestamp
-      const { error: relDeleteError } = await serviceClient
-        .from(junctionTable as any)
+      const { error: relDeleteError } = await fromTable(serviceClient, junctionTable)
         .update({
           deleted_at: new Date().toISOString()
         })
@@ -335,8 +330,7 @@ export async function deleteContentItem({
     // Step 3: Log the deletion for audit trail
     if (!deleteError && deletedBy) {
       try {
-        await serviceClient
-          .from('deletion_audit_log')
+        await fromTable(serviceClient, 'deletion_audit_log')
           .insert({
             content_type: contentType,
             content_id: id,
@@ -347,7 +341,7 @@ export async function deleteContentItem({
             metadata: {
               content_snapshot: contentSnapshot,
               relationship_configs: relationshipConfigs.length
-            } as any
+            }
           });
       } catch (auditError) {
         // Don't fail the delete if audit logging fails
@@ -369,7 +363,7 @@ export async function deleteContentItem({
     return { success: !deleteError, error: deleteError };
   } catch (error) {
     console.error('Soft delete failed:', error);
-    return { success: false, error: error as any };
+    return { success: false, error: error as PostgrestError | null };
   }
 }
 
@@ -410,9 +404,8 @@ export async function recoverContentItem({
     for (const config of relationshipConfigs) {
       const { junctionTable, contentIdField } = config;
       
-      const { error: relRecoverError } = await serviceClient
-        .from(junctionTable as any)
-        .update({ 
+      const { error: relRecoverError } = await fromTable(serviceClient, junctionTable)
+        .update({
           deleted_at: null
         })
         .eq(contentIdField, id);
@@ -426,12 +419,11 @@ export async function recoverContentItem({
     // Step 3: Log the recovery for audit trail
     if (recoveredBy) {
       // Extract content name from recovered data
-      const recoveredData = data as any;
-      const contentName = recoveredData.title || recoveredData.name || null;
+      const recoveredData = data as Record<string, unknown>;
+      const contentName = (recoveredData.title as string) || (recoveredData.name as string) || null;
 
       try {
-        await serviceClient
-          .from('deletion_audit_log')
+        await fromTable(serviceClient, 'deletion_audit_log')
           .insert({
             content_type: contentType,
             content_id: id,
@@ -441,7 +433,7 @@ export async function recoverContentItem({
             performed_at: new Date().toISOString(),
             metadata: {
               relationship_configs: relationshipConfigs.length
-            } as any
+            }
           });
       } catch (auditError) {
         // Don't fail the restore if audit logging fails
@@ -463,7 +455,7 @@ export async function recoverContentItem({
     return { success: true, data };
   } catch (error) {
     console.error('Recovery failed:', error);
-    return { success: false, error: error as any };
+    return { success: false, error: error as PostgrestError | null };
   }
 }
 

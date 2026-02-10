@@ -1,6 +1,15 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
-import { format } from 'date-fns'
+
+function formatTimestamp(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function formatFilenameDate(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+}
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +53,7 @@ export async function POST(request: Request) {
       const contentType = log.content_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
       const contentName = log.content_name || 'Untitled'
       const action = log.action.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
-      const timestamp = format(new Date(log.performed_at), 'yyyy-MM-dd HH:mm:ss')
+      const timestamp = formatTimestamp(new Date(log.performed_at))
 
       // Escape CSV fields (handle commas and quotes)
       const escape = (field: string) => {
@@ -55,7 +64,7 @@ export async function POST(request: Request) {
       }
 
       // Include metadata summary (not full snapshot to keep CSV readable)
-      const metadata = log.metadata as any
+      const metadata = log.metadata as Record<string, unknown> | null
       const metadataSummary = metadata?.content_snapshot
         ? 'Snapshot available'
         : 'No snapshot'
@@ -78,7 +87,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="audit-log-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.csv"`,
+        'Content-Disposition': `attachment; filename="audit-log-${formatFilenameDate(new Date())}.csv"`,
       },
     })
   } catch (error) {

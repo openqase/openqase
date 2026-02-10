@@ -261,7 +261,7 @@ export function getQuantumEntitySchema(entity: QuantumEntity, entityType: 'quant
   const schemaType = schemaTypeMap[entityType];
   
   // Build base schema
-  const baseSchema: any = {
+  const baseSchema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": schemaType,
     "name": entity.name,

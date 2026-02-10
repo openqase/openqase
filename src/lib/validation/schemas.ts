@@ -142,10 +142,10 @@ export const searchParamsSchema = z.object({
   algorithm: z.string().optional(),
   industry: z.string().optional(),
   persona: z.string().optional()
-}).merge(paginationSchema);
+}).extend(paginationSchema.shape);
 
 // Validation helper functions
-export function validateFormData<T>(schema: z.ZodSchema<T>, formData: FormData): { data: T; errors: null } | { data: null; errors: z.ZodError } {
+export function validateFormData<T>(schema: z.ZodType<T>, formData: FormData): { data: T; errors: null } | { data: null; errors: z.ZodError } {
   try {
     // Convert FormData to plain object
     const formObject: any = {};
@@ -195,7 +195,7 @@ export function validateSearchParams(searchParams: URLSearchParams) {
 export function formatValidationErrors(errors: z.ZodError): Record<string, string> {
   const formattedErrors: Record<string, string> = {};
   
-  for (const error of errors.errors) {
+  for (const error of errors.issues) {
     const path = error.path.join('.');
     formattedErrors[path] = error.message;
   }
