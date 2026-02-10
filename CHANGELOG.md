@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Dependencies**: Updated `@types/node` (patch), `framer-motion` (minor), `supabase` CLI (patch) to latest within semver range
+- **Bundle Size**: Removed unused `prism-react-renderer` dependency (~5-10KB)
+- **Bundle Size**: Deleted unused `organic-shapes.tsx` component (dead code with framer-motion dependency)
+- **Type Safety**: Added `TablesInsert<>` types to 5 server action files (algorithms, quantum-hardware, quantum-software, quantum-companies, partner-companies), replacing `any` params and return types
+- **Type Safety**: Typed case study layout component with `CaseStudyWithRelations` interface, replacing `caseStudy: any` and 12 `(rel: any)` casts
+- **Type Safety**: Replaced `baseSchema: any` with `Record<string, unknown>` in schema.ts
 
 ### Changed
 - **Type Safety**: Centralized ~48 `as any` casts into `fromTable()` helper for untyped Supabase tables, replacing scattered casts across 7 files

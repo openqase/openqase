@@ -2,8 +2,14 @@
 
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
+import { TablesInsert } from '@/types/supabase';
 
-export async function savePartnerCompany(values: any): Promise<any> {
+interface PartnerCompanyFormData extends Omit<TablesInsert<'partner_companies'>, 'id'> {
+  id?: string;
+  quantum_use_cases?: string | null;
+}
+
+export async function savePartnerCompany(values: PartnerCompanyFormData): Promise<TablesInsert<'partner_companies'>> {
   try {
     const supabase = createServiceRoleSupabaseClient();
     const { data, error } = await supabase
@@ -18,7 +24,7 @@ export async function savePartnerCompany(values: any): Promise<any> {
         company_size: values.company_size,
         headquarters: values.headquarters,
         partnership_type: values.partnership_type,
-        quantum_use_cases: values.quantum_use_cases,
+        quantum_initiatives: values.quantum_use_cases,
         website_url: values.website_url,
         linkedin_url: values.linkedin_url,
       })

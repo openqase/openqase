@@ -2,8 +2,13 @@
 
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
+import { TablesInsert } from '@/types/supabase';
 
-export async function saveQuantumHardware(values: any): Promise<any> {
+interface QuantumHardwareFormData extends Omit<TablesInsert<'quantum_hardware'>, 'id'> {
+  id?: string;
+}
+
+export async function saveQuantumHardware(values: QuantumHardwareFormData): Promise<TablesInsert<'quantum_hardware'>> {
   try {
     const supabase = createServiceRoleSupabaseClient();
     const { data, error } = await supabase

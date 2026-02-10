@@ -3,8 +3,16 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { fromTable } from '@/lib/supabase-untyped';
 import { revalidatePath } from 'next/cache';
+import { TablesInsert } from '@/types/supabase';
 
-export async function saveAlgorithm(values: any): Promise<any> {
+interface AlgorithmFormData extends Omit<TablesInsert<'algorithms'>, 'id'> {
+  id?: string;
+  related_case_studies?: string[];
+  related_industries?: string[];
+  related_personas?: string[];
+}
+
+export async function saveAlgorithm(values: AlgorithmFormData): Promise<TablesInsert<'algorithms'>> {
   try {
     const supabase = createServiceRoleSupabaseClient();
     const { data, error } = await supabase
