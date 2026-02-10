@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { format } from 'date-fns';
 import { getStaticContentList } from '@/lib/content-fetchers';
 import { DbBlogPost } from '@/lib/types';
 import { Clock, User } from "lucide-react";
@@ -50,7 +49,7 @@ export default async function BlogPage() {
                         <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-3 md:mb-4 text-xs md:text-sm text-muted-foreground">
                           {post.published_at && (
                             <time dateTime={post.published_at}>
-                              {format(new Date(post.published_at), 'MMM dd, yyyy')}
+                              {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
                             </time>
                           )}
                           {post.author && (

@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import Link from "next/link";
 import { Metadata } from 'next';
-import { format } from 'date-fns';
 import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
 import { EnrichedBlogPost } from '@/lib/types';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -88,7 +87,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           
           <div className="flex items-center text-muted-foreground mb-6 text-base">
             {blogPost.published_at && (
-              <span className="mr-6">{format(new Date(blogPost.published_at), 'MMM dd, yyyy')}</span>
+              <span className="mr-6">{new Date(blogPost.published_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
             )}
             {blogPost.author && (
               <span>By {blogPost.author}</span>
