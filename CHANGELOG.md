@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Test Coverage**: Added 93 new unit tests across 5 files covering cache (LRU, TTL, cache-aside, wrap), SEO schema generators, markdown processing, content metadata extraction, and quantum dictionary
+- **Coverage Tooling**: Added `test:coverage` script with v8 provider and 80% threshold on tested files
+
+### Changed
+- **Dependencies**: Updated `@types/node` (patch), `framer-motion` (minor), `supabase` CLI (patch) to latest within semver range
+
 ### Changed
 - **Type Safety**: Centralized ~48 `as any` casts into `fromTable()` helper for untyped Supabase tables, replacing scattered casts across 7 files
 - **Type Safety**: Converted all 18 `catch (error: any)` patterns to `catch (error: unknown)` with proper `instanceof Error` checks across 6 admin action files
