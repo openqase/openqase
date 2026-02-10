@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Coverage Tooling**: Added `test:coverage` script with v8 provider and 80% threshold on tested files
 
 ### Changed
+- **Dependencies**: Migrated Zod from v3 to v4 — updated deprecated `.merge()` → `.extend()`, `.errors` → `.issues`, `ZodSchema` → `ZodType`
 - **Dependencies**: Updated `@types/node` (patch), `framer-motion` (minor), `supabase` CLI (patch) to latest within semver range
 - **Bundle Size**: Removed unused `prism-react-renderer` dependency (~5-10KB)
 - **Bundle Size**: Deleted unused `organic-shapes.tsx` component (dead code with framer-motion dependency)
