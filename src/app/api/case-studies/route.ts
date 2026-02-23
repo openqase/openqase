@@ -512,16 +512,19 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'ID is required' },
         { status: 400 }
       );
     }
-    
+
     const relationshipConfigs = Object.values(RELATIONSHIP_CONFIG);
     
     const { success, error } = await deleteContentItem({
@@ -552,9 +555,12 @@ export async function DELETE(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const body = await request.json();
-    
+
     // Handle bulk operations
     if (body.bulk) {
       const { operation, ids } = body;

@@ -132,22 +132,25 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'ID is required' },
         { status: 400 }
       );
     }
-    
+
     // Accept JSON data
     const data = await request.json();
-    
+
     // Remove id from data to avoid conflicts
     const { id: _id, ...itemData } = data;
-    
+
     // Update the partner company item
     const { data: savedItem, error } = await saveContentItem({
       contentType: CONTENT_TYPE,
@@ -179,38 +182,41 @@ export async function PUT(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
     const { published } = body;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'ID is required' },
         { status: 400 }
       );
     }
-    
+
     if (published === undefined) {
       return NextResponse.json(
         { error: 'Published status is required' },
         { status: 400 }
       );
     }
-    
+
     const { data, error } = await updatePublishedStatus({
       contentType: CONTENT_TYPE,
       id,
       published
     });
-    
+
     if (error) {
       return NextResponse.json(
         { error: 'Failed to update published status' },
         { status: 500 }
       );
     }
-    
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error in partner-companies PATCH handler:', error);

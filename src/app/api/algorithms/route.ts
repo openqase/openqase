@@ -213,9 +213,12 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'ID is required' },
@@ -251,31 +254,34 @@ export async function DELETE(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
     const { published } = body;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'ID is required' },
         { status: 400 }
       );
     }
-    
+
     if (published === undefined) {
       return NextResponse.json(
         { error: 'Published status is required' },
         { status: 400 }
       );
     }
-    
+
     const { data, error } = await updatePublishedStatus({
       contentType: CONTENT_TYPE,
       id,
       published
     });
-    
+
     if (error) {
       return NextResponse.json(
         { error: 'Failed to update published status for algorithm' },
