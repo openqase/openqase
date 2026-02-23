@@ -1,5 +1,6 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth'
 
 function formatTimestamp(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -13,6 +14,9 @@ function formatFilenameDate(date: Date): string {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (auth.error) return auth.error
+
     const supabase = await createServiceRoleSupabaseClient()
 
     // Fetch audit log entries

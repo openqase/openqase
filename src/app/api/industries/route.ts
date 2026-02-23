@@ -8,6 +8,7 @@ import {
   ContentType
 } from '@/utils/content-management';
 import { industrySchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { requireAdmin } from '@/lib/auth';
 
 // Define the content type for this API route
 const CONTENT_TYPE: ContentType = 'industries';
@@ -86,8 +87,11 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const formData = await request.formData();
-    
+
     // Get form data
     const id = formData.get('id') as string || null;
     const name = formData.get('name') as string;

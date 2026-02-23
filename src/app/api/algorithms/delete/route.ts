@@ -1,8 +1,12 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin()
+    if (auth.error) return auth.error
+
     const { id, ids } = await request.json()
     
     if (!id && !ids) {

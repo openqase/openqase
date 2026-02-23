@@ -12,6 +12,7 @@ import {
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
 import { fromTable } from '@/lib/supabase-untyped';
 import { caseStudySchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { requireAdmin } from '@/lib/auth';
 import type { Database } from '@/types/supabase';
 
 // Define the content type for this API route
@@ -394,8 +395,11 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const formData = await request.formData();
-    
+
     // Get form data
     const id = formData.get('id') as string || null;
     const title = formData.get('title') as string;

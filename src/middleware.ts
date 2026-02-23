@@ -37,8 +37,7 @@ export async function middleware(req: NextRequest) {
   if (isApiRoute) {
     // Define public API routes that don't need authentication
     const publicApiRoutes = [
-      '/api/newsletter',
-      '/api/sentry-example-api'
+      '/api/newsletter'
     ]
     
     const isPublicApiRoute = publicApiRoutes.some(route => 
