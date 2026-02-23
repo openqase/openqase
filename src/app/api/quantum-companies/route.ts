@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  fetchContentItems, 
-  fetchContentItem, 
-  saveContentItem, 
+import {
+  fetchContentItems,
+  fetchContentItem,
+  saveContentItem,
   updatePublishedStatus,
   RELATIONSHIP_CONFIGS
 } from '@/utils/content-management';
+import { requireAdmin } from '@/lib/auth';
 
 // Define the content type for this API route
 const CONTENT_TYPE = 'quantum_companies' as const;
@@ -91,12 +92,15 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     // Accept JSON data instead of FormData for compatibility with admin forms
     const data = await request.json();
-    
+
     // Remove any id field for new items
     const { id, ...itemData } = data;
-    
+
     // Save the quantum company item
     const { data: savedItem, error } = await saveContentItem({
       contentType: CONTENT_TYPE,

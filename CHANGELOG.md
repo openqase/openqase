@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Defense-in-Depth**: Added `requireAdmin()` checks to audit-log export and all admin API write routes (17 route handlers) as defense-in-depth beyond middleware
+- **Script Injection**: Escaped `</script>` breakout in AutoSchema JSON-LD output via `\u003c` encoding
+- **Attack Surface**: Removed Sentry example API route and page (unnecessary test endpoints in production)
+
 ### Added
 - **Test Coverage**: Added 93 new unit tests across 5 files covering cache (LRU, TTL, cache-aside, wrap), SEO schema generators, markdown processing, content metadata extraction, and quantum dictionary
 - **Coverage Tooling**: Added `test:coverage` script with v8 provider and 80% threshold on tested files

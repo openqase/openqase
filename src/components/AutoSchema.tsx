@@ -61,7 +61,7 @@ export function AutoSchema({ type, data, courseType, entityType, breadcrumbs }: 
     <script 
       type="application/ld+json"
       dangerouslySetInnerHTML={{ 
-        __html: JSON.stringify(schema, null, 2) 
+        __html: JSON.stringify(schema, null, 2).replace(/</g, '\\u003c')
       }}
     />
   );
