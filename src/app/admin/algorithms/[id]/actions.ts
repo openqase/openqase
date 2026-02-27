@@ -4,6 +4,22 @@ import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { fromTable } from '@/lib/supabase-untyped';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
+import { z } from 'zod';
+
+const algorithmSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1).max(500),
+  slug: z.string().min(1).max(500),
+  description: z.string().max(5000).nullable().optional(),
+  main_content: z.string().max(50000).nullable().optional(),
+  use_cases: z.string().max(10000).nullable().optional(),
+  published: z.boolean().optional(),
+  steps: z.string().max(10000).optional(),
+  academic_references: z.string().max(10000).optional(),
+  related_case_studies: z.array(z.string().uuid()).optional(),
+  related_industries: z.array(z.string().uuid()).optional(),
+  related_personas: z.array(z.string().uuid()).optional(),
+});
 
 interface AlgorithmFormData extends Omit<TablesInsert<'algorithms'>, 'id'> {
   id?: string;
@@ -14,6 +30,11 @@ interface AlgorithmFormData extends Omit<TablesInsert<'algorithms'>, 'id'> {
 
 export async function saveAlgorithm(values: AlgorithmFormData): Promise<TablesInsert<'algorithms'>> {
   try {
+    const parsed = algorithmSchema.safeParse(values);
+    if (!parsed.success) {
+      throw new Error(`Validation failed: ${parsed.error.issues.map((e: { message: string }) => e.message).join(', ')}`);
+    }
+
     const supabase = createServiceRoleSupabaseClient();
     const { data, error } = await supabase
       .from('algorithms')

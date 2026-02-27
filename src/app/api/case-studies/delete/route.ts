@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
       if (!success && error) {
         console.error(`Error soft deleting case study ${contentId}:`, error)
-        errors.push(`${contentId}: ${error.message}`)
+        errors.push(contentId)
       }
     }
 

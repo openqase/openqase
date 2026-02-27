@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   fetchContentItems,
@@ -367,7 +368,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('[CaseStudies API] Error from fetchContentItems:', error);
       return NextResponse.json(
-        { error: 'Error fetching case studies', details: error.message || 'Unknown error' },
+        { error: 'Error fetching case studies' },
         { status: 500 }
       );
     }
@@ -563,26 +564,27 @@ export async function PATCH(request: NextRequest) {
 
     // Handle bulk operations
     if (body.bulk) {
-      const { operation, ids } = body;
-      
-      if (!Array.isArray(ids) || ids.length === 0) {
+      const bulkSchema = z.object({
+        operation: z.enum(['publish', 'unpublish', 'delete']),
+        ids: z.array(z.string().uuid()).min(1).max(100),
+      });
+
+      const parsed = bulkSchema.safeParse(body);
+      if (!parsed.success) {
         return NextResponse.json(
-          { error: 'IDs array is required for bulk operations' },
+          { error: 'Invalid bulk operation request' },
           { status: 400 }
         );
       }
-      
+
+      const { operation, ids } = parsed.data;
+
       if (operation === 'publish') {
         return await handleBulkPublish(ids, true);
       } else if (operation === 'unpublish') {
         return await handleBulkPublish(ids, false);
       } else if (operation === 'delete') {
         return await handleBulkDelete(ids);
-      } else {
-        return NextResponse.json(
-          { error: 'Invalid bulk operation' },
-          { status: 400 }
-        );
       }
     }
     

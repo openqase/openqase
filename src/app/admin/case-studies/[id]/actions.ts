@@ -3,6 +3,27 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
+import { z } from 'zod';
+
+const caseStudyActionSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().min(1).max(500),
+  slug: z.string().min(1).max(500),
+  description: z.string().max(5000).nullable().optional(),
+  main_content: z.string().max(50000).nullable().optional(),
+  published: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  academic_references: z.string().max(10000).nullable().optional(),
+  resource_links: z.string().max(10000).nullable().optional(),
+  year: z.number().int().min(1900).max(2100).nullable().optional(),
+  industries: z.array(z.string().uuid()).optional(),
+  algorithms: z.array(z.string().uuid()).optional(),
+  personas: z.array(z.string().uuid()).optional(),
+  quantum_software: z.array(z.string().uuid()).optional(),
+  quantum_hardware: z.array(z.string().uuid()).optional(),
+  quantum_companies: z.array(z.string().uuid()).optional(),
+  partner_companies: z.array(z.string().uuid()).optional(),
+});
 
 interface CaseStudyFormData extends Omit<TablesInsert<'case_studies'>, 'id'> {
   id?: string;
@@ -17,8 +38,16 @@ interface CaseStudyFormData extends Omit<TablesInsert<'case_studies'>, 'id'> {
 
 export async function saveCaseStudy(values: CaseStudyFormData): Promise<{ caseStudy?: TablesInsert<'case_studies'>; success: boolean; error?: string }> {
   const startTime = Date.now();
-  
+
   try {
+    const parsed = caseStudyActionSchema.safeParse(values);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: `Validation failed: ${parsed.error.issues.map((e: { message: string }) => e.message).join(', ')}`,
+      };
+    }
+
     const supabase = createServiceRoleSupabaseClient();
 
 

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Permanent delete error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to permanently delete case studies' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, deleted: idsToDelete.length })
