@@ -10,15 +10,13 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type') || 'case-study';
 
   // Check the secret to prevent unauthorized access
-  // In development, allow preview without secret for easier testing
-  const isDev = process.env.NODE_ENV === 'development';
   const validSecret = process.env.PREVIEW_SECRET;
 
-  if (!isDev && !validSecret) {
+  if (!validSecret) {
     return new Response('Preview secret not configured', { status: 500 });
   }
 
-  if (!isDev && secret !== validSecret) {
+  if (secret !== validSecret) {
     return new Response('Invalid token', { status: 401 });
   }
 

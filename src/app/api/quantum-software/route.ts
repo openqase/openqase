@@ -25,7 +25,13 @@ export async function GET(request: NextRequest) {
     const slug = searchParams.get('slug');
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '50');
-    const includeUnpublished = searchParams.get('preview') === 'true';
+    let includeUnpublished = false;
+    if (searchParams.get('preview') === 'true') {
+      const auth = await requireAdmin();
+      if (!auth.error) {
+        includeUnpublished = true;
+      }
+    }
     
     // Handle single item request
     if (slug) {

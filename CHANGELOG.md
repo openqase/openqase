@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Preview Auth Hardening**: Preview endpoint now always requires secret (removed dev-mode bypass); quantum entity GET endpoints require admin auth for `?preview=true`
+- **Input Validation**: Added Zod schema validation to all 5 admin server actions (algorithms, blog, case studies, industries, personas) and bulk operations with UUID + size limits
+- **Error Message Sanitization**: Removed `error.message` leaks from 8 API routes — generic messages to clients, full details logged server-side only
 - **Defense-in-Depth**: Added `requireAdmin()` checks to audit-log export and all admin API write routes (17 route handlers) as defense-in-depth beyond middleware
 - **Script Injection**: Escaped `</script>` breakout in AutoSchema JSON-LD output via `\u003c` encoding
 - **Attack Surface**: Removed Sentry example API route and page (unnecessary test endpoints in production)

@@ -3,6 +3,16 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
+import { z } from 'zod';
+
+const industrySchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1).max(500),
+  slug: z.string().min(1).max(500),
+  description: z.string().max(5000).nullable().optional(),
+  main_content: z.string().max(50000).nullable().optional(),
+  published: z.boolean().optional(),
+});
 
 interface IndustryFormData extends Omit<TablesInsert<'industries'>, 'id'> {
   id?: string;
@@ -10,6 +20,11 @@ interface IndustryFormData extends Omit<TablesInsert<'industries'>, 'id'> {
 
 export async function saveIndustry(values: IndustryFormData): Promise<TablesInsert<'industries'>> {
   try {
+    const parsed = industrySchema.safeParse(values);
+    if (!parsed.success) {
+      throw new Error(`Validation failed: ${parsed.error.issues.map((e: { message: string }) => e.message).join(', ')}`);
+    }
+
     const supabase = createServiceRoleSupabaseClient();
     const { data, error } = await supabase
       .from('industries')

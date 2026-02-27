@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Restore error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to restore case studies' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, restored: idsToRestore.length })

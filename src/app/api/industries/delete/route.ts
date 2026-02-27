@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       
       if (error) {
         console.error(`Error soft deleting industry ${contentId}:`, error)
-        errors.push(`${contentId}: ${error.message}`)
+        errors.push(contentId)
       }
     }
 

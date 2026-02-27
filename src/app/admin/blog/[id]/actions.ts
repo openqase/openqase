@@ -3,6 +3,23 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
+import { z } from 'zod';
+
+const blogPostSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().min(1).max(500),
+  slug: z.string().min(1).max(500),
+  description: z.string().max(5000).nullable().optional(),
+  content: z.string().max(50000).nullable().optional(),
+  author: z.string().max(200).nullable().optional(),
+  featured_image: z.string().max(2000).nullable().optional(),
+  category: z.string().max(200).nullable().optional(),
+  tags: z.string().max(2000).nullable().optional(),
+  published: z.boolean().optional(),
+  featured: z.boolean().optional(),
+  published_at: z.string().nullable().optional(),
+  related_posts: z.array(z.string().uuid()).optional(),
+});
 
 interface BlogPostFormData extends Omit<TablesInsert<'blog_posts'>, 'id'> {
   id?: string;
@@ -11,6 +28,11 @@ interface BlogPostFormData extends Omit<TablesInsert<'blog_posts'>, 'id'> {
 
 export async function saveBlogPost(values: BlogPostFormData): Promise<TablesInsert<'blog_posts'>> {
   try {
+    const parsed = blogPostSchema.safeParse(values);
+    if (!parsed.success) {
+      throw new Error(`Validation failed: ${parsed.error.issues.map((e: { message: string }) => e.message).join(', ')}`);
+    }
+
     const supabase = createServiceRoleSupabaseClient();
     const { data, error } = await supabase
       .from('blog_posts')
