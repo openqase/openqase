@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - **CSP Tightening**: Removed `unsafe-eval` and `unsafe-inline` from `script-src` Content Security Policy
+- **RLS Cleanup**: Removed 6 broken admin write RLS policies that checked a non-existent JWT claim; redacted internal security architecture details from public docs
 - **Rate Limiting**: Added rate limiting to `/api/search-data` public endpoint (100 req/15 min)
 - **Security Headers**: Added `X-Permitted-Cross-Domain-Policies: none` and `Cross-Origin-Opener-Policy: same-origin`
 - **Preview Auth Hardening**: Preview endpoint now always requires secret (removed dev-mode bypass); quantum entity GET endpoints require admin auth for `?preview=true`
