@@ -97,46 +97,22 @@ This client:
 - ✅ **Has full database access**
 - ✅ **Used only in secure server-side operations**
 
-## RLS Policies & Known Issues
+## RLS Policies
 
-### Current Policy Status
+### Public Content Access
 
-**Published Content (Working):**
+Published content is protected by RLS SELECT policies:
 ```sql
 CREATE POLICY "Public can view published content"
   ON table_name FOR SELECT
   USING (published = true);
 ```
 
-**Admin Policies (Unused):**
-```sql
--- These policies exist but are NOT used by admin operations
-CREATE POLICY "Admins can manage content"
-  ON table_name FOR ALL
-  USING (auth.jwt() ->> 'role' = 'admin');  -- ⚠️ Broken but unused
-```
+### Admin Write Access
 
-### Why Admin Policies Are Broken (But OK)
+Admin write operations use `createServiceRoleSupabaseClient()` which bypasses RLS. There are no RLS write policies for admin operations — access control is handled at the application layer via `requireAdmin()` middleware and server action checks.
 
-**The Issue:**
-- RLS policies check `auth.jwt() ->> 'role' = 'admin'`
-- But admin role is stored in `user_preferences` table, not JWT
-- This would fail for admin users using regular client
-
-**Why It Doesn't Matter:**
-- Admin operations use **service role client** which bypasses ALL RLS
-- These policies are never actually executed for admin operations
-- Public operations don't need admin privileges
-
-### Future Considerations
-
-If we ever need consistent admin access through public APIs:
-
-1. **Option A:** Update RLS policies to check `user_preferences` table
-2. **Option B:** Add role to JWT claims via Supabase Auth hooks
-3. **Option C:** Remove unused admin RLS policies entirely
-
-For now, the current architecture works well and provides clear separation of concerns.
+If admin operations ever move to using the regular client, RLS write policies checking `user_preferences.role` should be added at that time.
 
 ## User Authentication
 
@@ -430,22 +406,9 @@ CREATE POLICY "Public can view published case studies"
   USING (published = true AND deleted_at IS NULL);
 ```
 
-### Admin Write Access (Not Used)
+### Admin Write Access
 
-These policies exist but are bypassed by service role client:
-
-```sql
--- This policy is NEVER executed for admin operations
--- Admin operations use service role which bypasses RLS
-CREATE POLICY "Admins can manage case studies"
-  ON case_studies FOR ALL
-  USING (auth.jwt() ->> 'role' = 'admin');
-```
-
-**Why admin policies are not used:**
-- Admin operations use `createServiceRoleSupabaseClient()`
-- Service role bypasses ALL RLS policies
-- Simpler and more performant than checking policies
+Admin operations use `createServiceRoleSupabaseClient()` which bypasses RLS. Access control is enforced at the application layer via `requireAdmin()`.
 
 ### User-Owned Content
 
