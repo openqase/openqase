@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
-- **CSP Tightening**: Removed `unsafe-eval` and `unsafe-inline` from `script-src` Content Security Policy
+- **CSP Tightening**: Removed `unsafe-eval` from `script-src` Content Security Policy (`unsafe-inline` retained — required by Next.js hydration)
 - **RLS Cleanup**: Removed 6 broken admin write RLS policies that checked a non-existent JWT claim; redacted internal security architecture details from public docs
 - **Rate Limiting**: Added rate limiting to `/api/search-data` public endpoint (100 req/15 min)
 - **Security Headers**: Added `X-Permitted-Cross-Domain-Policies: none` and `Cross-Origin-Opener-Policy: same-origin`
