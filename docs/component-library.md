@@ -123,8 +123,12 @@ This document catalogs all UI components in the OpenQase design system. Componen
   - Icons: Grid3X3 (grid), List (list)
   - Built on: Radix UI Tabs with custom styling
 
-- **`Content List`** - List container for content items
+- **`Content List`** - Generic searchable/sortable content listing with card grid
   - Location: `src/components/ui/content-list.tsx`
+  - Props: `items`, `type`, `basePath`, `renderBadges`, `renderExtraFilters`, `sortOptions`
+  - Features: Search filter, sort dropdown, responsive card grid, empty state
+  - Used by: quantum-software, quantum-hardware, quantum-companies, partner-companies listing pages
+  - **Note**: The older listing pages (case studies, algorithms, industries, personas) have bespoke custom layouts that predate this component. Migrating them to use `ContentList` would require extending it to support their page-specific features (entity-specific filters, relationship badges, custom card designs). Consider this if those pages are ever redesigned.
 
 - **`Learning Path Layout`** - Layout for educational content
   - Location: `src/components/ui/learning-path-layout.tsx`

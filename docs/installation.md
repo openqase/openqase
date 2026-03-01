@@ -7,7 +7,7 @@ Complete guide to setting up OpenQase locally for development.
 - [Node.js](https://nodejs.org/) (Version >= 18.0)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 - [Git](https://git-scm.com/)
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (recommended)
+- [Supabase CLI](https://supabase.com/docs/guides/local-development) (recommended)
 - [Docker](https://www.docker.com/) (required for local Supabase)
 
 ## Quick Start

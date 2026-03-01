@@ -86,4 +86,4 @@ This project leverages the React Server Components (RSC) architecture introduced
 *   Data fetching is often done in Server Components and the data is passed down as props to Client Components.
 *   For mutations or actions triggered by user interaction in Client Components, **Server Actions** are used. Client Components invoke Server Actions (defined in separate files, often with `"use server";`), which execute securely on the server.
 
-This separation allows the project to keep interactive JavaScript bundles smaller while leveraging the server for efficient data fetching and secure operations. Refer to the [Next.js Documentation](https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns) for more details on patterns. 
+This separation allows the project to keep interactive JavaScript bundles smaller while leveraging the server for efficient data fetching and secure operations. Refer to the [Next.js Documentation](https://nextjs.org/docs/app/getting-started/server-and-client-components) for more details on patterns. 

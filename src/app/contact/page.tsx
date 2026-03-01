@@ -58,7 +58,7 @@ export default function ContactPage() {
                   <span className="text-foreground group-hover:text-primary font-medium">Follow us on GitHub</span>
                 </Link>
                 <Link 
-                  href="https://threads.com/openqase"
+                  href="https://www.threads.com/@openqase"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-md transition-colors group"

@@ -41,7 +41,7 @@ OpenQase uses a **hybrid architecture** that combines:
 
 ### Prerequisites
 - Node.js 18+
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (for local development)
+- [Supabase CLI](https://supabase.com/docs/guides/local-development) (for local development)
 - Docker (required by Supabase CLI)
 
 ### Setup
@@ -201,7 +201,7 @@ NEXT_STATIC_EXPORT=true npm run build
 
 ## 🤝 Contributing
 
-1. **Read the documentation** - Start with the [Quick Reference](./docs/v040-quick-reference.md)
+1. **Read the documentation** - Start with the [Contributing Guide](./CONTRIBUTING.md)
 2. **Follow the patterns** - Use unified content fetching for public content
 3. **Preserve admin functionality** - Keep dynamic patterns for admin features
 4. **Test performance** - Ensure changes don't impact build times

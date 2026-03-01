@@ -76,7 +76,7 @@ Two client factories exist in `src/lib/supabase-server.ts`. Use the right one fo
 - **Recovery**: Use `recover_content()` database function
 - Content has `content_status` field: 'draft', 'published', 'archived', 'deleted'
 - 30-day retention period for soft-deleted content before permanent deletion
-- **Note**: The `public_*`, `admin_*`, and `trash_*` database views were planned but **do not exist**. Filtering is done via `.eq('published', true)` in queries and JS-level filtering. See `/docs/deletion-system-implementation.md` for the original design.
+- **Note**: The `public_*`, `admin_*`, and `trash_*` database views were planned but **do not exist**. Filtering is done via `.eq('published', true)` in queries and JS-level filtering.
 
 ## Architecture Principles
 

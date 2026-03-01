@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
   // issues with users being randomly logged out.
 
   // Refresh session if expired - required for Server Components
-  // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
+  // https://supabase.com/docs/guides/auth/server-side/migrating-to-ssr-from-auth-helpers
   await supabase.auth.getUser();
 
   // Note: The original code had a redirect here if !user.
