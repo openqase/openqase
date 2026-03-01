@@ -4,7 +4,7 @@ This project utilizes a modern web development stack focused on React, Next.js, 
 
 ## Core Framework & Backend
 
-*   **Framework:** [Next.js](https://nextjs.org/) (v15+) - Using the App Router.
+*   **Framework:** [Next.js](https://nextjs.org/) (v16) - Using the App Router.
 *   **Language:** [TypeScript](https://www.typescriptlang.org/)
 *   **Backend & Database:** [Supabase](https://supabase.com/)
     *   PostgreSQL Database

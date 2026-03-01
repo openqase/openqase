@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function RoadmapPage() {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       <div className="container-outer section-spacing">
         {/* Hero Section */}
         <div className="max-w-4xl mx-auto text-center mb-16">
@@ -16,43 +16,45 @@ export default function RoadmapPage() {
             Product Roadmap
           </h1>
           <p className="text-xl text-muted-foreground">
-            Our collective community vision for the future of OpenQase. 
-            See what we're building and what's coming next.
+            Our collective community vision for the future of OpenQase.
+            See what we&apos;re building and what&apos;s coming next.
           </p>
         </div>
 
         {/* Roadmap Content */}
         <div className="max-w-4xl mx-auto">
-          {/* Current Release */}
+          {/* Recently Released */}
           <section className="mb-16">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
               <h2 className="text-2xl font-semibold">Recently Released</h2>
             </div>
-            
-            <div className="bg-card border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">Version 0.4.0 - Static Site Generation</h3>
-                <span className="text-sm text-muted-foreground">June 2025</span>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <h4 className="font-medium mb-2">🚀 Performance & Architecture</h4>
-                  <ul className="text-muted-foreground space-y-1 text-sm">
-                    <li>• Complete SSG implementation</li>
-                    <li>• Unified content fetching system</li>
-                    <li>• Enhanced admin workflows</li>
-                    <li>• Security improvements</li>
-                  </ul>
+
+            <div className="space-y-6">
+              <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">v0.5.0 &mdash; Hybrid Architecture</h3>
+                  <span className="text-sm text-muted-foreground">January 2026</span>
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2">🎨 User Experience</h4>
-                  <ul className="text-muted-foreground space-y-1 text-sm">
-                    <li>• Redesigned About & Contact pages</li>
-                    <li>• Custom branding & favicon</li>
-                    <li>• Improved mobile experience</li>
-                    <li>• Single-column layouts</li>
-                  </ul>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <h4 className="font-medium mb-2">Performance</h4>
+                    <ul className="text-muted-foreground space-y-1 text-sm">
+                      <li>&bull; Static generation for all public content</li>
+                      <li>&bull; Unified content fetching system</li>
+                      <li>&bull; 50&ndash;100ms page loads, 145+ static pages</li>
+                      <li>&bull; Professional soft delete with recovery</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Features</h4>
+                    <ul className="text-muted-foreground space-y-1 text-sm">
+                      <li>&bull; Featured content management</li>
+                      <li>&bull; Case study import system</li>
+                      <li>&bull; Newsletter integration (Beehiiv + Resend)</li>
+                      <li>&bull; Complete security audit</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -64,63 +66,33 @@ export default function RoadmapPage() {
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <h2 className="text-2xl font-semibold">In Development</h2>
             </div>
-            
+
             <div className="space-y-6">
               <div className="bg-card border rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">UX & Database Optimization</h3>
-                  <span className="text-sm text-muted-foreground">July 2025</span>
+                  <h3 className="text-xl font-semibold">v0.6.0 &mdash; Content Quality &amp; Cleanup</h3>
+                  <span className="text-sm text-muted-foreground">In progress</span>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Improving user experience and search visibility through data-driven design improvements.
+                  Strengthening the foundation &mdash; security, testing, type safety, and performance improvements.
                 </p>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <h4 className="font-medium mb-2">✅ Recently Completed</h4>
+                    <h4 className="font-medium mb-2">Completed</h4>
                     <ul className="text-muted-foreground space-y-1 text-sm">
-                      <li>• Introduced automatic schema markup</li>
-                      <li>• Landing page copy optimization</li>
-                      <li>• SEO metadata improvements</li>
-                      <li>• CTA and messaging refinements</li>
+                      <li>&bull; Security audit and defence-in-depth hardening</li>
+                      <li>&bull; 235+ unit tests with Vitest</li>
+                      <li>&bull; Type safety improvements across codebase</li>
+                      <li>&bull; Bundle size optimisation</li>
+                      <li>&bull; Accessibility fixes</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-medium mb-2">🚧 In Progress</h4>
+                    <h4 className="font-medium mb-2">Remaining</h4>
                     <ul className="text-muted-foreground space-y-1 text-sm">
-                      <li>• Enhanced About page and community story</li>
-                      <li>• Enhanced case study presentation</li>
-                      <li>• Content structure improvements</li>
-                      <li>• Database improvements for improved response time</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-card border rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">Enhanced Content Management</h3>
-                  <span className="text-sm text-muted-foreground">July/August 2025</span>
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  Improving the content creation and management experience for administrators and contributors. Implementing the Qookie AI research assistant.
-                </p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <h4 className="font-medium mb-2">🔧 Admin Tools</h4>
-                    <ul className="text-muted-foreground space-y-1 text-sm">
-                      <li>• Advanced relationship management</li>
-                      <li>• Bulk content operations</li>
-                      <li>• Content validation workflows</li>
-                      <li>• Preview and staging systems</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">📊 Analytics & Insights</h4>
-                    <ul className="text-muted-foreground space-y-1 text-sm">
-                      <li>• Content performance metrics</li>
-                      <li>• User engagement tracking</li>
-                      <li>• Search analytics</li>
-                      <li>• Content recommendation engine</li>
+                      <li>&bull; Case study quality audit and templates</li>
+                      <li>&bull; Enhanced social sharing images</li>
+                      <li>&bull; Database performance optimisation</li>
                     </ul>
                   </div>
                 </div>
@@ -134,39 +106,67 @@ export default function RoadmapPage() {
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
               <h2 className="text-2xl font-semibold">Planned Features</h2>
             </div>
-            
+
             <div className="space-y-6">
               <div className="bg-card border rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">Community Features</h3>
-                  <span className="text-sm text-muted-foreground">Q4 2025</span>
+                  <h3 className="text-xl font-semibold">v0.7.0 &mdash; CMS Power Features</h3>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Building stronger community engagement and collaboration tools.
+                  Making the CMS more powerful for content administrators and contributors.
                 </p>
                 <ul className="text-muted-foreground space-y-2 text-sm">
-                  <li>• User profiles and contribution tracking</li>
-                  <li>• Community-driven content rating and reviews</li>
-                  <li>• Discussion forums for case studies</li>
-                  <li>• Expert contributor program</li>
-                  <li>• Community newsletter and updates</li>
+                  <li>&bull; Bulk import system redesign</li>
+                  <li>&bull; Newsletter system completion</li>
+                  <li>&bull; Multi-admin support with roles</li>
+                  <li>&bull; Content versioning and change history</li>
+                  <li>&bull; Scheduled publishing</li>
                 </ul>
               </div>
 
               <div className="bg-card border rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">Advanced Search & Discovery</h3>
-                  <span className="text-sm text-muted-foreground">Q1 2026</span>
+                  <h3 className="text-xl font-semibold">v0.8.0 &mdash; Visualisation &amp; Technical Content</h3>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Making it easier to find relevant quantum computing applications and insights.
+                  Enhanced technical content presentation and discovery tools.
                 </p>
                 <ul className="text-muted-foreground space-y-2 text-sm">
-                  <li>• AI-powered content recommendations</li>
-                  <li>• Advanced filtering and faceted search</li>
-                  <li>• Personalized learning path suggestions</li>
-                  <li>• Industry-specific content discovery</li>
-                  <li>• Semantic search capabilities</li>
+                  <li>&bull; LaTeX/math formula support for algorithms</li>
+                  <li>&bull; Industry page visualisations</li>
+                  <li>&bull; Charting and diagramming (Mermaid)</li>
+                  <li>&bull; Full-text search with filters</li>
+                </ul>
+              </div>
+
+              <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">v0.9.0 &mdash; Infrastructure &amp; Scale</h3>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  Preparing for production scale and sustainability.
+                </p>
+                <ul className="text-muted-foreground space-y-2 text-sm">
+                  <li>&bull; Sponsor blocks for featured placements</li>
+                  <li>&bull; Production Redis caching deployment</li>
+                  <li>&bull; Performance benchmarking suite</li>
+                  <li>&bull; Tailwind CSS v4 migration</li>
+                </ul>
+              </div>
+
+              <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">v1.0.0 &mdash; Production Ready</h3>
+                  <span className="text-sm text-muted-foreground">Target: July 2026</span>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  Official production launch with comprehensive testing, documentation, and accessibility compliance.
+                </p>
+                <ul className="text-muted-foreground space-y-2 text-sm">
+                  <li>&bull; WCAG accessibility compliance audit</li>
+                  <li>&bull; Complete API documentation and SDKs</li>
+                  <li>&bull; MCP (Model Context Protocol) server</li>
+                  <li>&bull; Official launch campaign</li>
                 </ul>
               </div>
             </div>
@@ -177,14 +177,14 @@ export default function RoadmapPage() {
             <div className="bg-card border rounded-lg p-8 text-center">
               <h3 className="text-xl font-semibold mb-4">Shape Our Roadmap</h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Your feedback and suggestions help us prioritize features and improvements. 
-                Let us know what matters most to you and your organization.
+                Your feedback and suggestions help us prioritise features and improvements.
+                Let us know what matters most to you and your organisation.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <FeedbackButton />
-                <a 
-                  href="https://github.com/openqase/openqase" 
-                  target="_blank" 
+                <a
+                  href="https://github.com/openqase/openqase"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="bg-background border border-border hover:bg-muted px-6 py-3 rounded-lg font-medium transition-colors"
                 >
@@ -195,6 +195,6 @@ export default function RoadmapPage() {
           </section>
         </div>
       </div>
-    </main>
+    </div>
   );
-} 
+}

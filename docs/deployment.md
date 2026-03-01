@@ -123,6 +123,8 @@ tsx scripts/import-case-studies-with-mapping.ts /path/to/json/files --commit
 
 ## Docker Deployment
 
+> **Note:** The Docker and CI/CD configurations below are reference templates. They are not included in the repository and must be created if needed.
+
 ### Dockerfile
 
 Create a `Dockerfile` in the project root:

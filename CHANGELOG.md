@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Script Injection**: Escaped `</script>` breakout in AutoSchema JSON-LD output via `\u003c` encoding
 - **Attack Surface**: Removed Sentry example API route and page (unnecessary test endpoints in production)
 
+### Fixed
+- **Accessibility**: Fixed nested `<main>` elements on 6 pages — replaced inner `<main>` with `<div>` to ensure valid HTML landmark structure
+- **Dead Code**: Removed 13 unused files (components, lib utilities) identified during health check
+- **Broken Links**: Fixed 7 broken or redirected URLs in documentation and source code
+
 ### Added
 - **Test Coverage**: Added 93 new unit tests across 5 files covering cache (LRU, TTL, cache-aside, wrap), SEO schema generators, markdown processing, content metadata extraction, and quantum dictionary
 - **Coverage Tooling**: Added `test:coverage` script with v8 provider and 80% threshold on tested files
@@ -156,13 +161,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MINOR** (0.X.0): New features, monthly milestone releases
 - **PATCH** (0.0.X): Bug fixes, minor improvements
 
-### Monthly Milestone Releases
+### Milestone Releases
 
-- **v0.6.0** (Feb 1, 2026): Content Quality & Cleanup
-- **v0.7.0** (Mar 1, 2026): CMS Power Features
-- **v0.8.0** (Apr 1, 2026): Visualization & Technical Content
-- **v0.9.0** (May 1, 2026): Infrastructure & Scale
-- **v1.0.0** (Jul 1, 2026): Production Ready
+- **v0.6.0**: Content Quality & Cleanup (in progress)
+- **v0.7.0**: CMS Power Features
+- **v0.8.0**: Visualization & Technical Content
+- **v0.9.0**: Infrastructure & Scale
+- **v1.0.0** (Jul 2026): Production Ready
 
 ### Categories
 

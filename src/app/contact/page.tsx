@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       <div className="container-outer section-spacing">
         {/* Hero Section - Professional Magazine Style */}
         <div className="max-w-4xl mx-auto mb-16">
@@ -118,6 +118,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 } 

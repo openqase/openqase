@@ -115,7 +115,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 RESEND_API_KEY=your-resend-api-key
 RESEND_FROM_EMAIL=noreply@localhost
 
-# Newsletter Integration (Required for newsletter signup)
+# Newsletter Integration (Optional)
 BEEHIIV_API_KEY=your-beehiiv-api-key
 BEEHIIV_PUBLICATION_ID=your-beehiiv-publication-id
 

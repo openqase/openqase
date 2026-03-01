@@ -24,7 +24,7 @@ This is where the primary application logic resides.
 *   `src/app/`: Core of the Next.js App Router implementation. Contains layouts, pages, API routes, and specific feature routes.
 *   `src/components/`: Shared React components used throughout the application, likely including UI elements built with shadcn/ui.
 *   `src/lib/`: Core library code, utilities, and integrations. Notably contains Supabase client helpers (`supabase-*.ts`), API clients, type definitions, and validation logic.
-*   `src/utils/`: Additional utility functions. *(Consider consolidating relevant utilities into `src/lib/` if appropriate)*.
+*   `src/utils/`: Additional utility functions.
 *   `src/hooks/`: Custom React hooks.
 *   `src/contexts/`: React Context providers.
 *   `src/types/`: Application-specific TypeScript type definitions (though some might also be in `src/lib/types.ts`).
@@ -60,7 +60,7 @@ This project leverages the React Server Components (RSC) architecture introduced
     *   Cannot use browser-only APIs (e.g., `window`, `localStorage`).
     *   Cannot have interactive event handlers (`onClick`, `onChange`, etc.).
 *   **Example Usage (OpenQase):**
-    *   `page.tsx` files (e.g., `src/app/admin/blog-posts/page.tsx`, `src/app/blog/[slug]/page.tsx`) are typically Server Components responsible for fetching initial list or item data using helpers like `getSupabaseServerClient`.
+    *   `page.tsx` files (e.g., `src/app/admin/blog/page.tsx`, `src/app/blog/[slug]/page.tsx`) are typically Server Components responsible for fetching initial list or item data using helpers like `getSupabaseServerClient`.
     *   Layout components (`layout.tsx`) are often Server Components.
 
 ## Client Components
