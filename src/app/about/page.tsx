@@ -13,7 +13,7 @@ export default function AboutPage() {
       {/* Auto-generate organization schema for About page */}
       <AutoSchema type="organization" />
       
-      <main className="min-h-screen">
+      <div className="min-h-screen">
         <div className="container-outer section-spacing">
           {/* Hero Section */}
           <div className="max-w-4xl mx-auto text-center mb-16">
@@ -148,7 +148,7 @@ export default function AboutPage() {
           <GetInvolvedSection />
         </div>
       </div>
-    </main>
+    </div>
     </>
   );
 } 

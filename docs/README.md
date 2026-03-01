@@ -4,126 +4,81 @@ Complete documentation for the OpenQase quantum computing case study platform.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-New to OpenQase? Start here:
-
-- **[Installation Guide](./installation.md)** - Setup, local development, and deployment
-- **[Environment Variables](./environment-variables.md)** - Complete configuration reference
-- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute with commit conventions and standards
-
----
-
-## 📡 API & Development
-
-### API Documentation
-- **[API Reference](./api-reference.md)** - Complete REST API documentation
-  - All 26 endpoints with examples
-  - Authentication and rate limiting
-  - Error codes and pagination
-  - Code examples in JavaScript, cURL, Python
-- **[OpenAPI Specification](./openapi.yaml)** - Swagger/Postman compatible spec
-- **[API Architecture](./api-architecture.md)** - Architectural patterns and best practices
-
-### Content System
-- **[Unified Content Fetching](./unified-content-fetching.md)** - Server-side content API system
-- **[API & Relationships Architecture](./api-relationships-architecture.md)** - How content types connect and enable discovery
+- **[Installation Guide](./installation.md)** — Setup, local development, and deployment
+- **[Environment Variables](./environment-variables.md)** — Configuration reference
+- **[Contributing Guide](../CONTRIBUTING.md)** — Commit conventions and standards
+- **[Troubleshooting](./troubleshooting.md)** — Common issues and solutions
 
 ---
 
-## 🏗️ Architecture
+## API & Development
 
-- **[App Structure](./app-structure.md)** - Application organization and routing
-- **[Tech Stack](./tech-stack.md)** - Technologies, frameworks, and libraries
-- **[Component Library](./component-library.md)** - UI components and patterns
-- **[Schema Overview](./schema-overview.md)** - Database schema documentation
-
----
-
-## 🔐 Authentication & Security
-
-- **[Authentication](./authentication.md)** - Auth patterns, RLS policies, and user management
-- **[Environment Variables](./environment-variables.md)** - Secure configuration management
+- **[API Reference](./api-reference.md)** — All REST endpoints with examples, auth, rate limiting, and error codes
+- **[OpenAPI Specification](./openapi.yaml)** — Swagger/Postman compatible spec
+- **[API Architecture](./api-architecture.md)** — Architectural patterns and best practices
 
 ---
 
-## ✨ Features
+## Architecture
 
-### Content Management
-- **[Admin CMS Guide](./admin-cms-guide.md)** - Content management interface and workflows
-- **[Import System](./import-system.md)** - Bulk content import tools and utilities
-- **[Content Strategy](./content-strategy.md)** - Content approach and guidelines
-- **[Content Style Guide](./content-style-guide.md)** - Writing standards and formatting
-- **[Content Taxonomy](./content-taxonomy.md)** - Categories and classification
+### Core Systems
+- **[Unified Content Fetching](./unified-content-fetching.md)** — Static content fetching with `React.cache()` deduplication
+- **[API & Relationships Architecture](./api-relationships-architecture.md)** — Junction tables, cross-references, and content discovery
+- **[App Structure](./app-structure.md)** — Application organisation and routing
+- **[Schema Overview](./schema-overview.md)** — Database schema documentation
+- **[Tech Stack](./tech-stack.md)** — Technologies, frameworks, and libraries
 
-### Communication
-- **[Email System](./email-system.md)** - Beehiiv and Resend integration
-  - Newsletter subscriptions
-  - Transactional emails
-  - Dual email architecture
+### Infrastructure
+- **[Authentication](./authentication.md)** — Auth patterns, RLS policies, and user management
+- **[Caching](./caching.md)** — Redis caching with Upstash, LRU in-memory fallback
+- **[Rate Limiting](./rate-limiting.md)** — Request rate limiting for API endpoints
+- **[Deployment](./deployment.md)** — Production deployment guide
 
-### UI Features
-- **[View Switcher Feature](./view-switcher-feature.md)** - Grid/List view implementation
-
----
-
-## 📋 Project Planning
-
-- **[Project Plan](./openqase-project-plan.md)** - Vision, strategy, roadmap, and business model
-  - User personas
-  - Business model and revenue streams
-  - Go-to-market strategy
-  - Monthly milestone releases through v1.0.0
-- **[Content Strategy](./content-strategy.md)** - Content acquisition and quality standards
-- **[Release Notes](./release-notes.md)** - Version history and changelog
+### UI
+- **[Component Library](./component-library.md)** — UI components and patterns
+- **[View Switcher Feature](./view-switcher-feature.md)** — Grid/list view implementation
 
 ---
 
-## 🛠️ Development Resources
+## Content Management
 
-### Guides
-- **[Deployment](./deployment.md)** - Production deployment guide
-- **[Overview](./overview.md)** - High-level project overview
-
-### Reference
-- All documentation follows Markdown format
-- Code examples use TypeScript
-- Links are tested and verified
-
----
-
-## 📁 Archive
-
-Historical planning documents and completed work can be found in [./archive/](./archive/).
-
-These documents were used during development but are no longer actively maintained:
-- Relationship system planning and analysis
-- Migration plans and completions
-- Production migration tracking
+- **[Admin CMS Guide](./admin-cms-guide.md)** — Content management interface and workflows
+- **[Import System](./import-system.md)** — Bulk content import tools
+- **[Content Strategy](./content-strategy.md)** — Content approach and guidelines
+- **[Content Style Guide](./content-style-guide.md)** — Writing standards and formatting
+- **[Content Taxonomy](./content-taxonomy.md)** — Categories and classification
+- **[Case Study Style Guide](./case-study-style-guide.md)** — Case study writing standards
+- **[Case Study Quality Rubric](./case-study-quality-rubric.md)** — Quality assessment criteria
+- **[Email System](./email-system.md)** — Beehiiv newsletter + Resend transactional email
 
 ---
 
-## 🤝 Contributing to Documentation
+## Project Planning
 
-When updating documentation:
-
-1. **Keep it current** - Update docs when code changes
-2. **Be clear and concise** - Technical but accessible
-3. **Include examples** - Code snippets and use cases
-4. **Cross-reference** - Link to related documentation
-5. **Test links** - Ensure all links work
-
-See [Contributing Guide](../CONTRIBUTING.md) for detailed guidelines.
+- **[Project Plan](./openqase-project-plan.md)** — Vision, strategy, roadmap, and business model
+- **[Overview](./overview.md)** — High-level project overview
+- **[Release Notes](./release-notes.md)** — Version history and changes
+- **[Changelog](../CHANGELOG.md)** — Detailed change log
 
 ---
 
-## 📞 Need Help?
+## Archive
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/openqase/openqase/issues)
-- **Documentation Index**: You're reading it!
-- **Main README**: [Project overview](../README.md)
+Historical planning documents from earlier development phases: [./archive/](./archive/)
 
 ---
 
-**Last Updated:** January 2026
-**Documentation Version:** v0.5.0
+## Contributing to Documentation
+
+1. Keep docs current when code changes
+2. Include code examples where helpful
+3. Cross-reference related documentation
+4. Test all links before committing
+
+See [Contributing Guide](../CONTRIBUTING.md) for full guidelines.
+
+---
+
+**Last Updated:** March 2026

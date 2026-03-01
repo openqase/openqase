@@ -24,7 +24,7 @@ This is where the primary application logic resides.
 *   `src/app/`: Core of the Next.js App Router implementation. Contains layouts, pages, API routes, and specific feature routes.
 *   `src/components/`: Shared React components used throughout the application, likely including UI elements built with shadcn/ui.
 *   `src/lib/`: Core library code, utilities, and integrations. Notably contains Supabase client helpers (`supabase-*.ts`), API clients, type definitions, and validation logic.
-*   `src/utils/`: Additional utility functions. *(Consider consolidating relevant utilities into `src/lib/` if appropriate)*.
+*   `src/utils/`: Additional utility functions.
 *   `src/hooks/`: Custom React hooks.
 *   `src/contexts/`: React Context providers.
 *   `src/types/`: Application-specific TypeScript type definitions (though some might also be in `src/lib/types.ts`).
@@ -60,7 +60,7 @@ This project leverages the React Server Components (RSC) architecture introduced
     *   Cannot use browser-only APIs (e.g., `window`, `localStorage`).
     *   Cannot have interactive event handlers (`onClick`, `onChange`, etc.).
 *   **Example Usage (OpenQase):**
-    *   `page.tsx` files (e.g., `src/app/admin/blog-posts/page.tsx`, `src/app/blog/[slug]/page.tsx`) are typically Server Components responsible for fetching initial list or item data using helpers like `getSupabaseServerClient`.
+    *   `page.tsx` files (e.g., `src/app/admin/blog/page.tsx`, `src/app/blog/[slug]/page.tsx`) are typically Server Components responsible for fetching initial list or item data using helpers like `getSupabaseServerClient`.
     *   Layout components (`layout.tsx`) are often Server Components.
 
 ## Client Components
@@ -86,4 +86,4 @@ This project leverages the React Server Components (RSC) architecture introduced
 *   Data fetching is often done in Server Components and the data is passed down as props to Client Components.
 *   For mutations or actions triggered by user interaction in Client Components, **Server Actions** are used. Client Components invoke Server Actions (defined in separate files, often with `"use server";`), which execute securely on the server.
 
-This separation allows the project to keep interactive JavaScript bundles smaller while leveraging the server for efficient data fetching and secure operations. Refer to the [Next.js Documentation](https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns) for more details on patterns. 
+This separation allows the project to keep interactive JavaScript bundles smaller while leveraging the server for efficient data fetching and secure operations. Refer to the [Next.js Documentation](https://nextjs.org/docs/app/getting-started/server-and-client-components) for more details on patterns. 

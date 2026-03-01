@@ -71,7 +71,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         ]} 
       />
       
-      <main className="min-h-screen">
+      <div className="min-h-screen">
         <div className="container-outer section-spacing">
         <div className="max-w-4xl mx-auto">
         {/* Breadcrumb */}
@@ -144,7 +144,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         )}
         </div>
       </div>
-    </main>
+    </div>
     </>
   );
 }

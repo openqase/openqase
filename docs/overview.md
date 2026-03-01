@@ -13,4 +13,4 @@ Key functionalities include:
 
 This documentation aims to provide developers with the necessary information to understand the application's architecture, contribute effectively, and maintain the codebase.
 
-**Last updated:** 13th August 2025 
+**Last updated:** March 2026

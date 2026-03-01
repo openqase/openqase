@@ -10,7 +10,7 @@ echo "🚀 Setting up OpenQase local development environment..."
 # Check if Supabase CLI is installed
 if ! command -v supabase &> /dev/null; then
     echo "❌ Supabase CLI is not installed. Please install it first:"
-    echo "   https://supabase.com/docs/guides/cli"
+    echo "   https://supabase.com/docs/guides/local-development"
     exit 1
 fi
 

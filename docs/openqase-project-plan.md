@@ -1,7 +1,7 @@
 # OpenQase Project Plan
 
-**Version:** 1.0
-**Last Updated:** January 5, 2026
+**Version:** 1.1
+**Last Updated:** March 1, 2026
 **Target v1.0.0 Release:** July 1, 2026
 
 ---
@@ -145,7 +145,7 @@ Curate and cross-reference the world's most comprehensive collection of quantum 
 ## Technical Architecture
 
 ### Technology Stack
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 16 with App Router
 - **Database**: Supabase (PostgreSQL + Auth + Storage)
 - **Hosting**: Vercel with static generation
 - **UI**: shadcn/ui + Tailwind CSS
@@ -297,38 +297,46 @@ Curate and cross-reference the world's most comprehensive collection of quantum 
 
 ### Monthly Milestone Releases
 
-**v0.6.0 - February 1, 2026: Content Quality & Cleanup**
-- Case study quality audit and template standardization
-- Remove legacy database fields
-- Enhanced social sharing (OpenGraph images)
-- Database security improvements
+**v0.6.0 - Content Quality & Cleanup** *(target: Feb 2026, in progress)*
+- ✅ Security audit and defense-in-depth hardening (17 route handlers, CSP, RLS, input validation)
+- ✅ Testing infrastructure: Vitest with 235+ unit tests, coverage tooling
+- ✅ Type safety: eliminated ~25 `as any` casts, added `TablesInsert<>` types, `catch (error: unknown)` patterns
+- ✅ Bundle size: removed framer-motion from Card, date-fns, prism-react-renderer, dead code
+- ✅ Performance: fixed N+1 queries, parallelised admin queries, added React.cache() deduplication
+- ✅ Accessibility: fixed nested `<main>` landmarks on 6 pages
+- ✅ Zod v3 → v4 migration
+- ⬜ Case study quality audit and template standardisation (#104)
+- ⬜ Enhanced social sharing / OpenGraph images (#100)
+- ⬜ Database lint fixes: RLS initplan, missing FK indexes (#161)
 
-**v0.7.0 - March 1, 2026: CMS Power Features**
-- Deletion audit log
-- Bulk import system redesign
-- Newsletter system completion
-- Multi-admin support
+**v0.7.0 - CMS Power Features** *(target: Apr 2026)*
+- ⬜ Bulk import system redesign (#103)
+- ⬜ Newsletter system completion (#101)
+- ⬜ Multi-admin support (#108)
+- ⬜ Content versioning (#136)
+- ⬜ Scheduled publishing (#137)
 
-**v0.8.0 - April 1, 2026: Visualization & Technical Content**
-- LaTeX/math formula support for algorithms
-- Industry page visualizations
-- Charting and diagramming (Mermaid)
-- Enhanced search (full-text)
+**v0.8.0 - Visualization & Technical Content** *(target: May 2026)*
+- ⬜ LaTeX/math formula support for algorithms (#26)
+- ⬜ Industry page visualisations (#28)
+- ⬜ Charting and diagramming — Mermaid (#10)
+- ⬜ Enhanced search — full-text (#109)
 
-**v0.9.0 - May 1, 2026: Infrastructure & Scale**
-- Sponsor blocks implementation
-- Redis caching upgrade
-- Performance optimization
-- API rate limiting for production
+**v0.9.0 - Infrastructure & Scale** *(target: Jun 2026)*
+- ⬜ Sponsor blocks implementation (#96)
+- ✅ Redis caching with Upstash (implemented, needs production deployment)
+- ✅ API rate limiting (implemented for search endpoint)
+- ⬜ Performance benchmarking suite (#123)
+- ⬜ Tailwind CSS v3 → v4 migration (#147)
 
-**v1.0.0 - July 1, 2026: Production Ready**
-- Comprehensive testing infrastructure
-- Complete documentation
-- Type safety improvements
-- Security and accessibility audits
-- Major dependency updates
-- Performance benchmarking
-- Official launch
+**v1.0.0 - Production Ready** *(target: Jul 2026)*
+- ✅ Testing infrastructure (235+ tests)
+- ✅ Documentation (30+ docs)
+- ✅ Type safety improvements
+- ✅ Security audit (completed Feb 2026)
+- ⬜ WCAG accessibility audit (#121)
+- ⬜ Major dependency updates (Next.js 16 done; Tailwind v4 pending)
+- ⬜ Official launch
 
 ### Post-v1.0 Roadmap (Future)
 

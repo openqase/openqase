@@ -61,7 +61,7 @@ export default async function LearningPathsPage() {
   ];
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
         <div className="container-outer section-spacing">
           <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
             <h1 className="mb-6">
@@ -100,6 +100,6 @@ export default async function LearningPathsPage() {
             ))}
           </div>
         </div>
-      </main>
+      </div>
   );
 }

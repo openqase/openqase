@@ -7,7 +7,7 @@ Complete guide to setting up OpenQase locally for development.
 - [Node.js](https://nodejs.org/) (Version >= 18.0)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 - [Git](https://git-scm.com/)
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (recommended)
+- [Supabase CLI](https://supabase.com/docs/guides/local-development) (recommended)
 - [Docker](https://www.docker.com/) (required for local Supabase)
 
 ## Quick Start
@@ -115,7 +115,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 RESEND_API_KEY=your-resend-api-key
 RESEND_FROM_EMAIL=noreply@localhost
 
-# Newsletter Integration (Required for newsletter signup)
+# Newsletter Integration (Optional)
 BEEHIIV_API_KEY=your-beehiiv-api-key
 BEEHIIV_PUBLICATION_ID=your-beehiiv-publication-id
 
