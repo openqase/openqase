@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Database Lint Fixes**: Addressed 30 Supabase lint warnings — optimised RLS initplan evaluation, consolidated overlapping policies, hardened function `search_path`, added 12 missing FK indexes, and dropped overly permissive anon policy on `user_preferences`
 - **CSP Tightening**: Removed `unsafe-eval` from `script-src` Content Security Policy (`unsafe-inline` retained — required by Next.js hydration)
 - **RLS Cleanup**: Removed 6 broken admin write RLS policies that checked a non-existent JWT claim; redacted internal security architecture details from public docs
 - **Rate Limiting**: Added rate limiting to `/api/search-data` public endpoint (100 req/15 min)
