@@ -203,7 +203,7 @@ describe('getQuantumEntitySchema', () => {
     expect(schema.applicationCategory).toBe('Quantum Computing Software')
     expect(schema.applicationSubCategory).toBe('SDK')
     expect(schema.featureList).toEqual(['Circuits', 'Simulation'])
-    expect(schema.audience.audienceType).toBe('Finance, Healthcare')
+    expect((schema.audience as { audienceType: string }).audienceType).toBe('Finance, Healthcare')
   })
 
   it('maps quantum-hardware to Product', () => {

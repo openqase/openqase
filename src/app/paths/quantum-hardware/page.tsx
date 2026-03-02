@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 
 export type QuantumHardware = Database['public']['Tables']['quantum_hardware']['Row']
 
+export const revalidate = 3600;
+
 export default async function QuantumHardwarePage() {
   const quantumHardware = await getStaticContentList('quantum_hardware') as QuantumHardware[]
   const publishedHardware = quantumHardware.filter(hardware => hardware.published === true)

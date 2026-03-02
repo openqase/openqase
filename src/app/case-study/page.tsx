@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 
 type CaseStudy = Database['public']['Tables']['case_studies']['Row'];
 
+export const revalidate = 3600;
+
 export default async function CaseStudyPage() {
   const caseStudies = await getStaticContentList<CaseStudy>('case_studies', {
     orderBy: 'updated_at',

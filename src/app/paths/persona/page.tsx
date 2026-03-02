@@ -12,6 +12,8 @@ export const metadata: Metadata = {
 
 type Persona = Database['public']['Tables']['personas']['Row'];
 
+export const revalidate = 3600;
+
 export default async function PersonasPage() {
   const personas = await getStaticContentList('personas') as Persona[];
 
