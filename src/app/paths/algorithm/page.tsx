@@ -6,6 +6,8 @@ import type { Database } from '@/types/supabase';
 
 type Algorithm = Database['public']['Tables']['algorithms']['Row'];
 
+export const revalidate = 3600;
+
 export default async function AlgorithmsPage() {
   const algorithms = await getStaticContentList('algorithms') as Algorithm[];
   

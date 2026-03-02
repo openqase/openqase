@@ -9,8 +9,6 @@ import { processMarkdown } from '@/lib/markdown-server';
 import Link from 'next/link';
 import { AutoSchema } from '@/components/AutoSchema';
 
-// export const dynamic = 'force-dynamic'; // REMOVED - Restore default caching
-
 // Define a more accurate type for the case study data we expect after fetching relations
 type EnrichedCaseStudy = Database['public']['Tables']['case_studies']['Row'] & {
   case_study_industry_relations?: { industries: { id: string; name: string; slug?: string | null } | null }[];
