@@ -24,7 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Accessibility**: Fixed nested `<main>` elements on 6 pages — replaced inner `<main>` with `<div>` to ensure valid HTML landmark structure
 - **Dead Code**: Removed 13 unused files (components, lib utilities) identified during health check
+- **Dead Code**: Deleted orphaned admin test page (`src/app/admin/test/page.tsx`)
+- **Dead Code**: Removed commented-out `force-dynamic` export in case-study detail page
 - **Broken Links**: Fixed 7 broken or redirected URLs in documentation and source code
+- **TypeScript**: Fixed type error in schema test with proper type assertion for `schema.audience`
+- **ISR Coverage**: Added `revalidate = 3600` to 9 listing pages to prevent indefinite staleness
 
 ### Added
 - **Test Coverage**: Added 93 new unit tests across 5 files covering cache (LRU, TTL, cache-aside, wrap), SEO schema generators, markdown processing, content metadata extraction, and quantum dictionary
@@ -33,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Dependencies**: Migrated Zod from v3 to v4 — updated deprecated `.merge()` → `.extend()`, `.errors` → `.issues`, `ZodSchema` → `ZodType`
 - **Dependencies**: Updated `@types/node` (patch), `framer-motion` (minor), `supabase` CLI (patch) to latest within semver range
+- **Bundle Size**: Removed unused `uuid`/`@types/uuid` dependencies (all UUID validation uses Zod `.uuid()`)
 - **Bundle Size**: Removed unused `prism-react-renderer` dependency (~5-10KB)
 - **Bundle Size**: Deleted unused `organic-shapes.tsx` component (dead code with framer-motion dependency)
 - **Bundle Size**: Replaced `date-fns` with native `Intl.DateTimeFormat` across 4 files, removing the dependency entirely
