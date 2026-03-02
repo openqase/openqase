@@ -2,6 +2,9 @@
   "name": "openqase",
   "version": "0.5.0",
   "private": true,
+  "overrides": {
+    "serialize-javascript": "7.0.3"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
