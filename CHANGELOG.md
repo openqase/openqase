@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **serialize-javascript RCE** ([GHSA-5c6j-r48x-rmvq](https://github.com/advisories/GHSA-5c6j-r48x-rmvq)): Added npm override to force `serialize-javascript@7.0.3` — fixes RCE via `RegExp.flags` and `Date.prototype.toISOString()`. Transitive dep via `@sentry/nextjs → webpack → terser-webpack-plugin`. Override can be removed once `terser-webpack-plugin` bumps from `^6.0.2` to `^7.0.3`.
 - **Database Lint Fixes**: Addressed 30 Supabase lint warnings — optimised RLS initplan evaluation, consolidated overlapping policies, hardened function `search_path`, added 12 missing FK indexes, and dropped overly permissive anon policy on `user_preferences`
 - **CSP Tightening**: Removed `unsafe-eval` from `script-src` Content Security Policy (`unsafe-inline` retained — required by Next.js hydration)
 - **RLS Cleanup**: Removed 6 broken admin write RLS policies that checked a non-existent JWT claim; redacted internal security architecture details from public docs
