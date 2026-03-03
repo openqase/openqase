@@ -13,6 +13,7 @@ import {
 import { createServiceRoleSupabaseClient } from '@/lib/supabase';
 import { fromTable } from '@/lib/supabase-untyped';
 import { caseStudySchema, formatValidationErrors } from '@/lib/validation/schemas';
+import { MAX_BULK_IDS } from '@/lib/validation/constants';
 import { requireAdmin } from '@/lib/auth';
 import type { Database } from '@/types/supabase';
 
@@ -566,7 +567,7 @@ export async function PATCH(request: NextRequest) {
     if (body.bulk) {
       const bulkSchema = z.object({
         operation: z.enum(['publish', 'unpublish', 'delete']),
-        ids: z.array(z.string().uuid()).min(1).max(100),
+        ids: z.array(z.string().uuid()).min(1).max(MAX_BULK_IDS),
       });
 
       const parsed = bulkSchema.safeParse(body);

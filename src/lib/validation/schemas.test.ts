@@ -40,13 +40,13 @@ describe('caseStudySchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects year below 1990', () => {
-    const result = caseStudySchema.safeParse({ ...validCaseStudy, year: 1989 })
+  it('rejects year below 1900', () => {
+    const result = caseStudySchema.safeParse({ ...validCaseStudy, year: 1899 })
     expect(result.success).toBe(false)
   })
 
-  it('rejects year above 2030', () => {
-    const result = caseStudySchema.safeParse({ ...validCaseStudy, year: 2031 })
+  it('rejects year above 2100', () => {
+    const result = caseStudySchema.safeParse({ ...validCaseStudy, year: 2101 })
     expect(result.success).toBe(false)
   })
 

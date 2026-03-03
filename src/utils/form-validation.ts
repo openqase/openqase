@@ -1,6 +1,8 @@
 /**
  * Types for form validation
  */
+import { MIN_YEAR, MAX_YEAR } from '@/lib/validation/constants';
+
 export type ValidationIssue = {
   name: string;
   label: string;
@@ -289,8 +291,8 @@ export function createContentValidationRules(contentType: 'algorithm' | 'persona
         {
           field: 'year',
           tab: 'basic',
-          label: 'Year must be between 1990 and 2030',
-          validator: validators.and(validators.isNumber, validators.min(1990), validators.max(2030))
+          label: `Year must be between ${MIN_YEAR} and ${MAX_YEAR}`,
+          validator: validators.and(validators.isNumber, validators.min(MIN_YEAR), validators.max(MAX_YEAR))
         },
         {
           field: 'algorithms',

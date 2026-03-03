@@ -1,27 +1,46 @@
 import { z } from 'zod';
+import {
+  MAX_SLUG_LENGTH,
+  MAX_TITLE_LENGTH,
+  MAX_SHORT_TEXT_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_MEDIUM_TEXT_LENGTH,
+  MAX_LONG_TEXT_LENGTH,
+  MAX_CONTENT_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_SOURCE_LENGTH,
+  MAX_URL_LENGTH,
+  MAX_LABEL_LENGTH,
+  MAX_NAME_LENGTH,
+  MIN_PAGE,
+  MIN_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  MIN_YEAR,
+  MAX_YEAR,
+} from './constants';
 
 // Base validation schemas
 const slugSchema = z
   .string()
   .min(1, 'Slug is required')
-  .max(200, 'Slug must be less than 200 characters')
+  .max(MAX_SLUG_LENGTH, `Slug must be less than ${MAX_SLUG_LENGTH} characters`)
   .regex(/^[a-z0-9-]+$/, 'Slug must only contain lowercase letters, numbers, and hyphens');
 
 const titleSchema = z
   .string()
   .min(1, 'Title is required')
-  .max(500, 'Title must be less than 500 characters')
+  .max(MAX_TITLE_LENGTH, `Title must be less than ${MAX_TITLE_LENGTH} characters`)
   .trim();
 
 const descriptionSchema = z
   .string()
-  .max(1000, 'Description must be less than 1000 characters')
+  .max(MAX_DESCRIPTION_LENGTH, `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters`)
   .optional()
   .nullable();
 
 const contentSchema = z
   .string()
-  .max(50000, 'Content must be less than 50,000 characters')
+  .max(MAX_CONTENT_LENGTH, `Content must be less than ${MAX_CONTENT_LENGTH.toLocaleString()} characters`)
   .optional()
   .nullable();
 
@@ -52,7 +71,7 @@ export const caseStudySchema = z.object({
   url: urlSchema,
   published: z.boolean().default(false),
   featured: z.boolean().default(false),
-  year: z.number().int().min(1990).max(2030).optional(),
+  year: z.number().int().min(MIN_YEAR).max(MAX_YEAR).optional(),
   partner_companies: stringArraySchema,
   quantum_companies: stringArraySchema,
   quantum_hardware: stringArraySchema,
@@ -60,11 +79,11 @@ export const caseStudySchema = z.object({
   algorithms: idArraySchema,
   industries: idArraySchema,
   personas: idArraySchema,
-  academic_references: z.string().max(10000, 'Academic references must be less than 10,000 characters').optional().nullable(),
+  academic_references: z.string().max(MAX_LONG_TEXT_LENGTH, `Academic references must be less than ${MAX_LONG_TEXT_LENGTH.toLocaleString()} characters`).optional().nullable(),
   resource_links: z.array(z.object({
     url: z.string().url('Must be a valid URL'),
-    title: z.string().min(1).max(200),
-    description: z.string().max(500).optional()
+    title: z.string().min(1).max(MAX_SHORT_TEXT_LENGTH),
+    description: z.string().max(MAX_NAME_LENGTH).optional() // Short description, capped at 500
   })).optional().default([])
 });
 
@@ -77,11 +96,11 @@ export const blogPostSchema = z.object({
   content: contentSchema,
   published: z.boolean().default(false),
   featured: z.boolean().default(false),
-  author: z.string().max(100, 'Author name must be less than 100 characters').optional().nullable(),
-  featured_image: z.string().max(500, 'Featured image URL must be less than 500 characters').optional().nullable(),
+  author: z.string().max(MAX_LABEL_LENGTH, `Author name must be less than ${MAX_LABEL_LENGTH} characters`).optional().nullable(),
+  featured_image: z.string().max(MAX_URL_LENGTH, `Featured image URL must be less than ${MAX_URL_LENGTH} characters`).optional().nullable(),
   published_at: z.string().datetime('Invalid date format').optional().nullable(),
   tags: stringArraySchema,
-  category: z.string().max(100, 'Category must be less than 100 characters').optional().nullable()
+  category: z.string().max(MAX_LABEL_LENGTH, `Category must be less than ${MAX_LABEL_LENGTH} characters`).optional().nullable()
 });
 
 // Algorithm validation schema
@@ -92,7 +111,7 @@ export const algorithmSchema = z.object({
   description: descriptionSchema,
   main_content: contentSchema,
   published: z.boolean().default(false),
-  quantum_advantage: z.string().max(10000, 'Quantum advantage must be less than 10,000 characters').optional().nullable(),
+  quantum_advantage: z.string().max(MAX_LONG_TEXT_LENGTH, `Quantum advantage must be less than ${MAX_LONG_TEXT_LENGTH.toLocaleString()} characters`).optional().nullable(),
   use_cases: stringArraySchema,
   complexity: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional().nullable(),
   quantum_volume_required: z.number().int().min(1).optional().nullable(),
@@ -107,7 +126,7 @@ export const industrySchema = z.object({
   slug: slugSchema,
   description: descriptionSchema,
   main_content: contentSchema,
-  icon: z.string().max(100, 'Icon must be less than 100 characters').optional().nullable(),
+  icon: z.string().max(MAX_LABEL_LENGTH, `Icon must be less than ${MAX_LABEL_LENGTH} characters`).optional().nullable(),
   published: z.boolean().default(false)
 });
 
@@ -118,22 +137,22 @@ export const personaSchema = z.object({
   slug: slugSchema,
   description: descriptionSchema,
   main_content: contentSchema,
-  role: z.string().max(200, 'Role must be less than 200 characters').optional().nullable(),
+  role: z.string().max(MAX_SHORT_TEXT_LENGTH, `Role must be less than ${MAX_SHORT_TEXT_LENGTH} characters`).optional().nullable(),
   published: z.boolean().default(false),
   experience_level: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional().nullable(),
-  technical_background: z.string().max(200).optional().nullable()
+  technical_background: z.string().max(MAX_SHORT_TEXT_LENGTH).optional().nullable()
 });
 
 // Newsletter subscription validation schema
 export const newsletterSubscriptionSchema = z.object({
-  email: z.string().email('Invalid email format').max(255, 'Email must be less than 255 characters'),
-  source: z.string().max(50).optional().default('website')
+  email: z.string().email('Invalid email format').max(MAX_EMAIL_LENGTH, `Email must be less than ${MAX_EMAIL_LENGTH} characters`),
+  source: z.string().max(MAX_SOURCE_LENGTH).optional().default('website')
 });
 
 // Query parameter validation schemas
 export const paginationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(10),
+  page: z.coerce.number().int().min(MIN_PAGE).default(1),
+  pageSize: z.coerce.number().int().min(MIN_PAGE_SIZE).max(MAX_PAGE_SIZE).default(10),
   includeUnpublished: z.coerce.boolean().default(false)
 });
 
