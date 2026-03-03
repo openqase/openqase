@@ -5,17 +5,18 @@ import { fromTable } from '@/lib/supabase-untyped';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
 import { z } from 'zod';
+import { MAX_NAME_LENGTH, MAX_MEDIUM_TEXT_LENGTH, MAX_CONTENT_LENGTH, MAX_LONG_TEXT_LENGTH } from '@/lib/validation/constants';
 
 const algorithmSchema = z.object({
   id: z.string().uuid().optional(),
-  name: z.string().min(1).max(500),
-  slug: z.string().min(1).max(500),
-  description: z.string().max(5000).nullable().optional(),
-  main_content: z.string().max(50000).nullable().optional(),
-  use_cases: z.string().max(10000).nullable().optional(),
+  name: z.string().min(1).max(MAX_NAME_LENGTH),
+  slug: z.string().min(1).max(MAX_NAME_LENGTH),
+  description: z.string().max(MAX_MEDIUM_TEXT_LENGTH).nullable().optional(),
+  main_content: z.string().max(MAX_CONTENT_LENGTH).nullable().optional(),
+  use_cases: z.string().max(MAX_LONG_TEXT_LENGTH).nullable().optional(),
   published: z.boolean().optional(),
-  steps: z.string().max(10000).optional(),
-  academic_references: z.string().max(10000).optional(),
+  steps: z.string().max(MAX_LONG_TEXT_LENGTH).optional(),
+  academic_references: z.string().max(MAX_LONG_TEXT_LENGTH).optional(),
   related_case_studies: z.array(z.string().uuid()).optional(),
   related_industries: z.array(z.string().uuid()).optional(),
   related_personas: z.array(z.string().uuid()).optional(),

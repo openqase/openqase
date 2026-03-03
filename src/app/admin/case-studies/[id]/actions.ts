@@ -4,18 +4,19 @@ import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
 import { z } from 'zod';
+import { MAX_TITLE_LENGTH, MAX_MEDIUM_TEXT_LENGTH, MAX_CONTENT_LENGTH, MAX_LONG_TEXT_LENGTH, MIN_YEAR, MAX_YEAR } from '@/lib/validation/constants';
 
 const caseStudyActionSchema = z.object({
   id: z.string().uuid().optional(),
-  title: z.string().min(1).max(500),
-  slug: z.string().min(1).max(500),
-  description: z.string().max(5000).nullable().optional(),
-  main_content: z.string().max(50000).nullable().optional(),
+  title: z.string().min(1).max(MAX_TITLE_LENGTH),
+  slug: z.string().min(1).max(MAX_TITLE_LENGTH),
+  description: z.string().max(MAX_MEDIUM_TEXT_LENGTH).nullable().optional(),
+  main_content: z.string().max(MAX_CONTENT_LENGTH).nullable().optional(),
   published: z.boolean().optional(),
   featured: z.boolean().optional(),
-  academic_references: z.string().max(10000).nullable().optional(),
-  resource_links: z.string().max(10000).nullable().optional(),
-  year: z.number().int().min(1900).max(2100).nullable().optional(),
+  academic_references: z.string().max(MAX_LONG_TEXT_LENGTH).nullable().optional(),
+  resource_links: z.string().max(MAX_LONG_TEXT_LENGTH).nullable().optional(),
+  year: z.number().int().min(MIN_YEAR).max(MAX_YEAR).nullable().optional(),
   industries: z.array(z.string().uuid()).optional(),
   algorithms: z.array(z.string().uuid()).optional(),
   personas: z.array(z.string().uuid()).optional(),

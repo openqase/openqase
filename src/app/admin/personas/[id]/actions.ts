@@ -4,15 +4,16 @@ import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { Database, TablesInsert } from '@/types/supabase';
 import { z } from 'zod';
+import { MAX_NAME_LENGTH, MAX_MEDIUM_TEXT_LENGTH, MAX_CONTENT_LENGTH, MAX_LONG_TEXT_LENGTH } from '@/lib/validation/constants';
 
 const personaSchema = z.object({
   id: z.string().uuid().optional(),
-  name: z.string().min(1).max(500),
-  slug: z.string().min(1).max(500),
-  description: z.string().max(5000).nullable().optional(),
-  expertise: z.string().max(5000).nullable().optional(),
-  main_content: z.string().max(50000).nullable().optional(),
-  recommended_reading: z.string().max(10000).nullable().optional(),
+  name: z.string().min(1).max(MAX_NAME_LENGTH),
+  slug: z.string().min(1).max(MAX_NAME_LENGTH),
+  description: z.string().max(MAX_MEDIUM_TEXT_LENGTH).nullable().optional(),
+  expertise: z.string().max(MAX_MEDIUM_TEXT_LENGTH).nullable().optional(),
+  main_content: z.string().max(MAX_CONTENT_LENGTH).nullable().optional(),
+  recommended_reading: z.string().max(MAX_LONG_TEXT_LENGTH).nullable().optional(),
   published: z.boolean().optional(),
   industry: z.array(z.string().uuid()).optional(),
 });

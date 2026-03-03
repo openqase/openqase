@@ -4,17 +4,18 @@ import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { TablesInsert } from '@/types/supabase';
 import { z } from 'zod';
+import { MAX_TITLE_LENGTH, MAX_MEDIUM_TEXT_LENGTH, MAX_CONTENT_LENGTH, MAX_SHORT_TEXT_LENGTH, MAX_URL_LENGTH, MAX_TAG_LIST_LENGTH } from '@/lib/validation/constants';
 
 const blogPostSchema = z.object({
   id: z.string().uuid().optional(),
-  title: z.string().min(1).max(500),
-  slug: z.string().min(1).max(500),
-  description: z.string().max(5000).nullable().optional(),
-  content: z.string().max(50000).nullable().optional(),
-  author: z.string().max(200).nullable().optional(),
-  featured_image: z.string().max(2000).nullable().optional(),
-  category: z.string().max(200).nullable().optional(),
-  tags: z.string().max(2000).nullable().optional(),
+  title: z.string().min(1).max(MAX_TITLE_LENGTH),
+  slug: z.string().min(1).max(MAX_TITLE_LENGTH),
+  description: z.string().max(MAX_MEDIUM_TEXT_LENGTH).nullable().optional(),
+  content: z.string().max(MAX_CONTENT_LENGTH).nullable().optional(),
+  author: z.string().max(MAX_SHORT_TEXT_LENGTH).nullable().optional(),
+  featured_image: z.string().max(MAX_URL_LENGTH).nullable().optional(),
+  category: z.string().max(MAX_SHORT_TEXT_LENGTH).nullable().optional(),
+  tags: z.string().max(MAX_TAG_LIST_LENGTH).nullable().optional(),
   published: z.boolean().optional(),
   featured: z.boolean().optional(),
   published_at: z.string().nullable().optional(),
