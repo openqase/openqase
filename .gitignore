@@ -114,6 +114,7 @@ prod-server*.log
 # Temporary build and analysis files
 build-output.txt
 batch-import-report-*.json
+content-review-report.*
 
 # Test files (should be in proper test directories)
 scripts/test-*.json
