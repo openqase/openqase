@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dead Code**: Removed 13 unused files (components, lib utilities) identified during health check
 - **Dead Code**: Deleted orphaned admin test page (`src/app/admin/test/page.tsx`)
 - **Dead Code**: Removed commented-out `force-dynamic` export in case-study detail page
+- **Repo Cleanup**: Deleted 8 dead files (unused hook, boilerplate SVGs, empty plugin config, stale reports), archived 27 one-time scripts and 5 stale planning docs, removed broken `migrate:content` npm script
 - **Broken Links**: Fixed 7 broken or redirected URLs in documentation and source code
 - **TypeScript**: Fixed type error in schema test with proper type assertion for `schema.audience`
 - **ISR Coverage**: Added `revalidate = 3600` to 9 listing pages to prevent indefinite staleness
