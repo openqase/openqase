@@ -53,10 +53,22 @@ export async function generateMetadata({ params }: PageParams) {
   }
 
   return {
-    title: persona.name,
-    description: persona.description,
+    title: `${persona.name} | Quantum Computing Persona - OpenQase`,
+    description: persona.description || `Learn about the ${persona.name} quantum computing persona`,
     alternates: {
       canonical: `/paths/persona/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title: persona.name,
+      description: persona.description || `Learn about the ${persona.name} quantum computing persona`,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: persona.name,
+      description: persona.description || `Learn about the ${persona.name} quantum computing persona`,
+      images: ['/og-image.svg'],
     },
   };
 }
@@ -101,7 +113,6 @@ export default async function PersonaPage({ params }: PageParams) {
         type="breadcrumb" 
         breadcrumbs={[
           { name: 'Home', url: '/' },
-          { name: 'Paths', url: '/paths' },
           { name: 'Professional Roles', url: '/paths/persona' },
           { name: persona.name, url: `/paths/persona/${persona.slug}` }
         ]} 

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ExternalLink, HandHeart, Users, MapPin, Building, FileText, Building2, Cpu } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumSoftware, getRelatedQuantumHardware, getRelatedQuantumCompanies } from '@/lib/relationship-queries';
+import { AutoSchema } from '@/components/AutoSchema';
 type EnrichedPartnerCompany = Database['public']['Tables']['partner_companies']['Row'] & {
   case_study_partner_company_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
 };
@@ -40,9 +41,27 @@ export async function generateMetadata({ params }: PartnerCompanyPageProps) {
     };
   }
   
+  const title = `${partnerCompany.name} | Partner Company - OpenQase`;
+  const description = partnerCompany.description || `Learn about ${partnerCompany.name} and their quantum computing partnerships`;
+
   return {
-    title: `${partnerCompany.name} - Partner Companies | OpenQase`,
-    description: partnerCompany.description || `Learn about ${partnerCompany.name}, a partner organization featured in OpenQase case studies.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/paths/partner-companies/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.svg'],
+    },
   };
 }
 
@@ -79,7 +98,19 @@ export default async function PartnerCompanyDetailPage({ params }: PartnerCompan
   ]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      {/* Schema markup for SEO */}
+      <AutoSchema type="quantum-entity" data={partnerCompany} entityType="partner-companies" />
+      <AutoSchema
+        type="breadcrumb"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Partner Companies', url: '/paths/partner-companies' },
+          { name: partnerCompany.name, url: `/paths/partner-companies/${partnerCompany.slug}` }
+        ]}
+      />
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <div className="mb-4">
@@ -311,5 +342,6 @@ export default async function PartnerCompanyDetailPage({ params }: PartnerCompan
         </div>
       )}
     </div>
+    </>
   );
 }

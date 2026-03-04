@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ExternalLink, Github, FileText, Building2, Cpu, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumHardware, getRelatedQuantumCompanies, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
+import { AutoSchema } from '@/components/AutoSchema';
 
 type EnrichedQuantumSoftware = Database['public']['Tables']['quantum_software']['Row'] & {
   case_study_quantum_software_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
@@ -41,9 +42,27 @@ export async function generateMetadata({ params }: QuantumSoftwarePageProps) {
     };
   }
   
+  const title = `${quantumSoftware.name} | Quantum Software - OpenQase`;
+  const description = quantumSoftware.description || `Learn about ${quantumSoftware.name} quantum computing software`;
+
   return {
-    title: `${quantumSoftware.name} - Quantum Software | OpenQase`,
-    description: quantumSoftware.description || `Learn about ${quantumSoftware.name}, a quantum software platform featured in OpenQase case studies.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/paths/quantum-software/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.svg'],
+    },
   };
 }
 
@@ -80,7 +99,19 @@ export default async function QuantumSoftwareDetailPage({ params }: QuantumSoftw
   ]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      {/* Schema markup for SEO */}
+      <AutoSchema type="quantum-entity" data={quantumSoftware} entityType="quantum-software" />
+      <AutoSchema
+        type="breadcrumb"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Quantum Software', url: '/paths/quantum-software' },
+          { name: quantumSoftware.name, url: `/paths/quantum-software/${quantumSoftware.slug}` }
+        ]}
+      />
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <div className="mb-4">
@@ -315,5 +346,6 @@ export default async function QuantumSoftwareDetailPage({ params }: QuantumSoftw
         </div>
       )}
     </div>
+    </>
   );
 }

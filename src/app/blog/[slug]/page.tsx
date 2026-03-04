@@ -34,10 +34,22 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
   
   return {
-    title: `${blogPost.title} - OpenQASE Blog`,
-    description: blogPost.description || 'Blog post from OpenQASE',
+    title: `${blogPost.title} | OpenQase Blog`,
+    description: blogPost.description || 'Blog post from OpenQase',
     alternates: {
       canonical: `/blog/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title: blogPost.title,
+      description: blogPost.description || 'Blog post from OpenQase',
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: blogPost.title,
+      description: blogPost.description || 'Blog post from OpenQase',
+      images: ['/og-image.svg'],
     },
   };
 }

@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Script Injection**: Escaped `</script>` breakout in AutoSchema JSON-LD output via `\u003c` encoding
 - **Attack Surface**: Removed Sentry example API route and page (unnecessary test endpoints in production)
 
+### Changed
+- **Validation Constants**: Extracted hardcoded magic numbers from validation schemas into shared `constants.ts` module; fixed semantic mismatches where unrelated fields shared constants by coincidence (`MAX_ICON_LENGTH` → `MAX_LABEL_LENGTH`, added `MAX_TAG_LIST_LENGTH`)
+
 ### Fixed
 - **Accessibility**: Fixed nested `<main>` elements on 6 pages — replaced inner `<main>` with `<div>` to ensure valid HTML landmark structure
 - **Dead Code**: Removed 13 unused files (components, lib utilities) identified during health check

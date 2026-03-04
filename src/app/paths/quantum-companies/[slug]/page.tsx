@@ -41,10 +41,22 @@ export async function generateMetadata({ params }: QuantumCompanyPageProps) {
   }
   
   return {
-    title: `${quantumCompany.name} - Quantum Companies | OpenQase`,
-    description: quantumCompany.description || `Learn about ${quantumCompany.name}, a quantum computing company featured in OpenQase case studies.`,
+    title: `${quantumCompany.name} | Quantum Companies - OpenQase`,
+    description: quantumCompany.description || `Learn about ${quantumCompany.name} in quantum computing`,
     alternates: {
       canonical: `/paths/quantum-companies/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title: quantumCompany.name,
+      description: quantumCompany.description || `Learn about ${quantumCompany.name} in quantum computing`,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: quantumCompany.name,
+      description: quantumCompany.description || `Learn about ${quantumCompany.name} in quantum computing`,
+      images: ['/og-image.svg'],
     },
   };
 }
@@ -89,7 +101,6 @@ export default async function QuantumCompanyDetailPage({ params }: QuantumCompan
         type="breadcrumb" 
         breadcrumbs={[
           { name: 'Home', url: '/' },
-          { name: 'Paths', url: '/paths' },
           { name: 'Quantum Companies', url: '/paths/quantum-companies' },
           { name: quantumCompany.name, url: `/paths/quantum-companies/${quantumCompany.slug}` }
         ]} 
