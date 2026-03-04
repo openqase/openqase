@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
 import { StepsRenderer } from '@/components/ui/StepsRenderer';
 import { ReferencesRenderer, processContentWithReferences } from '@/components/ui/ReferencesRenderer';
+import { AutoSchema } from '@/components/AutoSchema';
 import Link from 'next/link';
 
 // Define enriched types
@@ -50,9 +51,27 @@ export async function generateMetadata({ params }: AlgorithmPageProps) {
     };
   }
 
+  const title = `${algorithm.name} | Quantum Algorithm - OpenQase`;
+  const description = algorithm.description || `Learn about the ${algorithm.name} quantum computing algorithm`;
+
   return {
-    title: algorithm.name,
-    description: algorithm.description,
+    title,
+    description,
+    alternates: {
+      canonical: `/paths/algorithm/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.svg'],
+    },
   };
 }
 
@@ -95,7 +114,17 @@ export default async function AlgorithmPage({ params }: AlgorithmPageProps) {
   }
 
   return (
-    <ProfessionalAlgorithmDetailLayout 
+    <>
+      <AutoSchema type="course" data={algorithm} courseType="algorithm" />
+      <AutoSchema
+        type="breadcrumb"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Algorithms', url: '/paths/algorithm' },
+          { name: algorithm.name, url: `/paths/algorithm/${algorithm.slug}` }
+        ]}
+      />
+      <ProfessionalAlgorithmDetailLayout
         title={algorithm.name}
         description={algorithm.description || ''}
         backLinkText="Back to Algorithms"
@@ -156,5 +185,6 @@ export default async function AlgorithmPage({ params }: AlgorithmPageProps) {
               </div>
             )}
         </ProfessionalAlgorithmDetailLayout>
+    </>
   );
 }

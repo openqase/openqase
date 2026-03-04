@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ExternalLink, FileText, Building2, Cpu, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumSoftware, getRelatedQuantumCompanies, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
+import { AutoSchema } from '@/components/AutoSchema';
 type EnrichedQuantumHardware = Database['public']['Tables']['quantum_hardware']['Row'] & {
   case_study_quantum_hardware_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
 };
@@ -40,9 +41,27 @@ export async function generateMetadata({ params }: QuantumHardwarePageProps) {
     };
   }
   
+  const title = `${quantumHardware.name} | Quantum Hardware - OpenQase`;
+  const description = quantumHardware.description || `Learn about ${quantumHardware.name} quantum computing hardware`;
+
   return {
-    title: `${quantumHardware.name} - Quantum Hardware | OpenQase`,
-    description: quantumHardware.description || `Learn about ${quantumHardware.name}, a quantum hardware platform featured in OpenQase case studies.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/paths/quantum-hardware/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.svg'],
+    },
   };
 }
 
@@ -79,7 +98,19 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
   ]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <>
+      {/* Schema markup for SEO */}
+      <AutoSchema type="quantum-entity" data={quantumHardware} entityType="quantum-hardware" />
+      <AutoSchema
+        type="breadcrumb"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Quantum Hardware', url: '/paths/quantum-hardware' },
+          { name: quantumHardware.name, url: `/paths/quantum-hardware/${quantumHardware.slug}` }
+        ]}
+      />
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <div className="mb-4">
@@ -314,5 +345,6 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
         </div>
       )}
     </div>
+    </>
   );
 }

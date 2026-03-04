@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
 import { processMarkdown } from '@/lib/markdown-server';
+import { AutoSchema } from '@/components/AutoSchema';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 // Define enriched types
@@ -51,9 +52,27 @@ export async function generateMetadata({ params }: PageParams) {
     };
   }
 
+  const title = `${industry.name} | Quantum Computing Industry - OpenQase`;
+  const description = industry.description || `Explore quantum computing applications in ${industry.name}`;
+
   return {
-    title: industry.name,
-    description: industry.description,
+    title,
+    description,
+    alternates: {
+      canonical: `/paths/industry/${resolvedParams.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      images: ['/og-image.svg'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.svg'],
+    },
   };
 }
 
@@ -89,8 +108,18 @@ export default async function IndustryPage({ params }: PageParams) {
   const processedContent = processMarkdown(industry.main_content);
 
   return (
-    <ProfessionalIndustryDetailLayout 
-      title={industry.name}
+    <>
+      <AutoSchema type="course" data={industry} courseType="industry" />
+      <AutoSchema
+        type="breadcrumb"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Industries', url: '/paths/industry' },
+          { name: industry.name, url: `/paths/industry/${industry.slug}` }
+        ]}
+      />
+      <ProfessionalIndustryDetailLayout
+        title={industry.name}
       description={industry.description || ''}
       backLinkText="Back to Industries"
       backLinkHref="/paths/industry"
@@ -123,5 +152,6 @@ export default async function IndustryPage({ params }: PageParams) {
         </div>
       )}
     </ProfessionalIndustryDetailLayout>
+    </>
   );
 }
