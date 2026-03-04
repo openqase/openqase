@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Validation Constants**: Extracted hardcoded magic numbers from validation schemas into shared `constants.ts` module; fixed semantic mismatches where unrelated fields shared constants by coincidence (`MAX_ICON_LENGTH` → `MAX_LABEL_LENGTH`, added `MAX_TAG_LIST_LENGTH`)
+- **SEO Metadata**: Added canonical URLs, OpenGraph tags, Twitter cards, and JSON-LD structured data to 8 detail pages (blog, algorithm, industry, persona, quantum-hardware, quantum-software, quantum-companies, partner-companies); normalized breadcrumb depth and title formats for consistency
 
 ### Fixed
 - **Accessibility**: Fixed nested `<main>` elements on 6 pages — replaced inner `<main>` with `<div>` to ensure valid HTML landmark structure
