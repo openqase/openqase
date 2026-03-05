@@ -192,7 +192,7 @@ export default async function HomePage() {
                 {latestCaseStudies.length > 0 ? (
                   latestCaseStudies.map((caseStudy) => (
                     <Link key={caseStudy.id} href={`/case-study/${caseStudy.slug}`} className="block group">
-                      <div className="bg-card rounded-lg border border-border px-5 py-4 flex flex-col justify-center elevation-interactive hover:border-primary">
+                      <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center elevation-interactive hover:border-primary">
                         <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                           {caseStudy.title}
                         </h3>
@@ -224,7 +224,7 @@ export default async function HomePage() {
                 {blogPosts.length > 0 ? (
                   blogPosts.map((blogPost) => (
                     <Link key={blogPost.id} href={`/blog/${blogPost.slug}`} className="block group">
-                      <div className="bg-card rounded-lg border border-border px-5 py-4 flex flex-col justify-center elevation-interactive hover:border-primary">
+                      <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center elevation-interactive hover:border-primary">
                         <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                           {blogPost.title}
                         </h3>
