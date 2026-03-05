@@ -59,7 +59,7 @@ export default function NewsletterSignup() {
     <div>
       <h2 className="text-xl font-semibold text-foreground mb-6">Stay Updated</h2>
       <div
-        className="bg-card rounded-lg border border-border p-6 elevation-interactive hover:border-primary transition-colors cursor-pointer"
+        className="bg-card rounded-lg border border-border p-6 elevation-interactive hover:border-primary transition-colors"
         onClick={handleCardClick}
       >
         <p className="text-sm text-muted-foreground leading-relaxed mb-5">
@@ -85,13 +85,17 @@ export default function NewsletterSignup() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
+            <label htmlFor="newsletter-email" className="sr-only">Email address</label>
             <input
               ref={emailInputRef}
+              id="newsletter-email"
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={status === 'loading'}
+              autoComplete="email"
+              aria-describedby={status === 'error' ? 'newsletter-error' : undefined}
               className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-foreground text-sm focus:border-primary focus:outline-none transition-colors disabled:opacity-50"
               required
             />
@@ -104,7 +108,7 @@ export default function NewsletterSignup() {
               {status === 'loading' ? 'Subscribing...' : 'Subscribe to Updates'}
             </Button>
             {status === 'error' && (
-              <div className="text-red-400 text-xs mt-2">
+              <div id="newsletter-error" role="alert" className="text-red-400 text-xs mt-2">
                 {message}
               </div>
             )}

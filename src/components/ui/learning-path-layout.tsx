@@ -18,7 +18,7 @@ export default function LearningPathLayout({
   backLinkHref = "/paths"
 }: LearningPathLayoutProps) {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       <div className="container-outer section-spacing">
         <div className="mb-8">
           <Link
@@ -37,6 +37,6 @@ export default function LearningPathLayout({
         </div>
         {children}
       </div>
-    </main>
+    </div>
   );
 } 

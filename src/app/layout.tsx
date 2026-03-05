@@ -10,6 +10,7 @@ import { GlobalErrorBoundary } from '@/components/error-boundary/GlobalErrorBoun
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AutoSchema } from '@/components/AutoSchema';
+import ScrollToTop from '@/components/ScrollToTop';
 
 // Load Montserrat locally for headings
 const montserrat = localFont({
@@ -129,6 +130,7 @@ export default function RootLayout({
             <FooterWrapper />
           </div>
           <Toaster />
+          <ScrollToTop />
         </Providers>
         <Analytics />
         <SpeedInsights />

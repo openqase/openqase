@@ -10,7 +10,7 @@ const contentCardVariants = cva(
   {
     variants: {
       variant: {
-        grid: "h-[320px] flex-col",
+        grid: "min-h-[260px] flex-col",
         list: "h-auto flex-row gap-6"
       }
     },

@@ -30,7 +30,7 @@ export default function ProfessionalPersonaDetailLayout({
   const expertiseCount = persona.expertise?.length || 0;
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Professional Header Section */}
       <div className="bg-muted/20 border-b border-border/30">
         <div className="container-outer py-6">
@@ -171,6 +171,6 @@ export default function ProfessionalPersonaDetailLayout({
           </aside>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

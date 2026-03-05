@@ -18,6 +18,7 @@ import {
 import { AutoSchema } from '@/components/AutoSchema';
 import SearchCard from '@/components/SearchCard';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import FadeInOnScroll from '@/components/FadeInOnScroll';
 import { getBuildTimeContentList, fetchSearchData, getStaticContentList } from '@/lib/content-fetchers';
 import type { BlogPost, DbCaseStudy } from '@/lib/types';
 import { draftMode } from 'next/headers';
@@ -174,8 +175,8 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Content Section */}
-      <section className="py-16 md:py-24 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-12 md:py-16 px-4 border-t border-border">
+        <FadeInOnScroll className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Latest Case Studies */}
             <div>
@@ -191,7 +192,7 @@ export default async function HomePage() {
                 {latestCaseStudies.length > 0 ? (
                   latestCaseStudies.map((caseStudy) => (
                     <Link key={caseStudy.id} href={`/case-study/${caseStudy.slug}`} className="block group">
-                      <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center elevation-interactive hover:border-primary">
+                      <div className="bg-card rounded-lg border border-border px-5 py-4 flex flex-col justify-center elevation-interactive hover:border-primary">
                         <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                           {caseStudy.title}
                         </h3>
@@ -223,7 +224,7 @@ export default async function HomePage() {
                 {blogPosts.length > 0 ? (
                   blogPosts.map((blogPost) => (
                     <Link key={blogPost.id} href={`/blog/${blogPost.slug}`} className="block group">
-                      <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center elevation-interactive hover:border-primary">
+                      <div className="bg-card rounded-lg border border-border px-5 py-4 flex flex-col justify-center elevation-interactive hover:border-primary">
                         <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                           {blogPost.title}
                         </h3>
@@ -241,12 +242,12 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </FadeInOnScroll>
       </section>
 
       {/* Newsletter & Community */}
-      <section className="py-16 md:py-20 px-4 bg-muted/30 border-t border-border">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-12 md:py-16 px-4 bg-muted/30 border-t border-border">
+        <FadeInOnScroll className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Newsletter */}
             <div>
@@ -259,13 +260,16 @@ export default async function HomePage() {
               <div className="space-y-4">
                 <Link
                   href="https://github.com/openqase/openqase"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-4 bg-card rounded-lg border border-border px-5 py-4 elevation-interactive hover:border-primary group"
                 >
-                  <Github className="w-5 h-5 text-primary flex-shrink-0" />
+                  <Github className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
                   <div>
                     <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">Contribute on GitHub</h3>
                     <p className="text-sm text-muted-foreground">All code and content is open source</p>
                   </div>
+                  <span className="sr-only">(opens in new tab)</span>
                 </Link>
 
                 <Link
@@ -281,7 +285,7 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </FadeInOnScroll>
       </section>
 
     </div>
