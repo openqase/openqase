@@ -18,7 +18,6 @@ import {
 import { AutoSchema } from '@/components/AutoSchema';
 import SearchCard from '@/components/SearchCard';
 import NewsletterSignup from '@/components/NewsletterSignup';
-import FadeInOnScroll from '@/components/FadeInOnScroll';
 import { getBuildTimeContentList, fetchSearchData, getStaticContentList } from '@/lib/content-fetchers';
 import type { BlogPost, DbCaseStudy } from '@/lib/types';
 import { draftMode } from 'next/headers';
@@ -176,7 +175,7 @@ export default async function HomePage() {
 
       {/* Featured Content Section */}
       <section className="py-12 md:py-16 px-4 border-t border-border">
-        <FadeInOnScroll className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Latest Case Studies */}
             <div>
@@ -242,12 +241,12 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        </FadeInOnScroll>
+        </div>
       </section>
 
       {/* Newsletter & Community */}
       <section className="py-12 md:py-16 px-4 bg-muted/30 border-t border-border">
-        <FadeInOnScroll className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Newsletter */}
             <div>
@@ -285,7 +284,7 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-        </FadeInOnScroll>
+        </div>
       </section>
 
     </div>
