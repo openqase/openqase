@@ -20,33 +20,8 @@ interface QuantumSoftwareRelation { quantum_software: RelatedEntity | null }
 
 interface ResourceLink {
   url: string;
-  label?: string;
+  label: string;
   order: number;
-}
-
-// Format a URL into a readable display name when no label is provided
-function formatResourceUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const domain = parsed.hostname.replace(/^www\./, '');
-    // Extract filename from path, decode URI components
-    const pathParts = parsed.pathname.split('/').filter(Boolean);
-    const lastPart = pathParts[pathParts.length - 1];
-    if (lastPart && lastPart.includes('.')) {
-      // It's a file - show domain + filename
-      const filename = decodeURIComponent(lastPart)
-        .replace(/[-_]/g, ' ')
-        .replace(/\.[^.]+$/, ''); // Remove extension
-      // Truncate long filenames
-      const displayName = filename.length > 40 ? filename.slice(0, 40) + '...' : filename;
-      return `${domain} - ${displayName}`;
-    }
-    // No file - just show the domain
-    return domain;
-  } catch {
-    // If URL parsing fails, truncate the raw URL
-    return url.length > 50 ? url.slice(0, 50) + '...' : url;
-  }
 }
 
 interface CaseStudyWithRelations {
@@ -310,7 +285,7 @@ export default function ProfessionalCaseStudyLayout({
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
                       >
                         <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{link.label || formatResourceUrl(link.url)}</span>
+                        <span className="truncate">{link.label}</span>
                       </a>
                     ))}
                 </div>
