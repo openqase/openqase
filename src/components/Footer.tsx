@@ -52,7 +52,7 @@ function FooterSection({ title, children }: FooterSectionProps) {
 }
 
 export default function Footer() {
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
 
   return (
     <footer className="border-t border-border bg-background">
@@ -182,7 +182,7 @@ export default function Footer() {
         <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-border">
           <div className="flex justify-center mb-6">
             <Image
-              src={theme === 'dark' ? '/openqase-wordmark-sm2.svg' : '/openqase-wordmark-sm2-dark.svg'}
+              src={resolvedTheme === 'dark' ? '/openqase-wordmark-sm2.svg' : '/openqase-wordmark-sm2-dark.svg'}
               alt="OpenQase - Quantum Computing Business Applications Platform"
               className="h-10 w-auto"
               width={140}
