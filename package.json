@@ -11,7 +11,7 @@
     "build:static": "NEXT_STATIC_EXPORT=true next build",
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "setup-admin": "tsx scripts/setup-admin.ts",
     "test-performance": "node scripts/page-load-performance.js",
     "enable-dev-mode": "node scripts/enable-dev-mode.js",

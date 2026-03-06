@@ -82,8 +82,8 @@ export const caseStudySchema = z.object({
   academic_references: z.string().max(MAX_LONG_TEXT_LENGTH, `Academic references must be less than ${MAX_LONG_TEXT_LENGTH.toLocaleString()} characters`).optional().nullable(),
   resource_links: z.array(z.object({
     url: z.string().url('Must be a valid URL'),
-    title: z.string().min(1).max(MAX_SHORT_TEXT_LENGTH),
-    description: z.string().max(MAX_NAME_LENGTH).optional() // Short description, capped at 500
+    label: z.string().min(1, 'Label is required').max(MAX_SHORT_TEXT_LENGTH),
+    order: z.number().int().optional()
   })).optional().default([])
 });
 

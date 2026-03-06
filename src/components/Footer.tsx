@@ -15,27 +15,36 @@ interface FooterSectionProps {
 
 function FooterSection({ title, children }: FooterSectionProps) {
   const [isOpen, setIsOpen] = useState(true)
+  const sectionId = `footer-${title.toLowerCase().replace(/\s+/g, '-')}`
 
   return (
     <div className="border-b md:border-none border-border last:border-0">
       <button
         className="flex w-full items-center justify-between py-4 md:py-0 md:cursor-default"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={sectionId}
       >
         <h4 className="text-sm font-semibold uppercase">
           {title}
         </h4>
-        <ChevronDown 
+        <ChevronDown
           className={cn(
             "h-4 w-4 transition-transform md:hidden",
             isOpen && "transform rotate-180"
-          )} 
+          )}
+          aria-hidden="true"
         />
       </button>
-      <div className={cn(
-        "overflow-hidden transition-all duration-200 ease-in-out",
-        isOpen ? "max-h-96 pb-4 md:pb-0" : "max-h-0 md:max-h-96"
-      )}>
+      <div
+        id={sectionId}
+        role="region"
+        aria-label={title}
+        className={cn(
+          "overflow-hidden transition-all duration-200 ease-in-out",
+          isOpen ? "max-h-96 pb-4 md:pb-0" : "max-h-0 md:max-h-96"
+        )}
+      >
         {children}
       </div>
     </div>
@@ -101,8 +110,9 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-base text-muted-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
                 >
-                  <Github className="h-4 w-4" />
+                  <Github className="h-4 w-4" aria-hidden="true" />
                   <span>GitHub</span>
+                  <span className="sr-only">(opens in new tab)</span>
                 </Link>
               </li>
               <li>
@@ -112,8 +122,9 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-base text-muted-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
                 >
-                  <Twitter className="h-4 w-4" />
+                  <Twitter className="h-4 w-4" aria-hidden="true" />
                   <span>Threads</span>
+                  <span className="sr-only">(opens in new tab)</span>
                 </Link>
               </li>
               {/* 
@@ -168,14 +179,15 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-8 md:mt-12 pt-4 md:pt-8 border-t border-border">
+        <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-border">
           <div className="flex justify-center mb-6">
             <Image
-              src={'/openqase-wordmark-sm2.svg'}
+              src={theme === 'dark' ? '/openqase-wordmark-sm2.svg' : '/openqase-wordmark-sm2-dark.svg'}
               alt="OpenQase - Quantum Computing Business Applications Platform"
               className="h-10 w-auto"
-              width={120}
-              height={40}
+              width={140}
+              height={90}
+              unoptimized
               loading="lazy"
               suppressHydrationWarning
             />

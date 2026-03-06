@@ -197,7 +197,23 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
+  /* Respect reduced-motion preferences globally */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* Add box-shadow transition for elements */
   .shadow-transition {
     transition: box-shadow 0.3s ease;

@@ -20,7 +20,7 @@ interface QuantumSoftwareRelation { quantum_software: RelatedEntity | null }
 
 interface ResourceLink {
   url: string;
-  label?: string;
+  label: string;
   order: number;
 }
 
@@ -93,7 +93,7 @@ export default function ProfessionalCaseStudyLayout({
   caseStudy
 }: ProfessionalCaseStudyLayoutProps) {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header Section */}
       <div className="bg-muted/30 border-b border-border">
         <div className="container-outer py-6">
@@ -157,7 +157,9 @@ export default function ProfessionalCaseStudyLayout({
               </div>
             </div>
 
-            {/* Technical Details */}
+            {/* Technical Details - only show if hardware or software relations exist */}
+            {((caseStudy.case_study_quantum_hardware_relations?.some((rel: QuantumHardwareRelation) => rel.quantum_hardware !== null)) ||
+              (caseStudy.case_study_quantum_software_relations?.some((rel: QuantumSoftwareRelation) => rel.quantum_software !== null))) && (
             <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
               <h3 className="text-lg font-semibold mb-4 text-foreground">Technical Details</h3>
               <div className="space-y-4">
@@ -175,6 +177,7 @@ export default function ProfessionalCaseStudyLayout({
                 )}
               </div>
             </div>
+            )}
 
             {/* Categories */}
             <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
@@ -282,7 +285,7 @@ export default function ProfessionalCaseStudyLayout({
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
                       >
                         <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{link.label || link.url}</span>
+                        <span className="truncate">{link.label}</span>
                       </a>
                     ))}
                 </div>
@@ -291,6 +294,6 @@ export default function ProfessionalCaseStudyLayout({
           </aside>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

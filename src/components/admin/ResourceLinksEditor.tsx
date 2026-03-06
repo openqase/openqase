@@ -89,14 +89,20 @@ export function ResourceLinksEditor({ links, onChange }: ResourceLinksEditorProp
             
             <div>
               <Label htmlFor={`resource-label-${index}`} className="text-xs mb-1 block">
-                Label
+                Label <span className="text-destructive">*</span>
               </Label>
               <Input
                 id={`resource-label-${index}`}
                 value={link.label}
                 onChange={(e) => handleLabelChange(index, e.target.value)}
                 placeholder="e.g. Company Website"
+                required
+                aria-required="true"
+                className={!link.label.trim() ? 'border-destructive' : ''}
               />
+              {!link.label.trim() && (
+                <p className="text-xs text-destructive mt-1">Label is required</p>
+              )}
             </div>
             
             <div>
