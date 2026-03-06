@@ -72,9 +72,9 @@ export default async function LearningPathsPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-12 md:mb-16">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-12 md:mb-16">
             {paths.map((path) => (
-              <Link key={path.title} href={path.href} className="group">
+              <Link key={path.title} href={path.href} className="group w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
                 <Card className={cn(
                   "h-full card-link-hover-effect"
                 )}>

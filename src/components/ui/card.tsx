@@ -64,7 +64,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={`text-[var(--muted-foreground)] text-sm ${className || ""}`}
+    className={`text-muted-foreground text-base ${className || ""}`}
     {...props}
   />
 ));

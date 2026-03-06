@@ -106,7 +106,7 @@ export default function PersonaList({ personas }: PersonaListProps) {
 
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
             {filteredPersonas.length} persona{filteredPersonas.length !== 1 ? 's' : ''} found
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />

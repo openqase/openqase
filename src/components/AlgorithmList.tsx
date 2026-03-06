@@ -104,7 +104,7 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
 
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
             {filteredAlgorithms.length} algorithm{filteredAlgorithms.length !== 1 ? 's' : ''} found
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />

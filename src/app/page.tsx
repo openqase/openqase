@@ -174,7 +174,7 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Content Section */}
-      <section className="py-16 md:py-24 px-4 border-t border-border">
+      <section className="py-12 md:py-16 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Latest Case Studies */}
@@ -245,7 +245,7 @@ export default async function HomePage() {
       </section>
 
       {/* Newsletter & Community */}
-      <section className="py-16 md:py-20 px-4 bg-muted/30 border-t border-border">
+      <section className="py-12 md:py-16 px-4 bg-muted/30 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Newsletter */}
@@ -259,13 +259,16 @@ export default async function HomePage() {
               <div className="space-y-4">
                 <Link
                   href="https://github.com/openqase/openqase"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-4 bg-card rounded-lg border border-border px-5 py-4 elevation-interactive hover:border-primary group"
                 >
-                  <Github className="w-5 h-5 text-primary flex-shrink-0" />
+                  <Github className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
                   <div>
                     <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors">Contribute on GitHub</h3>
                     <p className="text-sm text-muted-foreground">All code and content is open source</p>
                   </div>
+                  <span className="sr-only">(opens in new tab)</span>
                 </Link>
 
                 <Link

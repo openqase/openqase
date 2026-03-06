@@ -31,7 +31,7 @@ export default function ProfessionalIndustryDetailLayout({
   const caseStudyCount = industry.case_study_industry_relations?.filter(rel => rel.case_studies).length || 0;
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Professional Header Section */}
       <div className="bg-muted/20 border-b border-border/30">
         <div className="container-outer py-6">
@@ -180,6 +180,6 @@ export default function ProfessionalIndustryDetailLayout({
           </aside>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

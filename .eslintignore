@@ -1,8 +1,0 @@
-# Ignore Docusaurus folder since it has its own build
-/docs/**
-
-# Other common excludes
-/node_modules
-/.next
-/out
-/.vercel 

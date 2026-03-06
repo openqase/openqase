@@ -22,7 +22,7 @@ export default function ProfessionalAlgorithmsLayout({
   useCaseCount = 0
 }: ProfessionalAlgorithmsLayoutProps) {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Professional Header Section */}
       <div className="bg-muted/20 border-b border-border/30">
         <div className="container-outer py-6">
@@ -88,6 +88,6 @@ export default function ProfessionalAlgorithmsLayout({
       <div className="container-outer py-8 md:py-12">
         {children}
       </div>
-    </main>
+    </div>
   );
 }

@@ -159,7 +159,7 @@ export function CaseStudiesList({ caseStudies }: CaseStudiesListProps) {
 
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
             {filteredCaseStudies.length} case stud{filteredCaseStudies.length !== 1 ? 'ies' : 'y'} found
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
