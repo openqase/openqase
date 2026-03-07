@@ -1,0 +1,72 @@
+name: Link Check
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Every Monday at 09:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check links in source files
+        id: lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --exclude 'localhost'
+            --exclude '127\.0\.0\.1'
+            --exclude 'example\.com'
+            --exclude 'schema\.org'
+            --exclude 'ogp\.me'
+            --exclude 'linkedin\.com'
+            --exclude 'test\.openqase\.com'
+            --exclude 'api\.beehiiv\.com'
+            'src/**/*.tsx'
+            'src/**/*.ts'
+            '*.md'
+          fail: true
+
+      - name: Post report to Slack
+        if: env.SLACK_WEBHOOK != ''
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_LINK_CHECK_WEBHOOK }}
+        run: |
+          REPORT_FILE="lychee/out.md"
+          if [ -f "$REPORT_FILE" ] && [ -s "$REPORT_FILE" ]; then
+            # Truncate to fit Slack's 3000-char block limit
+            REPORT=$(head -c 2800 "$REPORT_FILE")
+            STATUS="Found issues"
+            EMOJI=":warning:"
+          else
+            REPORT="All links are healthy."
+            STATUS="All clear"
+            EMOJI=":white_check_mark:"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg emoji "$EMOJI" \
+            --arg status "$STATUS" \
+            --arg report "$REPORT" \
+            --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{
+              blocks: [
+                {
+                  type: "header",
+                  text: { type: "plain_text", text: ($emoji + " Weekly Link Check — " + $status) }
+                },
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: ("```\n" + $report + "\n```") }
+                },
+                {
+                  type: "context",
+                  elements: [{ type: "mrkdwn", text: ("<" + $url + "|View full run>") }]
+                }
+              ]
+            }')
+
+          curl -sf -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK"
