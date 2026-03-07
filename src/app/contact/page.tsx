@@ -1,5 +1,6 @@
 import { Github, Twitter } from 'lucide-react'
 import Link from 'next/link'
+import { TALLY_FORMS, SOCIAL_LINKS } from '@/lib/external-links'
 
 export default function ContactPage() {
   return (
@@ -30,7 +31,7 @@ export default function ContactPage() {
                 </p>
               </div>
               <Link
-                href="https://tally.so/r/wap82b"
+                href={TALLY_FORMS.contact}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center w-full py-4 text-base font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -49,7 +50,7 @@ export default function ContactPage() {
               </div>
               <div className="space-y-4">
                 <Link 
-                  href="https://github.com/openqase/openqase"
+                  href={SOCIAL_LINKS.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-md transition-colors group"
@@ -58,7 +59,7 @@ export default function ContactPage() {
                   <span className="text-foreground group-hover:text-primary font-medium">Follow us on GitHub</span>
                 </Link>
                 <Link 
-                  href="https://www.threads.com/@openqase"
+                  href={SOCIAL_LINKS.threads}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-md transition-colors group"
@@ -84,7 +85,7 @@ export default function ContactPage() {
                   <p className="text-muted-foreground leading-relaxed text-base">
                     We welcome contributions from the quantum computing community! You can contribute by submitting case studies,
                     improving documentation, reporting bugs, or contributing code. Check out our 
-                    <Link href="https://github.com/openqase/openqase" className="text-primary hover:underline ml-1">GitHub repository</Link> for detailed contribution guidelines.
+                    <Link href={SOCIAL_LINKS.github} className="text-primary hover:underline ml-1">GitHub repository</Link> for detailed contribution guidelines.
                   </p>
                 </div>
                 

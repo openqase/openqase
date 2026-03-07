@@ -7,6 +7,7 @@ import { Github, Twitter, Linkedin, MessageCircle, ChevronDown } from 'lucide-re
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
+import { SOCIAL_LINKS } from '@/lib/external-links'
 
 interface FooterSectionProps {
   title: string
@@ -105,7 +106,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link 
-                  href="https://github.com/openqase/openqase"
+                  href={SOCIAL_LINKS.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-base text-muted-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
@@ -117,7 +118,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link 
-                  href="https://www.threads.com/@openqase"
+                  href={SOCIAL_LINKS.threads}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-base text-muted-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
