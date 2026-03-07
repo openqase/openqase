@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export type QuantumCompany = Database['public']['Tables']['quantum_companies']['Row']
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function QuantumCompaniesPage() {
   const quantumCompanies = await getStaticContentList('quantum_companies') as QuantumCompany[]

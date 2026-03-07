@@ -25,7 +25,7 @@ export async function generateStaticParams() {
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed company) within 1 hour
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export async function generateMetadata({ params }: QuantumSoftwarePageProps) {
   const resolvedParams = await params;

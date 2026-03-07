@@ -96,11 +96,11 @@ Every save/publish/unpublish action must revalidate:
 3. The individual page by slug (e.g., `/paths/algorithm/${slug}`)
 
 #### Layer 2: ISR Safety Net (fallback)
-All dynamic `[slug]/page.tsx` files export `revalidate = 3600` (1 hour). This catches **cross-entity staleness** — when a related entity changes (e.g., an algorithm's name is updated), pages that display that algorithm won't be directly revalidated by the algorithm's save action. The 1-hour ISR ensures these pages refresh eventually.
+All dynamic `[slug]/page.tsx` files export `revalidate = 86400` (24 hours). This catches **cross-entity staleness** — when a related entity changes (e.g., an algorithm's name is updated), pages that display that algorithm won't be directly revalidated by the algorithm's save action. The 24-hour ISR ensures these pages refresh eventually while keeping Vercel ISR write usage low.
 
 #### When Adding New Content Types
 1. Create admin server actions with proper `revalidatePath()` calls for save/publish/unpublish
-2. Add `export const revalidate = 3600` to the public `[slug]/page.tsx`
+2. Add `export const revalidate = 86400` to the public `[slug]/page.tsx`
 3. Use `generateStaticParams()` with `generateStaticParamsForContentType()` for build-time generation
 
 #### Request-Scoped Deduplication

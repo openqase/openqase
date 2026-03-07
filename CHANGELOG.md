@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **ISR Revalidation Interval**: Increased ISR safety net from 1 hour to 24 hours across all 18 pages to reduce Vercel ISR write usage (on-demand revalidation still handles CMS changes instantly)
+- **Sentry Sampling Rates**: Reduced client and edge performance trace sampling from 100% to 10% in production; disabled general session replay (error session replay remains at 100%)
+
+### Added
+- **Weekly Link Check**: Added GitHub Action (`link-check.yml`) using lychee to check for broken URLs in source files every Monday
+- **Centralized External URLs**: Created `src/lib/external-links.ts` with all Tally form and social media URLs; updated FeedbackButton, GetInvolvedSection, PrivacyContactLink, and contact page to use it
+- **Google Search Console**: Added verification meta tag placeholder in layout metadata
+
 ### Security
 - **serialize-javascript RCE** ([GHSA-5c6j-r48x-rmvq](https://github.com/advisories/GHSA-5c6j-r48x-rmvq)): Added npm override to force `serialize-javascript@7.0.3` — fixes RCE via `RegExp.flags` and `Date.prototype.toISOString()`. Transitive dep via `@sentry/nextjs → webpack → terser-webpack-plugin`. Override can be removed once `terser-webpack-plugin` bumps from `^6.0.2` to `^7.0.3`.
 - **Database Lint Fixes**: Addressed 30 Supabase lint warnings — optimised RLS initplan evaluation, consolidated overlapping policies, hardened function `search_path`, added 12 missing FK indexes, and dropped overly permissive anon policy on `user_preferences`
