@@ -80,7 +80,7 @@ export async function generateStaticParams() {
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed industry) within 1 hour
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function PersonaPage({ params }: PageParams) {
   const resolvedParams = await params;

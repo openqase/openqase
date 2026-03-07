@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export type PartnerCompany = Database['public']['Tables']['partner_companies']['Row']
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function PartnerCompaniesPage() {
   const partnerCompanies = await getStaticContentList('partner_companies') as PartnerCompany[]
