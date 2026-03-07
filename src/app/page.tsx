@@ -16,6 +16,7 @@ import {
   Handshake
 } from 'lucide-react';
 import { AutoSchema } from '@/components/AutoSchema';
+import { SOCIAL_LINKS } from '@/lib/external-links';
 import SearchCard from '@/components/SearchCard';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { getBuildTimeContentList, fetchSearchData, getStaticContentList } from '@/lib/content-fetchers';
@@ -258,7 +259,7 @@ export default async function HomePage() {
               <h2 className="text-xl font-semibold text-foreground mb-6">Open Source & Community</h2>
               <div className="space-y-4">
                 <Link
-                  href="https://github.com/openqase/openqase"
+                  href={SOCIAL_LINKS.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-4 bg-card rounded-lg border border-border px-5 py-4 elevation-interactive hover:border-primary group"

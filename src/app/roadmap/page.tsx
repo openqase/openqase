@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { FeedbackButton } from '@/components/FeedbackButton'
+import { SOCIAL_LINKS } from '@/lib/external-links'
 
 export const metadata: Metadata = {
   title: 'Product Roadmap - OpenQase',
@@ -183,7 +184,7 @@ export default function RoadmapPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <FeedbackButton />
                 <a
-                  href="https://github.com/openqase/openqase"
+                  href={SOCIAL_LINKS.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-background border border-border hover:bg-muted px-6 py-3 rounded-lg font-medium transition-colors"
