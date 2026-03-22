@@ -4,7 +4,7 @@
   "private": true,
   "overrides": {
     "serialize-javascript": "7.0.3",
-    "tar": "7.5.10"
+    "tar": "7.5.12"
   },
   "scripts": {
     "dev": "next dev",
@@ -49,6 +49,7 @@
     "cmdk": "^1.1.1",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.24.11",
+    "isomorphic-dompurify": "^3.5.1",
     "lucide-react": "^0.563.0",
     "markdown-it": "^14.1.0",
     "next": "^16.1.1",

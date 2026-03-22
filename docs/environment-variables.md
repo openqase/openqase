@@ -71,7 +71,7 @@ These are **required** for the application to function.
 - **Security**: Public
 - **When to set**: Different for each environment
 
-#### `NEXT_PUBLIC_DEV_MODE`
+#### `DEV_MODE_AUTH_BYPASS`
 - **Required**: No
 - **Type**: Boolean string
 - **Default**: `false`
@@ -278,7 +278,7 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUz...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUz...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_DEV_MODE=true
+DEV_MODE_AUTH_BYPASS=true
 ```
 
 ### Staging
@@ -289,7 +289,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://staging-xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUz...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUz...
 NEXT_PUBLIC_SITE_URL=https://staging.openqase.com
-NEXT_PUBLIC_DEV_MODE=false
+DEV_MODE_AUTH_BYPASS=false
 
 # Optional services for testing
 BEEHIIV_API_KEY=sk_test_...
@@ -305,7 +305,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://prod-xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUz...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUz...
 NEXT_PUBLIC_SITE_URL=https://openqase.com
-NEXT_PUBLIC_DEV_MODE=false
+DEV_MODE_AUTH_BYPASS=false
 
 # Production services
 BEEHIIV_API_KEY=sk_live_...
@@ -332,7 +332,7 @@ RATE_LIMIT_GENERAL_WINDOW=900000
 - **Use different keys per environment** - Don't reuse production keys in development
 - **Rotate keys regularly** - Especially service role keys and API keys
 - **Use environment variables in hosting platforms** - Vercel, Netlify, etc. have secure env var management
-- **Set `NEXT_PUBLIC_DEV_MODE=false`** in production - Never bypass auth in production
+- **Set `DEV_MODE_AUTH_BYPASS=false`** in production - Never bypass auth in production
 
 ### ❌ DON'T
 
@@ -371,7 +371,7 @@ Set environment variables in Vercel Dashboard → Settings → Environment Varia
 - **Solution**: Verify `SUPABASE_SERVICE_ROLE_KEY` is set (server-side only)
 
 **Issue**: "Auth not working on localhost"
-- **Solution**: Set `NEXT_PUBLIC_DEV_MODE=true` for local development
+- **Solution**: Set `DEV_MODE_AUTH_BYPASS=true` for local development
 
 **Issue**: "Newsletter subscription failing"
 - **Solution**: Check `BEEHIIV_API_KEY` and `BEEHIIV_PUBLICATION_ID` are set

@@ -124,7 +124,7 @@ ADMIN_EMAIL=admin@localhost
 ADMIN_PASSWORD=your-secure-password
 
 # Development Mode (Optional - See Security Note below)
-NEXT_PUBLIC_DEV_MODE=false
+DEV_MODE_AUTH_BYPASS=false
 ```
 
 **Important**: Never commit `.env.local` to version control.

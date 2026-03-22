@@ -106,11 +106,9 @@ export default async function AlgorithmPage({ params }: AlgorithmPageProps) {
   // Process content with server-side markdown and references
   let processedContent = '';
   if (algorithm.main_content) {
-    // First render markdown to HTML
-    const htmlContent = processMarkdown(algorithm.main_content);
-    // Then process references 
-    const contentWithReferences = processContentWithReferences(htmlContent);
-    processedContent = contentWithReferences;
+    // Process reference citations in raw markdown first, then render + sanitize
+    const contentWithReferences = processContentWithReferences(algorithm.main_content);
+    processedContent = processMarkdown(contentWithReferences);
   }
 
   return (
