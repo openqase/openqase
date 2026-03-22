@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Message Sanitization**: Removed `error.message` leaks from 8 API routes — generic messages to clients, full details logged server-side only
 - **Defense-in-Depth**: Added `requireAdmin()` checks to audit-log export and all admin API write routes (17 route handlers) as defense-in-depth beyond middleware
 - **Script Injection**: Escaped `</script>` breakout in AutoSchema JSON-LD output via `\u003c` encoding
+- **Dependency Patches**: Updated Next.js to 16.2.1 (fixes CSRF bypass, request smuggling, DoS), flatted (prototype pollution), tar to 7.5.12 (symlink traversal) — 0 vulnerabilities remaining
+- **CSRF Protection**: Added Origin header validation on all write API routes (POST/PUT/PATCH/DELETE) — rejects cross-origin and missing-origin requests
+- **HTML Sanitization**: Added DOMPurify to markdown renderer — all content sanitized before `dangerouslySetInnerHTML`, preventing stored XSS even if content authoring expands beyond single admin
+- **Dev Mode Hardening**: Renamed `NEXT_PUBLIC_DEV_MODE` to `DEV_MODE_AUTH_BYPASS` — no longer exposed in client bundles
 - **Attack Surface**: Removed Sentry example API route and page (unnecessary test endpoints in production)
 
 ### Changed
