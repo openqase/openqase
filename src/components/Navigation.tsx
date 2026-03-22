@@ -84,8 +84,9 @@ export default function Navigation() {
                   src={theme === 'dark' ? '/openqase-light.svg' : '/openqase-dark.svg'}
                   alt="OpenQase - Quantum Computing Business Applications Platform"
                   className="h-8 w-auto"
-                  width={32}
-                  height={32}
+                  width={80}
+                  height={80}
+                  unoptimized
                   priority
                   suppressHydrationWarning
                 />
@@ -94,8 +95,9 @@ export default function Navigation() {
                   src='/openqase-light.svg'
                   alt="OpenQase - Quantum Computing Business Applications Platform"
                   className="h-8 w-auto"
-                  width={32}
-                  height={32}
+                  width={80}
+                  height={80}
+                  unoptimized
                   priority
                   suppressHydrationWarning
                 />
