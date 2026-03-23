@@ -73,6 +73,7 @@ export async function saveRelationships(
       const rows = ids.map(targetId => ({
         [rel.foreignKey]: contentId,
         [rel.targetKey]: targetId,
+        ...(rel.extraJunctionFields ?? {}),
       }))
       await supabase.from(rel.junction).insert(rows)
     }

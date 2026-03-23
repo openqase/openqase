@@ -17,9 +17,10 @@ export interface RelationshipDefinition {
   junction: string
   foreignKey: string
   targetKey: string
-  selectFields?: string[]          // fields to select from target table (default: ['id', 'name', 'slug'])
-  junctionForeignKeyHint?: string  // PostgREST !fk_name hint for self-referential joins
-  targetForeignKeyHint?: string    // PostgREST !fk_name hint for target side of self-referential joins
+  selectFields?: string[]                          // fields to select from target table (default: ['id', 'name', 'slug'])
+  junctionForeignKeyHint?: string                  // PostgREST !fk_name hint for self-referential joins
+  targetForeignKeyHint?: string                    // PostgREST !fk_name hint for target side of self-referential joins
+  extraJunctionFields?: Record<string, unknown>    // extra fields required by the junction table (e.g. { relation_type: 'related' })
 }
 
 export interface AdminExtension {

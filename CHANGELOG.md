@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Blog Posts CMS Migration**: Migrated blog-posts admin actions, API route, and public detail page to use the CMS engine operations layer; self-referential `blog_post_relations` junction now handled via PostgREST FK disambiguation hints; `related_posts` returned as a flat array
 - **Industries CMS Migration**: Migrated industries admin actions, API route, and public detail page to use the CMS engine operations layer; flattened nested junction-table relationship shapes throughout
 
 

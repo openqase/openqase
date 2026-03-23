@@ -1,11 +1,13 @@
 import type { ContentTypeDefinition } from './define'
 import { industries } from './types/industries'
 import { personas } from './types/personas'
+import { blogPosts } from './types/blog-posts'
 
 // Add content types here as they are migrated
 const contentTypes: ContentTypeDefinition[] = [
   industries,
   personas,
+  blogPosts,
 ]
 
 const bySlug = new Map(contentTypes.map(ct => [ct.slug, ct]))
