@@ -125,3 +125,6 @@ scripts/test-*.json
 # Cursor IDE configuration (may contain tokens)
 .cursor/
 src/.cursor/
+
+# Git worktrees
+.worktrees/

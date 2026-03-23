@@ -10,14 +10,6 @@ interface RelatedEntity {
   slug?: string | null;
 }
 
-interface IndustryRelation { industries: RelatedEntity | null }
-interface AlgorithmRelation { algorithms: RelatedEntity | null }
-interface PersonaRelation { personas: RelatedEntity | null }
-interface PartnerCompanyRelation { partner_companies: RelatedEntity | null }
-interface QuantumCompanyRelation { quantum_companies: RelatedEntity | null }
-interface QuantumHardwareRelation { quantum_hardware: RelatedEntity | null }
-interface QuantumSoftwareRelation { quantum_software: RelatedEntity | null }
-
 interface ResourceLink {
   url: string;
   label: string;
@@ -27,24 +19,23 @@ interface ResourceLink {
 interface CaseStudyWithRelations {
   year?: number;
   resource_links?: Json;
-  case_study_industry_relations?: IndustryRelation[];
-  algorithm_case_study_relations?: AlgorithmRelation[];
-  case_study_persona_relations?: PersonaRelation[];
-  case_study_partner_company_relations?: PartnerCompanyRelation[];
-  case_study_quantum_company_relations?: QuantumCompanyRelation[];
-  case_study_quantum_hardware_relations?: QuantumHardwareRelation[];
-  case_study_quantum_software_relations?: QuantumSoftwareRelation[];
+  industries?: RelatedEntity[];
+  algorithms?: RelatedEntity[];
+  personas?: RelatedEntity[];
+  partner_companies?: RelatedEntity[];
+  quantum_companies?: RelatedEntity[];
+  quantum_hardware?: RelatedEntity[];
+  quantum_software?: RelatedEntity[];
 }
 
 // Helper function to render clickable links for related content
 function renderEntityLinks(
-  entities: Array<RelatedEntity | null> | undefined,
+  entities: RelatedEntity[] | undefined,
   basePath: string,
   title: string,
   icon?: React.ReactNode
 ) {
-  const filtered = entities?.filter((e): e is RelatedEntity => e !== null);
-  if (!filtered || filtered.length === 0) return null;
+  if (!entities || entities.length === 0) return null;
 
   return (
     <div>
@@ -53,7 +44,7 @@ function renderEntityLinks(
         {title}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {filtered.map((entity) => {
+        {entities.map((entity) => {
           if (entity.slug) {
             return (
               <Link key={entity.id} href={`/paths/${basePath}/${entity.slug}`}>
@@ -104,7 +95,7 @@ export default function ProfessionalCaseStudyLayout({
             <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
             <span>{backLinkText}</span>
           </Link>
-          
+
           <div className="max-w-4xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-tight mb-4">
               {title}
@@ -144,13 +135,13 @@ export default function ProfessionalCaseStudyLayout({
                 )}
 
                 {renderEntityLinks(
-                  caseStudy.case_study_partner_company_relations?.map((rel: PartnerCompanyRelation) => rel.partner_companies),
+                  caseStudy.partner_companies,
                   'partner-companies',
                   'Partner Companies'
                 )}
 
                 {renderEntityLinks(
-                  caseStudy.case_study_quantum_company_relations?.map((rel: QuantumCompanyRelation) => rel.quantum_companies),
+                  caseStudy.quantum_companies,
                   'quantum-companies',
                   'Quantum Companies'
                 )}
@@ -158,20 +149,20 @@ export default function ProfessionalCaseStudyLayout({
             </div>
 
             {/* Technical Details - only show if hardware or software relations exist */}
-            {((caseStudy.case_study_quantum_hardware_relations?.some((rel: QuantumHardwareRelation) => rel.quantum_hardware !== null)) ||
-              (caseStudy.case_study_quantum_software_relations?.some((rel: QuantumSoftwareRelation) => rel.quantum_software !== null))) && (
+            {((caseStudy.quantum_hardware && caseStudy.quantum_hardware.length > 0) ||
+              (caseStudy.quantum_software && caseStudy.quantum_software.length > 0)) && (
             <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
               <h3 className="text-lg font-semibold mb-4 text-foreground">Technical Details</h3>
               <div className="space-y-4">
                 {renderEntityLinks(
-                  caseStudy.case_study_quantum_hardware_relations?.map((rel: QuantumHardwareRelation) => rel.quantum_hardware),
+                  caseStudy.quantum_hardware,
                   'quantum-hardware',
                   'Quantum Hardware',
                   <Cpu className="h-3 w-3" />
                 )}
 
                 {renderEntityLinks(
-                  caseStudy.case_study_quantum_software_relations?.map((rel: QuantumSoftwareRelation) => rel.quantum_software),
+                  caseStudy.quantum_software,
                   'quantum-software',
                   'Quantum Software'
                 )}
@@ -187,22 +178,20 @@ export default function ProfessionalCaseStudyLayout({
                   <div className="text-sm text-muted-foreground mb-2">Industries</div>
                   <div className="flex flex-wrap gap-1.5">
                     {(() => {
-                      if (caseStudy.case_study_industry_relations && caseStudy.case_study_industry_relations.length > 0) {
-                        const naIndustry = caseStudy.case_study_industry_relations.find((rel: IndustryRelation) => rel.industries?.slug === 'not-applicable');
-                        if (naIndustry && naIndustry.industries) {
+                      if (caseStudy.industries && caseStudy.industries.length > 0) {
+                        const naIndustry = caseStudy.industries.find((ind) => ind.slug === 'not-applicable');
+                        if (naIndustry) {
                           return <span className="text-xs text-muted-foreground">Not Applicable</span>;
                         }
-                        const actualIndustries = caseStudy.case_study_industry_relations.filter((rel: IndustryRelation) => rel.industries?.slug !== 'not-applicable');
+                        const actualIndustries = caseStudy.industries.filter((ind) => ind.slug !== 'not-applicable');
                         if (actualIndustries.length > 0) {
-                          return actualIndustries.map((relation: IndustryRelation) =>
-                            relation.industries ? (
-                              <Link key={relation.industries.id} href={`/paths/industry/${relation.industries?.slug}`}>
-                                <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
-                                  {relation.industries.name}
-                                </Badge>
-                              </Link>
-                            ) : null
-                          );
+                          return actualIndustries.map((industry) => (
+                            <Link key={industry.id} href={`/paths/industry/${industry.slug}`}>
+                              <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
+                                {industry.name}
+                              </Badge>
+                            </Link>
+                          ));
                         }
                       }
                       return <span className="text-xs text-muted-foreground">None</span>;
@@ -214,22 +203,20 @@ export default function ProfessionalCaseStudyLayout({
                   <div className="text-sm text-muted-foreground mb-2">Algorithms</div>
                   <div className="flex flex-wrap gap-1.5">
                     {(() => {
-                      if (caseStudy.algorithm_case_study_relations && caseStudy.algorithm_case_study_relations.length > 0) {
-                        const naAlgorithm = caseStudy.algorithm_case_study_relations.find((rel: AlgorithmRelation) => rel.algorithms?.slug === 'not-applicable');
-                        if (naAlgorithm && naAlgorithm.algorithms) {
+                      if (caseStudy.algorithms && caseStudy.algorithms.length > 0) {
+                        const naAlgorithm = caseStudy.algorithms.find((alg) => alg.slug === 'not-applicable');
+                        if (naAlgorithm) {
                           return <span className="text-xs text-muted-foreground">Not Applicable</span>;
                         }
-                        const actualAlgorithms = caseStudy.algorithm_case_study_relations.filter((rel: AlgorithmRelation) => rel.algorithms?.slug !== 'not-applicable');
+                        const actualAlgorithms = caseStudy.algorithms.filter((alg) => alg.slug !== 'not-applicable');
                         if (actualAlgorithms.length > 0) {
-                          return actualAlgorithms.map((relation: AlgorithmRelation) =>
-                            relation.algorithms ? (
-                              <Link key={relation.algorithms.id} href={`/paths/algorithm/${relation.algorithms?.slug}`}>
-                                <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
-                                  {relation.algorithms.name}
-                                </Badge>
-                              </Link>
-                            ) : null
-                          );
+                          return actualAlgorithms.map((algorithm) => (
+                            <Link key={algorithm.id} href={`/paths/algorithm/${algorithm.slug}`}>
+                              <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
+                                {algorithm.name}
+                              </Badge>
+                            </Link>
+                          ));
                         }
                       }
                       return <span className="text-xs text-muted-foreground">None</span>;
@@ -241,22 +228,20 @@ export default function ProfessionalCaseStudyLayout({
                   <div className="text-sm text-muted-foreground mb-2">Target Personas</div>
                   <div className="flex flex-wrap gap-1.5">
                     {(() => {
-                      if (caseStudy.case_study_persona_relations && caseStudy.case_study_persona_relations.length > 0) {
-                        const naPersona = caseStudy.case_study_persona_relations.find((rel: PersonaRelation) => rel.personas?.slug === 'not-applicable');
-                        if (naPersona && naPersona.personas) {
+                      if (caseStudy.personas && caseStudy.personas.length > 0) {
+                        const naPersona = caseStudy.personas.find((p) => p.slug === 'not-applicable');
+                        if (naPersona) {
                           return <span className="text-xs text-muted-foreground">Not Applicable</span>;
                         }
-                        const actualPersonas = caseStudy.case_study_persona_relations.filter((rel: PersonaRelation) => rel.personas?.slug !== 'not-applicable');
+                        const actualPersonas = caseStudy.personas.filter((p) => p.slug !== 'not-applicable');
                         if (actualPersonas.length > 0) {
-                          return actualPersonas.map((relation: PersonaRelation) =>
-                            relation.personas ? (
-                              <Link key={relation.personas.id} href={`/paths/persona/${relation.personas?.slug}`}>
-                                <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
-                                  {relation.personas.name}
-                                </Badge>
-                              </Link>
-                            ) : null
-                          );
+                          return actualPersonas.map((persona) => (
+                            <Link key={persona.id} href={`/paths/persona/${persona.slug}`}>
+                              <Badge variant="default" className="text-xs hover:bg-primary/80 cursor-pointer">
+                                {persona.name}
+                              </Badge>
+                            </Link>
+                          ));
                         }
                       }
                       return <span className="text-xs text-muted-foreground">None</span>;
@@ -277,10 +262,10 @@ export default function ProfessionalCaseStudyLayout({
                   {(caseStudy.resource_links as unknown as ResourceLink[])
                     .sort((a, b) => a.order - b.order)
                     .map((link, index) => (
-                      <a 
-                        key={index} 
-                        href={link.url} 
-                        target="_blank" 
+                      <a
+                        key={index}
+                        href={link.url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
                       >

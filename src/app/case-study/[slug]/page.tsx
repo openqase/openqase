@@ -1,6 +1,6 @@
 // src/app/case-study/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalCaseStudyLayout from '@/components/ui/professional-case-study-layout';
 import { Badge } from '@/components/ui/badge';
@@ -9,15 +9,15 @@ import { processMarkdown } from '@/lib/markdown-server';
 import Link from 'next/link';
 import { AutoSchema } from '@/components/AutoSchema';
 
-// Define a more accurate type for the case study data we expect after fetching relations
+// Define enriched types using flat relationship shapes from the CMS engine
 type EnrichedCaseStudy = Database['public']['Tables']['case_studies']['Row'] & {
-  case_study_industry_relations?: { industries: { id: string; name: string; slug?: string | null } | null }[];
-  algorithm_case_study_relations?: { algorithms: { id: string; name: string; slug?: string | null } | null }[];
-  case_study_persona_relations?: { personas: { id: string; name: string; slug?: string | null } | null }[];
-  case_study_quantum_software_relations?: { quantum_software: { id: string; name: string; slug?: string | null } | null }[];
-  case_study_quantum_hardware_relations?: { quantum_hardware: { id: string; name: string; slug?: string | null } | null }[];
-  case_study_quantum_company_relations?: { quantum_companies: { id: string; name: string; slug?: string | null } | null }[];
-  case_study_partner_company_relations?: { partner_companies: { id: string; name: string; slug?: string | null } | null }[];
+  industries?: { id: string; name: string; slug?: string | null }[];
+  algorithms?: { id: string; name: string; slug?: string | null }[];
+  personas?: { id: string; name: string; slug?: string | null }[];
+  quantum_software?: { id: string; name: string; slug?: string | null }[];
+  quantum_hardware?: { id: string; name: string; slug?: string | null }[];
+  quantum_companies?: { id: string; name: string; slug?: string | null }[];
+  partner_companies?: { id: string; name: string; slug?: string | null }[];
 };
 
 interface CaseStudyPageProps {
@@ -28,11 +28,8 @@ interface CaseStudyPageProps {
 // Get metadata for the page
 export async function generateMetadata({ params }: CaseStudyPageProps) {
   const resolvedParams = await params;
-  
-  const caseStudy = await getStaticContentWithRelationships<{ title: string; description: string | null }>(
-    'case_studies',
-    resolvedParams.slug
-  );
+
+  const caseStudy = await fetchContentBySlug('case-studies', resolvedParams.slug) as EnrichedCaseStudy | null;
 
   if (!caseStudy) {
     return {
@@ -63,9 +60,7 @@ export async function generateMetadata({ params }: CaseStudyPageProps) {
 }
 
 // Generate static params for all published case studies
-export async function generateStaticParams() {
-  return await generateStaticParamsForContentType('case_studies');
-}
+export const generateStaticParams = generateStaticParamsFor('case-studies');
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed algorithm) within 1 hour
@@ -75,10 +70,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
-  const caseStudy = await getStaticContentWithRelationships<EnrichedCaseStudy>(
-    'case_studies',
-    slug
-  );
+  const caseStudy = await fetchContentBySlug('case-studies', slug) as EnrichedCaseStudy | null;
 
   if (!caseStudy) {
     return notFound();
@@ -100,15 +92,15 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
     <>
       {/* Ghost-style automatic case study schema */}
       <AutoSchema type="case-study" data={caseStudy} />
-      <AutoSchema 
-        type="breadcrumb" 
+      <AutoSchema
+        type="breadcrumb"
         breadcrumbs={[
           { name: 'Home', url: '/' },
           { name: 'Case Studies', url: '/case-study' },
           { name: caseStudy.title, url: `/case-study/${caseStudy.slug}` }
-        ]} 
+        ]}
       />
-      
+
       <ProfessionalCaseStudyLayout
         title={caseStudy.title}
         description={caseStudy.description || ''}
@@ -117,7 +109,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
         caseStudy={caseStudy}
       >
         <div dangerouslySetInnerHTML={{ __html: processedContent }} />
-        
+
         {/* Display References Section if available */}
         {caseStudy.academic_references && (
           <>
