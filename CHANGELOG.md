@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Industries CMS Migration**: Migrated industries admin actions, API route, and public detail page to use the CMS engine operations layer; flattened nested junction-table relationship shapes throughout
+
+
 - **ISR Revalidation Interval**: Increased ISR safety net from 1 hour to 24 hours across all 18 pages to reduce Vercel ISR write usage (on-demand revalidation still handles CMS changes instantly)
 - **Sentry Sampling Rates**: Reduced client and edge performance trace sampling from 100% to 10% in production; disabled general session replay (error session replay remains at 100%)
 
