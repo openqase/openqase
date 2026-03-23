@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumSoftware, getRelatedQuantumHardware, getRelatedQuantumCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
 type EnrichedPartnerCompany = Database['public']['Tables']['partner_companies']['Row'] & {
-  case_study_partner_company_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
+  case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
 
 interface PartnerCompanyPageProps {
@@ -18,9 +18,7 @@ interface PartnerCompanyPageProps {
   }>;
 }
 
-export async function generateStaticParams() {
-  return generateStaticParamsForContentType('partner_companies');
-}
+export const generateStaticParams = generateStaticParamsFor('partner-companies')
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed company) within 1 hour
@@ -29,11 +27,8 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: PartnerCompanyPageProps) {
   const resolvedParams = await params;
   
-  const partnerCompany = await getStaticContentWithRelationships<EnrichedPartnerCompany>(
-    'partner_companies',
-    resolvedParams.slug
-  );
-  
+  const partnerCompany = await fetchContentBySlug('partner-companies', resolvedParams.slug) as EnrichedPartnerCompany | null;
+
   if (!partnerCompany) {
     return {
       title: 'Not Found',
@@ -68,10 +63,7 @@ export async function generateMetadata({ params }: PartnerCompanyPageProps) {
 export default async function PartnerCompanyDetailPage({ params }: PartnerCompanyPageProps) {
   const resolvedParams = await params;
   
-  const partnerCompany = await getStaticContentWithRelationships<EnrichedPartnerCompany>(
-    'partner_companies',
-    resolvedParams.slug
-  );
+  const partnerCompany = await fetchContentBySlug('partner-companies', resolvedParams.slug) as EnrichedPartnerCompany | null;
 
   if (!partnerCompany) {
     notFound();
@@ -83,9 +75,7 @@ export default async function PartnerCompanyDetailPage({ params }: PartnerCompan
     : null;
 
   // Extract related case studies
-  const relatedCaseStudies = partnerCompany.case_study_partner_company_relations
-    ?.map(relation => relation.case_studies)
-    .filter((cs): cs is NonNullable<typeof cs> => cs !== null) || [];
+  const relatedCaseStudies = (partnerCompany.case_studies || []);
   
   // Get case study IDs for ecosystem discovery
   const caseStudyIds = relatedCaseStudies.map(cs => cs.id);
