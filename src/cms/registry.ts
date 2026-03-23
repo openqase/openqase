@@ -7,6 +7,7 @@ import { quantumHardware } from './types/quantum-hardware'
 import { quantumCompanies } from './types/quantum-companies'
 import { partnerCompanies } from './types/partner-companies'
 import { algorithms } from './types/algorithms'
+import { caseStudies } from './types/case-studies'
 
 // Add content types here as they are migrated
 const contentTypes: ContentTypeDefinition[] = [
@@ -18,6 +19,7 @@ const contentTypes: ContentTypeDefinition[] = [
   quantumCompanies,
   partnerCompanies,
   algorithms,
+  caseStudies,
 ]
 
 const bySlug = new Map(contentTypes.map(ct => [ct.slug, ct]))
