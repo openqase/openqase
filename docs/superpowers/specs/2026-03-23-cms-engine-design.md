@@ -326,14 +326,17 @@ At each step the app keeps working. Migrated types use the engine. Unmigrated ty
 Old routes: `/api/algorithms/`, `/api/case-studies/`, etc.
 New route: `/api/content/[type]/`
 
-Options (decide during implementation):
-- Keep old URL structure with `api/[type]/route.ts` catch-all
-- Add redirect stubs at old paths
-- Use new `/api/content/[type]` path (cleanest, but breaks any external references)
+**Decision: keep old URL structure.** Use `api/[type]/route.ts` as a catch-all that delegates to the operations layer. This avoids breaking any external references, monitoring, or bookmarks. The internal architecture is new; the URL surface stays the same.
 
 ## Known Implementation Risks
 
-### 1. Relationship data shape migration
+### 1. Self-referential relationships
+Blog posts and case studies have self-referential junction tables (`blog_post_relations`, `case_study_relations`) where both sides point to the same entity type. The relationship config shape (`foreignKey`/`targetKey`/`junction`) handles this — the type definition uses `targetType: 'blog-posts'` pointing back to itself. Implementer should verify whether `case_study_relations` is actively used or can be dropped.
+
+### 2. Actual type definitions will be longer than examples
+The spec's algorithm example shows ~30 lines for clarity. Real definitions will be longer — algorithms also have `steps`, `use_cases`, `classical_preprocessing`, `error_mitigation_required`, and other fields. Expect ~50-80 lines per type definition for complex types. This doesn't change the architecture, just the sizing estimate.
+
+### 3. Relationship data shape migration
 Today, `getStaticContentWithRelationships` returns nested Supabase join shapes like `{ algorithm_case_study_relations: [{ case_studies: { id, name, slug } }] }`, and `filterRelationships()` flattens them. The new `fetchContentBySlug` should return a clean shape like `{ case_studies: [{ id, name, slug }] }`. Page components that destructure the nested shape need updating. Straightforward but touches every detail page.
 
 ### 2. Request-scoped deduplication
