@@ -9,7 +9,7 @@ interface AlgorithmFormData {
   slug: string
   description?: string | null
   main_content?: string | null
-  use_cases?: string | null
+  use_cases?: string[] | null
   steps?: string | null
   academic_references?: string | null
   quantum_advantage?: string | null

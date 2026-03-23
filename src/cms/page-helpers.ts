@@ -1,6 +1,7 @@
 import { getContentType } from './registry'
 import { fetchContentBySlug } from './operations'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 
 export function generateStaticParamsFor(typeSlug: string) {
   return async function generateStaticParams() {
@@ -8,8 +9,7 @@ export function generateStaticParamsFor(typeSlug: string) {
     if (!ct) return []
 
     const supabase = createServiceRoleSupabaseClient()
-    const { data } = await supabase
-      .from(ct.tableName)
+    const { data } = await fromTable(supabase, ct.tableName)
       .select('slug')
       .eq('published', true)
 

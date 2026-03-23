@@ -1,6 +1,7 @@
 import type { ContentTypeDefinition } from '../define'
 import { getContentType } from '../registry'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 
 export function buildRelationshipSelect(contentType: ContentTypeDefinition): string {
   if (contentType.relationships.length === 0) return '*'
@@ -63,8 +64,7 @@ export async function saveRelationships(
     if (ids === undefined) continue
 
     // Delete existing
-    await supabase
-      .from(rel.junction)
+    await fromTable(supabase, rel.junction)
       .delete()
       .eq(rel.foreignKey, contentId)
 
@@ -75,7 +75,7 @@ export async function saveRelationships(
         [rel.targetKey]: targetId,
         ...(rel.extraJunctionFields ?? {}),
       }))
-      await supabase.from(rel.junction).insert(rows)
+      await fromTable(supabase, rel.junction).insert(rows)
     }
   }
 }

@@ -1,6 +1,7 @@
 import { getContentType } from '../registry'
 import { generateZodSchema } from '../schema'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 import { saveRelationships } from './relationships'
 import { revalidateContentType } from './revalidate'
 
@@ -25,8 +26,7 @@ export async function updateContent(
   }
 
   const supabase = createServiceRoleSupabaseClient()
-  const { data: result, error } = await supabase
-    .from(ct.tableName)
+  const { data: result, error } = await fromTable(supabase, ct.tableName)
     .update(parsed.data)
     .eq('id', id)
     .select()

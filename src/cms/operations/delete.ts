@@ -1,5 +1,6 @@
 import { getContentType } from '../registry'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 import { revalidateContentType } from './revalidate'
 
 interface DeleteResult {
@@ -12,8 +13,7 @@ export async function deleteContent(typeSlug: string, id: string): Promise<Delet
   if (!ct) return { success: false, error: `Unknown content type: ${typeSlug}` }
 
   const supabase = createServiceRoleSupabaseClient()
-  const { error } = await supabase
-    .from(ct.tableName)
+  const { error } = await fromTable(supabase, ct.tableName)
     .delete()
     .eq('id', id)
 

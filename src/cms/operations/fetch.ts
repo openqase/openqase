@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { getContentType } from '../registry'
 import { buildRelationshipSelect, flattenRelationships } from './relationships'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 
 async function _fetchContentBySlug(
   typeSlug: string,
@@ -13,8 +14,7 @@ async function _fetchContentBySlug(
   const supabase = createServiceRoleSupabaseClient()
   const selectStr = buildRelationshipSelect(ct)
 
-  const { data, error } = await supabase
-    .from(ct.tableName)
+  const { data, error } = await fromTable(supabase, ct.tableName)
     .select(selectStr)
     .eq('slug', slug)
     .single()
@@ -48,8 +48,7 @@ async function _fetchContent(
   const supabase = createServiceRoleSupabaseClient()
   const selectStr = buildRelationshipSelect(ct)
 
-  const { data, error } = await supabase
-    .from(ct.tableName)
+  const { data, error } = await fromTable(supabase, ct.tableName)
     .select(selectStr)
     .eq('id', id)
     .single()
@@ -84,8 +83,7 @@ export async function listContent(
   const { page = 1, pageSize = 50, search, publishedOnly = true } = options
   const supabase = createServiceRoleSupabaseClient()
 
-  let query = supabase
-    .from(ct.tableName)
+  let query = fromTable(supabase, ct.tableName)
     .select('*', { count: 'exact' })
 
   if (publishedOnly) {

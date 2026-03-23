@@ -1,5 +1,6 @@
 import { getContentType } from '../registry'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { fromTable } from '@/lib/supabase-untyped'
 import { revalidateContentType } from './revalidate'
 
 interface PublishResult {
@@ -12,8 +13,7 @@ export async function publishContent(typeSlug: string, id: string): Promise<Publ
   if (!ct) return { success: false, error: `Unknown content type: ${typeSlug}` }
 
   const supabase = createServiceRoleSupabaseClient()
-  const { data, error } = await supabase
-    .from(ct.tableName)
+  const { data, error } = await fromTable(supabase, ct.tableName)
     .update({ published: true })
     .eq('id', id)
     .select('slug')
@@ -30,8 +30,7 @@ export async function unpublishContent(typeSlug: string, id: string): Promise<Pu
   if (!ct) return { success: false, error: `Unknown content type: ${typeSlug}` }
 
   const supabase = createServiceRoleSupabaseClient()
-  const { data, error } = await supabase
-    .from(ct.tableName)
+  const { data, error } = await fromTable(supabase, ct.tableName)
     .update({ published: false })
     .eq('id', id)
     .select('slug')
