@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Config-Driven CMS Engine**: New `src/cms/` module replaces 9 duplicated content type implementations with a unified system. Content types are defined declaratively via `defineContentType()` with auto-generated Zod schemas, generic CRUD operations, relationship management, and ISR revalidation. All 9 types (algorithms, case studies, industries, personas, blog posts, quantum software/hardware/companies, partner companies) now share ~500 lines of engine code instead of ~4,000 lines of per-type boilerplate.
+
 ### Changed
-- **Blog Posts CMS Migration**: Migrated blog-posts admin actions, API route, and public detail page to use the CMS engine operations layer; self-referential `blog_post_relations` junction now handled via PostgREST FK disambiguation hints; `related_posts` returned as a flat array
-- **Industries CMS Migration**: Migrated industries admin actions, API route, and public detail page to use the CMS engine operations layer; flattened nested junction-table relationship shapes throughout
+- **All Content Types CMS Migration**: Migrated all 9 content types to the CMS engine — admin server actions reduced to thin wrappers (~30 lines each), API routes simplified to use generic operations, public detail pages use flat relationship shapes instead of nested junction-table structures
+- **Case Studies Bulk Delete Fix**: Bulk delete now cleans all 7 relationship junction tables (was only cleaning 3)
 
 
 - **ISR Revalidation Interval**: Increased ISR safety net from 1 hour to 24 hours across all 18 pages to reduce Vercel ISR write usage (on-demand revalidation still handles CMS changes instantly)
