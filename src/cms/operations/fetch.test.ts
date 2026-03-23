@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // Mock React cache to be a pass-through
 vi.mock('react', async () => {
   const actual = await vi.importActual('react')
-  return { ...actual, cache: (fn: Function) => fn }
+  return { ...actual, cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn }
 })
 
 // Mock Supabase client
