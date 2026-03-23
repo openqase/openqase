@@ -1,196 +1,50 @@
-'use server';
+'use server'
 
-import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
-import { fromTable } from '@/lib/supabase-untyped';
-import { revalidatePath } from 'next/cache';
-import { TablesInsert } from '@/types/supabase';
-import { z } from 'zod';
-import { MAX_NAME_LENGTH, MAX_MEDIUM_TEXT_LENGTH, MAX_CONTENT_LENGTH, MAX_LONG_TEXT_LENGTH } from '@/lib/validation/constants';
+import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import type { TablesInsert } from '@/types/supabase'
 
-const algorithmSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(1).max(MAX_NAME_LENGTH),
-  slug: z.string().min(1).max(MAX_NAME_LENGTH),
-  description: z.string().max(MAX_MEDIUM_TEXT_LENGTH).nullable().optional(),
-  main_content: z.string().max(MAX_CONTENT_LENGTH).nullable().optional(),
-  use_cases: z.string().max(MAX_LONG_TEXT_LENGTH).nullable().optional(),
-  published: z.boolean().optional(),
-  steps: z.string().max(MAX_LONG_TEXT_LENGTH).optional(),
-  academic_references: z.string().max(MAX_LONG_TEXT_LENGTH).optional(),
-  related_case_studies: z.array(z.string().uuid()).optional(),
-  related_industries: z.array(z.string().uuid()).optional(),
-  related_personas: z.array(z.string().uuid()).optional(),
-});
-
-interface AlgorithmFormData extends Omit<TablesInsert<'algorithms'>, 'id'> {
-  id?: string;
-  related_case_studies?: string[];
-  related_industries?: string[];
-  related_personas?: string[];
+interface AlgorithmFormData {
+  id?: string
+  name: string
+  slug: string
+  description?: string | null
+  main_content?: string | null
+  use_cases?: string | null
+  steps?: string | null
+  academic_references?: string | null
+  quantum_advantage?: string | null
+  published?: boolean
+  related_case_studies?: string[]
+  related_industries?: string[]
+  related_personas?: string[]
 }
 
 export async function saveAlgorithm(values: AlgorithmFormData): Promise<TablesInsert<'algorithms'>> {
-  try {
-    const parsed = algorithmSchema.safeParse(values);
-    if (!parsed.success) {
-      throw new Error(`Validation failed: ${parsed.error.issues.map((e: { message: string }) => e.message).join(', ')}`);
-    }
+  const { id, related_case_studies, related_industries, related_personas, ...data } = values
 
-    const supabase = createServiceRoleSupabaseClient();
-    const { data, error } = await supabase
-      .from('algorithms')
-      .upsert({
-        id: values.id,
-        name: values.name,
-        slug: values.slug,
-        description: values.description,
-        main_content: values.main_content,
-        use_cases: values.use_cases,
-        published: values.published,
-        steps: values.steps || '',
-        academic_references: values.academic_references || '',
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error saving algorithm:", error);
-      throw new Error(error.message || "Failed to save algorithm");
-    }
-    
-    // Handle case study relationships (delete and re-create)
-    const caseStudyError = await fromTable(supabase, 'algorithm_case_study_relations')
-      .delete()
-      .eq('algorithm_id', data?.id);
-
-    if (caseStudyError && caseStudyError.error) {
-        console.error("Error deleting case study relationships:", caseStudyError.error);
-        throw new Error(caseStudyError.error.message || "Failed to delete case study relationships");
-    }
-
-    // If there are related case studies
-    if (values.related_case_studies && values.related_case_studies.length > 0) {
-        // Insert relationships with IDs
-        for (const caseStudyId of values.related_case_studies) {
-            const insertError = await fromTable(supabase, 'algorithm_case_study_relations')
-                .insert({ algorithm_id: data?.id, case_study_id: caseStudyId });
-
-            if (insertError && insertError.error) {
-                console.error("Error inserting case study relationship:", insertError.error);
-                throw new Error(insertError.error.message || "Failed to insert case study relationship");
-            }
-        }
-    }
-
-    // Handle industry relationships (delete and re-create)
-    const industryError = await fromTable(supabase, 'algorithm_industry_relations')
-      .delete()
-      .eq('algorithm_id', data?.id);
-
-    if (industryError && industryError.error) {
-        console.error("Error deleting industry relationships:", industryError.error);
-        throw new Error(industryError.error.message || "Failed to delete industry relationships");
-    }
-
-    // If there are related industries
-    if (values.related_industries && values.related_industries.length > 0) {
-        // Insert relationships with IDs
-        for (const industryId of values.related_industries) {
-            const insertError = await fromTable(supabase, 'algorithm_industry_relations')
-                .insert({ algorithm_id: data?.id, industry_id: industryId });
-
-            if (insertError && insertError.error) {
-                console.error("Error inserting industry relationship:", insertError.error);
-                throw new Error(insertError.error.message || "Failed to insert industry relationship");
-            }
-        }
-    }
-
-    // Handle persona relationships (delete and re-create)
-    const personaError = await fromTable(supabase, 'persona_algorithm_relations')
-      .delete()
-      .eq('algorithm_id', data?.id);
-
-    if (personaError && personaError.error) {
-        console.error("Error deleting persona relationships:", personaError.error);
-        throw new Error(personaError.error.message || "Failed to delete persona relationships");
-    }
-
-    // If there are related personas
-    if (values.related_personas && values.related_personas.length > 0) {
-        // Insert relationships with IDs
-        for (const personaId of values.related_personas) {
-            const insertError = await fromTable(supabase, 'persona_algorithm_relations')
-                .insert({ algorithm_id: data?.id, persona_id: personaId });
-
-            if (insertError && insertError.error) {
-                console.error("Error inserting persona relationship:", insertError.error);
-                throw new Error(insertError.error.message || "Failed to insert persona relationship");
-            }
-        }
-    }
-    
-    revalidatePath('/admin/algorithms');
-    revalidatePath('/paths/algorithm');
-    if (data?.slug) {
-      revalidatePath(`/paths/algorithm/${data.slug}`);
-    }
-    
-    // Return the saved data
-    return data;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Error saving algorithm:", message);
-    throw new Error(message || "Failed to save algorithm");
+  const relationships = {
+    ...(related_industries ? { industries: related_industries } : {}),
+    ...(related_case_studies ? { case_studies: related_case_studies } : {}),
+    ...(related_personas ? { personas: related_personas } : {}),
   }
+
+  if (id) {
+    const result = await updateContent('algorithms', id, data, relationships)
+    if (result.error) throw new Error(result.error)
+    return result.data as TablesInsert<'algorithms'>
+  }
+
+  const result = await createContent('algorithms', data, relationships)
+  if (result.error) throw new Error(result.error)
+  return result.data as TablesInsert<'algorithms'>
 }
 
 export async function publishAlgorithm(id: string): Promise<void> {
-  try {
-    const supabase = createServiceRoleSupabaseClient();
-    const { data, error } = await supabase
-      .from('algorithms')
-      .update({ published: true })
-      .eq('id', id)
-      .select('slug')
-      .single();
-
-    if (error) {
-      throw error;
-    }
-    revalidatePath('/admin/algorithms');
-    revalidatePath('/paths/algorithm');
-    if (data?.slug) {
-      revalidatePath(`/paths/algorithm/${data.slug}`);
-    }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Error publishing algorithm:", message);
-    throw new Error(message || "Failed to publish algorithm");
-  }
+  const result = await publishContent('algorithms', id)
+  if (!result.success) throw new Error(result.error || 'Failed to publish')
 }
 
 export async function unpublishAlgorithm(id: string): Promise<void> {
-  try {
-    const supabase = createServiceRoleSupabaseClient();
-    const { data, error } = await supabase
-      .from('algorithms')
-      .update({ published: false })
-      .eq('id', id)
-      .select('slug')
-      .single();
-
-    if (error) {
-      throw error;
-    }
-    revalidatePath('/admin/algorithms');
-    revalidatePath('/paths/algorithm');
-    if (data?.slug) {
-      revalidatePath(`/paths/algorithm/${data.slug}`);
-    }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Error unpublishing algorithm:", message);
-    throw new Error(message || "Failed to unpublish algorithm");
-  }
+  const result = await unpublishContent('algorithms', id)
+  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
 }
