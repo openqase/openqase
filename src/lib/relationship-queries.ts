@@ -3,7 +3,7 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { fromTable } from '@/lib/supabase-untyped';
 
-interface RelatedEntity {
+export interface RelatedEntity {
   id: string;
   name: string;
   slug: string;
@@ -103,4 +103,119 @@ export async function getRelatedQuantumCompanies(caseStudyIds: string[]): Promis
     selectFields: 'id, name, slug, description, company_type',
     label: 'quantum companies',
   });
+}
+
+export async function getRelatedIndustries(caseStudyIds: string[]): Promise<RelatedEntity[]> {
+  return getRelatedEntities<RelatedEntity>(caseStudyIds, {
+    junctionTable: 'case_study_industry_relations',
+    foreignKey: 'industry_id',
+    targetTable: 'industries',
+    selectFields: 'id, name, slug, description',
+    label: 'industries',
+  });
+}
+
+export async function getRelatedAlgorithms(caseStudyIds: string[]): Promise<RelatedEntity[]> {
+  return getRelatedEntities<RelatedEntity>(caseStudyIds, {
+    junctionTable: 'algorithm_case_study_relations',
+    foreignKey: 'algorithm_id',
+    targetTable: 'algorithms',
+    selectFields: 'id, name, slug, description',
+    label: 'algorithms',
+  });
+}
+
+export async function getRelatedPersonas(caseStudyIds: string[]): Promise<RelatedEntity[]> {
+  return getRelatedEntities<RelatedEntity>(caseStudyIds, {
+    junctionTable: 'case_study_persona_relations',
+    foreignKey: 'persona_id',
+    targetTable: 'personas',
+    selectFields: 'id, name, slug, description',
+    label: 'personas',
+  });
+}
+
+export interface CaseStudyRelationships {
+  industries: RelatedEntity[];
+  algorithms: RelatedEntity[];
+  personas: RelatedEntity[];
+}
+
+export async function getCaseStudyRelationshipMap(
+  caseStudyIds: string[]
+): Promise<Record<string, CaseStudyRelationships>> {
+  if (!caseStudyIds || caseStudyIds.length === 0) return {};
+
+  const supabase = await createServiceRoleSupabaseClient();
+
+  // Fetch all junction rows in parallel (need both IDs to group by case_study_id)
+  const [industryJunctions, algorithmJunctions, personaJunctions] = await Promise.all([
+    fromTable(supabase, 'case_study_industry_relations')
+      .select('case_study_id, industry_id')
+      .in('case_study_id', caseStudyIds),
+    fromTable(supabase, 'algorithm_case_study_relations')
+      .select('case_study_id, algorithm_id')
+      .in('case_study_id', caseStudyIds),
+    fromTable(supabase, 'case_study_persona_relations')
+      .select('case_study_id, persona_id')
+      .in('case_study_id', caseStudyIds),
+  ]);
+
+  // Collect unique entity IDs
+  const industryIds = [...new Set(
+    (industryJunctions.data || []).map((r: any) => r.industry_id).filter(Boolean)
+  )] as string[];
+  const algorithmIds = [...new Set(
+    (algorithmJunctions.data || []).map((r: any) => r.algorithm_id).filter(Boolean)
+  )] as string[];
+  const personaIds = [...new Set(
+    (personaJunctions.data || []).map((r: any) => r.persona_id).filter(Boolean)
+  )] as string[];
+
+  // Fetch entity details in parallel
+  const [industries, algorithms, personas] = await Promise.all([
+    industryIds.length > 0
+      ? fromTable(supabase, 'industries').select('id, name, slug, description').in('id', industryIds)
+      : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
+    algorithmIds.length > 0
+      ? fromTable(supabase, 'algorithms').select('id, name, slug, description').in('id', algorithmIds)
+      : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
+    personaIds.length > 0
+      ? fromTable(supabase, 'personas').select('id, name, slug, description').in('id', personaIds)
+      : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
+  ]);
+
+  // Build lookup maps
+  const industryMap = new Map<string, RelatedEntity>((industries.data || []).map((e: any) => [e.id, e as RelatedEntity]));
+  const algorithmMap = new Map<string, RelatedEntity>((algorithms.data || []).map((e: any) => [e.id, e as RelatedEntity]));
+  const personaMap = new Map<string, RelatedEntity>((personas.data || []).map((e: any) => [e.id, e as RelatedEntity]));
+
+  // Group by case study ID
+  const result: Record<string, CaseStudyRelationships> = {};
+  for (const id of caseStudyIds) {
+    result[id] = { industries: [], algorithms: [], personas: [] };
+  }
+
+  for (const row of (industryJunctions.data || []) as any[]) {
+    const entity = industryMap.get(row.industry_id);
+    if (entity && result[row.case_study_id]) {
+      result[row.case_study_id].industries.push(entity);
+    }
+  }
+
+  for (const row of (algorithmJunctions.data || []) as any[]) {
+    const entity = algorithmMap.get(row.algorithm_id);
+    if (entity && result[row.case_study_id]) {
+      result[row.case_study_id].algorithms.push(entity);
+    }
+  }
+
+  for (const row of (personaJunctions.data || []) as any[]) {
+    const entity = personaMap.get(row.persona_id);
+    if (entity && result[row.case_study_id]) {
+      result[row.case_study_id].personas.push(entity);
+    }
+  }
+
+  return result;
 }
