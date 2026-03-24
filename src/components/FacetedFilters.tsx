@@ -43,6 +43,7 @@ export function FacetedFilters({ groups, activeFilters, onFilterChange, onClearA
     <div className="space-y-6">
       {hasActiveFilters && (
         <button
+          type="button"
           onClick={onClearAll}
           className="text-xs font-semibold text-primary hover:underline"
         >
@@ -50,7 +51,7 @@ export function FacetedFilters({ groups, activeFilters, onFilterChange, onClearA
         </button>
       )}
 
-      {groups.map((group) => {
+      {groups.map((group, groupIndex) => {
         const isExpanded = expandedGroups.has(group.key);
         const visibleOptions = isExpanded ? group.options : group.options.slice(0, MAX_VISIBLE);
         const hasMore = group.options.length > MAX_VISIBLE;
@@ -90,13 +91,15 @@ export function FacetedFilters({ groups, activeFilters, onFilterChange, onClearA
             </div>
             {hasMore && (
               <button
+                type="button"
                 onClick={() => toggleExpanded(group.key)}
+                aria-expanded={isExpanded}
                 className="text-xs font-semibold text-primary hover:underline mt-2"
               >
                 {isExpanded ? 'Show less' : `Show ${group.options.length - MAX_VISIBLE} more`}
               </button>
             )}
-            {group !== groups[groups.length - 1] && (
+            {groupIndex < groups.length - 1 && (
               <hr className="border-border mt-4" />
             )}
           </div>
