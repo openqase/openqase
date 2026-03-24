@@ -47,7 +47,7 @@
   <!-- Logo and branding -->
   <g transform="translate(80, 180)">
     <!-- OpenQase text with gradient -->
-    <text x="0" y="0" font-family="Montserrat, Arial, sans-serif" font-size="84" font-weight="bold" fill="url(#amber-gradient)">
+    <text x="0" y="0" font-family="Georgia, 'Times New Roman', serif" font-size="84" font-weight="bold" fill="url(#amber-gradient)">
       OpenQase
     </text>
 
