@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 import { getStaticContentList } from '@/lib/content-fetchers';
 import { CaseStudiesList } from '@/components/CaseStudiesList';
+import { getCaseStudyRelationshipMap } from '@/lib/relationship-queries';
 import type { Database } from '@/types/supabase';
+import type { CaseStudyRelationships } from '@/lib/relationship-queries';
 
 export const metadata: Metadata = {
   title: 'Quantum Computing Case Studies | Real-World Business Applications - OpenQase',
@@ -18,6 +20,12 @@ export default async function CaseStudyPage() {
     orderDirection: 'desc'
   });
 
+  // Fetch relationships for all case studies (for sidebar filters and tag pills)
+  const caseStudyIds = caseStudies.map(cs => cs.id);
+  const relationshipMap = caseStudyIds.length > 0
+    ? await getCaseStudyRelationshipMap(caseStudyIds)
+    : {};
+
   return (
     <div className="min-h-screen">
       <div className="container-outer section-spacing">
@@ -29,7 +37,10 @@ export default async function CaseStudyPage() {
             Explore real-world applications of quantum computing across different industries and use cases.
           </p>
         </div>
-        <CaseStudiesList caseStudies={caseStudies} />
+        <CaseStudiesList
+          caseStudies={caseStudies}
+          relationshipMap={relationshipMap}
+        />
       </div>
     </div>
   );
