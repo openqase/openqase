@@ -3,7 +3,6 @@ import { getStaticContentList } from '@/lib/content-fetchers';
 import { CaseStudiesList } from '@/components/CaseStudiesList';
 import { getCaseStudyRelationshipMap } from '@/lib/relationship-queries';
 import type { Database } from '@/types/supabase';
-import type { CaseStudyRelationships } from '@/lib/relationship-queries';
 
 export const metadata: Metadata = {
   title: 'Quantum Computing Case Studies | Real-World Business Applications - OpenQase',

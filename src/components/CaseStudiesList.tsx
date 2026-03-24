@@ -27,6 +27,12 @@ type SortOption = 'title-asc' | 'title-desc' | 'updated-asc' | 'updated-desc' | 
 
 const CASE_STUDIES_SORT_OPTIONS = ['title-asc', 'title-desc', 'updated-asc', 'updated-desc', 'year-asc', 'year-desc'] as const;
 
+const FILTER_GROUP_LABELS: Record<string, string> = {
+  industries: 'Industry',
+  algorithms: 'Algorithm',
+  personas: 'Role',
+};
+
 export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudiesListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({
@@ -37,10 +43,6 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
 
   const { viewMode, handleViewModeChange } = useViewSwitcher('case-studies-view-mode');
   const { sortBy, handleSortChange } = useSortPersistence('case-studies-sort', 'title-asc', CASE_STUDIES_SORT_OPTIONS);
-
-  if (!caseStudies || caseStudies.length === 0) {
-    return <div>No case studies found.</div>;
-  }
 
   // Filter case studies by search and active faceted filters
   const filteredCaseStudies = useMemo(() => {
@@ -139,13 +141,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
         .map(([id, { name, count }]) => ({ id, name, count }))
         .sort((a, b) => b.count - a.count);
 
-      const labels: Record<string, string> = {
-        industries: 'Industry',
-        algorithms: 'Algorithm',
-        personas: 'Role',
-      };
-
-      return { key: groupKey, label: labels[groupKey] || groupKey, options };
+      return { key: groupKey, label: FILTER_GROUP_LABELS[groupKey] || groupKey, options };
     };
 
     return [
@@ -180,6 +176,10 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   }, []);
+
+  if (!caseStudies || caseStudies.length === 0) {
+    return <div>No case studies found.</div>;
+  }
 
   const hasActiveFilters = Object.values(activeFilters).some(arr => arr.length > 0);
 
