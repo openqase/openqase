@@ -104,25 +104,25 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Case Study */}
-      {latestCaseStudies.length > 0 && (
-        <section className="px-4 pb-8">
-          <div className="max-w-4xl mx-auto">
-            <FeaturedCaseStudy
-              title={latestCaseStudies[0].title}
-              description={latestCaseStudies[0].description || 'Explore this quantum computing implementation.'}
-              slug={latestCaseStudies[0].slug}
-              pills={(() => {
-                const rels = relationshipMap[latestCaseStudies[0].id];
-                if (!rels) return [];
-                return [
-                  ...rels.industries.map(i => i.name),
-                  ...rels.algorithms.map(a => a.name),
-                ].slice(0, 4);
-              })()}
-            />
-          </div>
-        </section>
-      )}
+      {latestCaseStudies.length > 0 && (() => {
+        const featured = latestCaseStudies[0];
+        const featuredRels = relationshipMap[featured.id];
+        const featuredPills = featuredRels
+          ? [...featuredRels.industries.map(i => i.name), ...featuredRels.algorithms.map(a => a.name)].slice(0, 4)
+          : [];
+        return (
+          <section className="px-4 pb-8">
+            <div className="max-w-4xl mx-auto">
+              <FeaturedCaseStudy
+                title={featured.title}
+                description={featured.description || 'Explore this quantum computing implementation.'}
+                slug={featured.slug}
+                pills={featuredPills}
+              />
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Latest Sections — text lists */}
       <section className="py-12 md:py-16 px-4 border-t border-border">

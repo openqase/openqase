@@ -43,9 +43,9 @@ export function LatestList({ title, viewAllHref, viewAllCount, items }: LatestLi
             </p>
             {item.pills && item.pills.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {item.pills.slice(0, 3).map((pill) => (
+                {item.pills.slice(0, 3).map((pill, index) => (
                   <span
-                    key={pill}
+                    key={`${index}-${pill}`}
                     className="inline-block text-[0.65rem] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
                   >
                     {pill}

@@ -23,9 +23,9 @@ export function FeaturedCaseStudy({ title, description, slug, pills = [] }: Feat
       </p>
       {pills.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
-          {pills.slice(0, 4).map((pill) => (
+          {pills.slice(0, 4).map((pill, index) => (
             <span
-              key={pill}
+              key={`${index}-${pill}`}
               className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
             >
               {pill}
