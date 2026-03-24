@@ -1,7 +1,6 @@
 import { memo, useMemo } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
@@ -75,22 +74,18 @@ const ContentCard = memo(function ContentCard({
             </p>
 
             <div className="flex flex-wrap gap-2">
-              {displayBadges.map((badge) => (
-                <Badge 
-                  key={badge} 
-                  variant="outline" 
-                  className="text-[var(--text-secondary)] border-[var(--border)]"
+              {displayBadges.map((badge, index) => (
+                <span
+                  key={`${index}-${badge}`}
+                  className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
                 >
                   {badge}
-                </Badge>
+                </span>
               ))}
               {remainingCount > 0 && (
-                <Badge 
-                  variant="outline" 
-                  className="text-[var(--text-secondary)] border-[var(--border)]"
-                >
+                <span className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
                   +{remainingCount} more
-                </Badge>
+                </span>
               )}
             </div>
           </div>
@@ -101,34 +96,30 @@ const ContentCard = memo(function ContentCard({
 
   return (
     <Link href={href} className="group block">
-      <Card 
+      <Card
         className={cn(contentCardVariants({ variant }))}>
         <div className="flex flex-col h-full">
           <h3 className="text-xl font-semibold text-[var(--text-primary)] min-h-[3.5rem] mb-3 line-clamp-2">
             {title}
           </h3>
-          
+
           <p className={`text-[var(--text-secondary)] mb-auto ${badges.length === 0 ? 'line-clamp-6' : 'line-clamp-4'} min-h-[5rem]`}>
             {description}
           </p>
 
           <div className="flex flex-wrap gap-2 mt-6">
-            {displayBadges.map((badge) => (
-              <Badge 
-                key={badge} 
-                variant="outline" 
-                className="text-[var(--text-secondary)] border-[var(--border)]"
+            {displayBadges.map((badge, index) => (
+              <span
+                key={`${index}-${badge}`}
+                className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
               >
                 {badge}
-              </Badge>
+              </span>
             ))}
             {remainingCount > 0 && (
-              <Badge 
-                variant="outline" 
-                className="text-[var(--text-secondary)] border-[var(--border)]"
-              >
+              <span className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
                 +{remainingCount} more
-              </Badge>
+              </span>
             )}
           </div>
         </div>
