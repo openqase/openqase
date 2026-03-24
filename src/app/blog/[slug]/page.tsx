@@ -98,21 +98,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-6">{blogPost.title as string}</h1>
 
           <div className="flex items-center text-muted-foreground mb-6 text-base">
-            {blogPost.published_at && (
-              <span className="mr-6">{new Date(blogPost.published_at as string).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
+            {typeof blogPost.published_at === 'string' && (
+              <span className="mr-6">{new Date(blogPost.published_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
             )}
-            {blogPost.author && (
-              <span>By {blogPost.author as string}</span>
+            {typeof blogPost.author === 'string' && (
+              <span>By {blogPost.author}</span>
             )}
           </div>
 
-          {blogPost.category && (
+          {typeof blogPost.category === 'string' && (
             <Badge variant="outline" className="mr-2">
-              {blogPost.category as string}
+              {blogPost.category}
             </Badge>
           )}
 
-          {blogPost.tags && (blogPost.tags as string[]).map((tag: string) => (
+          {Array.isArray(blogPost.tags) && (blogPost.tags as string[]).map((tag: string) => (
             <Badge key={tag} variant="secondary" className="mr-2">
               {tag}
             </Badge>
