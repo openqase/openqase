@@ -148,7 +148,7 @@ export async function getCaseStudyRelationshipMap(
 
   const supabase = await createServiceRoleSupabaseClient();
 
-  // Fetch all junction rows in parallel (need both IDs to group by case_study_id)
+  // Cannot reuse getRelated* helpers here — we need case_study_id for grouping
   const [industryJunctions, algorithmJunctions, personaJunctions] = await Promise.all([
     fromTable(supabase, 'case_study_industry_relations')
       .select('case_study_id, industry_id')
@@ -160,6 +160,11 @@ export async function getCaseStudyRelationshipMap(
       .select('case_study_id, persona_id')
       .in('case_study_id', caseStudyIds),
   ]);
+
+  // Log junction query errors (matching getRelatedEntities pattern)
+  if (industryJunctions.error) console.error('Error fetching industry junctions:', industryJunctions.error);
+  if (algorithmJunctions.error) console.error('Error fetching algorithm junctions:', algorithmJunctions.error);
+  if (personaJunctions.error) console.error('Error fetching persona junctions:', personaJunctions.error);
 
   // Collect unique entity IDs
   const industryIds = [...new Set(
@@ -185,34 +190,43 @@ export async function getCaseStudyRelationshipMap(
       : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
   ]);
 
+  if (industries.error) console.error('Error fetching industries:', industries.error);
+  if (algorithms.error) console.error('Error fetching algorithms:', algorithms.error);
+  if (personas.error) console.error('Error fetching personas:', personas.error);
+
   // Build lookup maps
   const industryMap = new Map<string, RelatedEntity>((industries.data || []).map((e: any) => [e.id, e as RelatedEntity]));
   const algorithmMap = new Map<string, RelatedEntity>((algorithms.data || []).map((e: any) => [e.id, e as RelatedEntity]));
   const personaMap = new Map<string, RelatedEntity>((personas.data || []).map((e: any) => [e.id, e as RelatedEntity]));
 
-  // Group by case study ID
+  // Group by case study ID (deduplicate to guard against duplicate junction rows)
   const result: Record<string, CaseStudyRelationships> = {};
+  const seen: Record<string, { industries: Set<string>; algorithms: Set<string>; personas: Set<string> }> = {};
   for (const id of caseStudyIds) {
     result[id] = { industries: [], algorithms: [], personas: [] };
+    seen[id] = { industries: new Set(), algorithms: new Set(), personas: new Set() };
   }
 
   for (const row of (industryJunctions.data || []) as any[]) {
     const entity = industryMap.get(row.industry_id);
-    if (entity && result[row.case_study_id]) {
+    if (entity && result[row.case_study_id] && !seen[row.case_study_id].industries.has(row.industry_id)) {
+      seen[row.case_study_id].industries.add(row.industry_id);
       result[row.case_study_id].industries.push(entity);
     }
   }
 
   for (const row of (algorithmJunctions.data || []) as any[]) {
     const entity = algorithmMap.get(row.algorithm_id);
-    if (entity && result[row.case_study_id]) {
+    if (entity && result[row.case_study_id] && !seen[row.case_study_id].algorithms.has(row.algorithm_id)) {
+      seen[row.case_study_id].algorithms.add(row.algorithm_id);
       result[row.case_study_id].algorithms.push(entity);
     }
   }
 
   for (const row of (personaJunctions.data || []) as any[]) {
     const entity = personaMap.get(row.persona_id);
-    if (entity && result[row.case_study_id]) {
+    if (entity && result[row.case_study_id] && !seen[row.case_study_id].personas.has(row.persona_id)) {
+      seen[row.case_study_id].personas.add(row.persona_id);
       result[row.case_study_id].personas.push(entity);
     }
   }
