@@ -40,7 +40,8 @@ export default async function HomePage() {
     partnerCompanies,
     blogPostsData,
     latestCaseStudiesData,
-    featuredData
+    featuredData,
+    featuredBlogData
   ] = await Promise.all([
     getBuildTimeContentList('case_studies', { filters: publishedFilter }),
     getBuildTimeContentList('algorithms', { filters: publishedFilter }),
@@ -52,20 +53,26 @@ export default async function HomePage() {
     getBuildTimeContentList('partner_companies', { filters: publishedFilter }),
     getBuildTimeContentList('blog_posts', { filters: publishedFilter, limit: 5 }),
     getBuildTimeContentList('case_studies', { filters: publishedFilter, limit: 5 }),
-    getBuildTimeContentList('case_studies', { filters: { ...publishedFilter, featured: true }, limit: 1 })
+    getBuildTimeContentList('case_studies', { filters: { ...publishedFilter, featured: true }, limit: 1 }),
+    getBuildTimeContentList('blog_posts', { filters: { ...publishedFilter, featured: true }, limit: 1 })
   ]);
 
   // Type the blog posts and latest case studies properly
   const blogPosts = blogPostsData as BlogPost[];
   const latestCaseStudies = latestCaseStudiesData as DbCaseStudy[];
   const featuredCaseStudyData = featuredData as DbCaseStudy[];
+  const featuredBlogPostData = featuredBlogData as BlogPost[];
 
-  // Use explicitly featured case study, or fall back to most recent
+  // Use explicitly featured items, or fall back to most recent
   const featuredCaseStudy = featuredCaseStudyData[0] || latestCaseStudies[0] || null;
-  // Remove featured from the regular list to avoid duplication
+  const featuredBlogPost = featuredBlogPostData[0] || blogPosts[0] || null;
+  // Remove featured from regular lists to avoid duplication
   const regularCaseStudies = featuredCaseStudy
     ? latestCaseStudies.filter(cs => cs.id !== featuredCaseStudy.id)
     : latestCaseStudies;
+  const regularBlogPosts = featuredBlogPost
+    ? blogPosts.filter(p => p.id !== featuredBlogPost.id)
+    : blogPosts;
 
   const allDisplayedIds = [
     ...(featuredCaseStudy ? [featuredCaseStudy.id] : []),
@@ -163,7 +170,12 @@ export default async function HomePage() {
             <LatestList
               title="Latest Blog Posts"
               viewAllHref="/blog"
-              items={blogPosts.map((post) => ({
+              featured={featuredBlogPost ? {
+                title: featuredBlogPost.title,
+                description: featuredBlogPost.description || 'Read more about this topic.',
+                href: `/blog/${featuredBlogPost.slug}`,
+              } : undefined}
+              items={regularBlogPosts.map((post) => ({
                 title: post.title,
                 description: post.description || 'Read more about this topic.',
                 href: `/blog/${post.slug}`,
