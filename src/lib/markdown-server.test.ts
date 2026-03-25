@@ -93,4 +93,24 @@ describe('processMarkdown', () => {
     expect(result).toContain('<h1>Title</h1>')
     expect(result).toContain('<h2>Subtitle</h2>')
   })
+
+  it('sanitizes script tags from HTML content', async () => {
+    const { processMarkdown } = await getModule()
+    const result = processMarkdown('<script>alert("xss")</script>')
+    expect(result).not.toContain('<script>')
+    expect(result).not.toContain('alert')
+  })
+
+  it('sanitizes event handlers from HTML content', async () => {
+    const { processMarkdown } = await getModule()
+    const result = processMarkdown('<img src="x" onerror="alert(1)">')
+    expect(result).not.toContain('onerror')
+  })
+
+  it('allows safe iframe embeds', async () => {
+    const { processMarkdown } = await getModule()
+    const result = processMarkdown('<iframe src="https://example.com" allowfullscreen></iframe>')
+    expect(result).toContain('<iframe')
+    expect(result).toContain('src="https://example.com"')
+  })
 })

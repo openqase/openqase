@@ -1,100 +1,25 @@
-'use server';
+'use server'
 
-import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
-import { revalidatePath } from 'next/cache';
-import { TablesInsert } from '@/types/supabase';
+import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 
-interface QuantumHardwareFormData extends Omit<TablesInsert<'quantum_hardware'>, 'id'> {
-  id?: string;
-}
-
-export async function saveQuantumHardware(values: QuantumHardwareFormData): Promise<TablesInsert<'quantum_hardware'>> {
-  try {
-    const supabase = createServiceRoleSupabaseClient();
-    const { data, error } = await supabase
-      .from('quantum_hardware')
-      .upsert({
-        id: values.id,
-        name: values.name,
-        slug: values.slug,
-        description: values.description,
-        main_content: values.main_content,
-        vendor: values.vendor,
-        technology_type: values.technology_type,
-        qubit_count: values.qubit_count,
-        connectivity: values.connectivity,
-        gate_fidelity: values.gate_fidelity,
-        coherence_time: values.coherence_time,
-        availability: values.availability,
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error saving quantum hardware:", error);
-      throw new Error(error.message || "Failed to save quantum hardware");
-    }
-    
-    revalidatePath('/admin/quantum-hardware');
-    revalidatePath('/paths/quantum-hardware');
-    if (data?.slug) {
-      revalidatePath(`/paths/quantum-hardware/${data.slug}`);
-    }
-    
-    return data;
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Error saving quantum hardware:", message);
-    throw new Error(message || "Failed to save quantum hardware");
+export async function saveQuantumHardware(values: any) {
+  const { id, ...data } = values
+  if (id) {
+    const result = await updateContent('quantum-hardware', id, data)
+    if (result.error) throw new Error(result.error)
+    return result.data
   }
+  const result = await createContent('quantum-hardware', data)
+  if (result.error) throw new Error(result.error)
+  return result.data
 }
 
 export async function publishQuantumHardware(id: string): Promise<void> {
-  try {
-    const supabase = createServiceRoleSupabaseClient();
-    const { data, error } = await supabase
-      .from('quantum_hardware')
-      .update({ published: true })
-      .eq('id', id)
-      .select('slug')
-      .single();
-
-    if (error) {
-      throw error;
-    }
-    revalidatePath('/admin/quantum-hardware');
-    revalidatePath('/paths/quantum-hardware');
-    if (data?.slug) {
-      revalidatePath(`/paths/quantum-hardware/${data.slug}`);
-    }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Error publishing quantum hardware:", message);
-    throw new Error(message || "Failed to publish quantum hardware");
-  }
+  const result = await publishContent('quantum-hardware', id)
+  if (!result.success) throw new Error(result.error || 'Failed to publish')
 }
 
 export async function unpublishQuantumHardware(id: string): Promise<void> {
-  try {
-    const supabase = createServiceRoleSupabaseClient();
-    const { data, error } = await supabase
-      .from('quantum_hardware')
-      .update({ published: false })
-      .eq('id', id)
-      .select('slug')
-      .single();
-
-    if (error) {
-      throw error;
-    }
-    revalidatePath('/admin/quantum-hardware');
-    revalidatePath('/paths/quantum-hardware');
-    if (data?.slug) {
-      revalidatePath(`/paths/quantum-hardware/${data.slug}`);
-    }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("Error unpublishing quantum hardware:", message);
-    throw new Error(message || "Failed to unpublish quantum hardware");
-  }
+  const result = await unpublishContent('quantum-hardware', id)
+  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
 }

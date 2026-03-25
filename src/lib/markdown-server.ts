@@ -1,24 +1,6 @@
 import { cache } from 'react';
 import MarkdownIt from 'markdown-it';
-
-/**
- * SECURITY NOTE: XSS Risk Assessment
- * 
- * This markdown renderer has `html: true` which allows raw HTML in markdown content.
- * This is a KNOWN and ACCEPTED security risk because:
- * 
- * 1. SINGLE AUTHOR SYSTEM - Only one trusted admin creates content
- * 2. NO USER-GENERATED CONTENT - All content is authored internally
- * 3. REQUIRED FOR FEATURES - HTML support needed for rich content formatting
- * 4. ADMIN-ONLY ACCESS - Content creation restricted to authenticated admin
- * 
- * If this changes to multi-author or user-generated content, implement DOMPurify:
- * - npm install isomorphic-dompurify
- * - Sanitize HTML before rendering with dangerouslySetInnerHTML
- * 
- * This is NOT a vulnerability in the current single-author architecture.
- * Do not report as security issue without understanding the context.
- */
+import DOMPurify from 'isomorphic-dompurify';
 
 // Create a singleton instance of MarkdownIt with the same configuration used across all pages
 let mdInstance: MarkdownIt | null = null;
@@ -85,7 +67,12 @@ export const processMarkdown = cache((content: string | null | undefined): strin
   
   const md = getMarkdownInstance();
   const preprocessedContent = preprocessMarkdown(content);
-  return md.render(preprocessedContent);
+  const rawHtml = md.render(preprocessedContent);
+  return DOMPurify.sanitize(rawHtml, {
+    ADD_TAGS: ['iframe'],
+    ADD_ATTR: ['target', 'rel', 'class', 'id', 'allowfullscreen', 'frameborder', 'src'],
+    ALLOW_DATA_ATTR: false,
+  });
 });
 
 /**

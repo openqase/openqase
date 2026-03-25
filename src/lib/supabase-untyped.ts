@@ -6,6 +6,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
  * Remove this when database.types.ts is regenerated with all tables.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function fromTable(client: SupabaseClient, table: string) {
+export function fromTable(client: SupabaseClient, table: string): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return client.from(table as any)
 }

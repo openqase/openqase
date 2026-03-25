@@ -14,16 +14,16 @@ if (fs.existsSync(envPath)) {
   console.log('Updating existing .env.local file...');
   let envContent = fs.readFileSync(envPath, 'utf8');
   
-  // Check if NEXT_PUBLIC_DEV_MODE is already set
-  if (envContent.includes('NEXT_PUBLIC_DEV_MODE=')) {
+  // Check if DEV_MODE_AUTH_BYPASS is already set
+  if (envContent.includes('DEV_MODE_AUTH_BYPASS=')) {
     // Update the value
     envContent = envContent.replace(
-      /NEXT_PUBLIC_DEV_MODE=.*/,
-      'NEXT_PUBLIC_DEV_MODE=true'
+      /DEV_MODE_AUTH_BYPASS=.*/,
+      'DEV_MODE_AUTH_BYPASS=true'
     );
   } else {
     // Add the variable
-    envContent += '\n# Development Mode - Set to true to bypass authentication on localhost\nNEXT_PUBLIC_DEV_MODE=true\n';
+    envContent += '\n# Development Mode - Set to true to bypass authentication on localhost\nDEV_MODE_AUTH_BYPASS=true\n';
   }
   
   // Write the updated content
@@ -33,7 +33,7 @@ if (fs.existsSync(envPath)) {
   
   // Create minimal .env.local file
   const envContent = `# Development Mode - Set to true to bypass authentication on localhost
-NEXT_PUBLIC_DEV_MODE=true
+DEV_MODE_AUTH_BYPASS=true
 
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
