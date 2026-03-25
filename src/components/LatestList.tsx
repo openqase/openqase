@@ -35,7 +35,7 @@ export function LatestList({ title, viewAllHref, viewAllCount, items }: LatestLi
       <div className="divide-y divide-border">
         {items.map((item) => (
           <Link key={item.href} href={item.href} className="block group py-5 first:pt-0">
-            <h3 className="font-heading text-base md:text-lg font-semibold leading-snug mb-1.5 group-hover:text-primary transition-colors">
+            <h3 className="font-heading text-base md:text-lg font-semibold leading-snug mb-1.5 line-clamp-2 group-hover:text-primary transition-colors">
               {item.title}
             </h3>
             <p className="text-sm text-muted-foreground line-clamp-1 mb-3">
