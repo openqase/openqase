@@ -83,14 +83,14 @@ export default async function HomePage() {
     : {};
 
   const stats = [
-    { label: 'Case Studies', count: caseStudies.length },
-    { label: 'Algorithms', count: algorithms.length },
-    { label: 'Industries', count: industries.length },
-    { label: 'Roles', count: personas.length },
-    { label: 'Software', count: quantumSoftware.length },
-    { label: 'Hardware', count: quantumHardware.length },
-    { label: 'Companies', count: quantumCompanies.length },
-    { label: 'Partners', count: partnerCompanies.length },
+    { label: 'Case Studies', count: caseStudies.length, href: '/case-study' },
+    { label: 'Algorithms', count: algorithms.length, href: '/paths/algorithm' },
+    { label: 'Industries', count: industries.length, href: '/paths/industry' },
+    { label: 'Roles', count: personas.length, href: '/paths/persona' },
+    { label: 'Software', count: quantumSoftware.length, href: '/paths/quantum-software' },
+    { label: 'Hardware', count: quantumHardware.length, href: '/paths/quantum-hardware' },
+    { label: 'Companies', count: quantumCompanies.length, href: '/paths/quantum-companies' },
+    { label: 'Partners', count: partnerCompanies.length, href: '/paths/partner-companies' },
   ];
 
   return (
@@ -120,14 +120,14 @@ export default async function HomePage() {
           <div className="max-w-3xl mx-auto border-y border-border py-4">
             <div className="grid grid-cols-4 gap-y-4">
               {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
+                <Link key={stat.label} href={stat.href} className="text-center group">
                   <div className="text-2xl md:text-3xl font-bold text-primary">
                     {stat.count}
                   </div>
-                  <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">
+                  <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5 group-hover:text-primary transition-colors">
                     {stat.label}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
