@@ -2,6 +2,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { Source_Serif_4 } from 'next/font/google';
 import Navigation from '@/components/Navigation';
 import { Toaster } from '@/components/ui/toaster';
 import FooterWrapper from '@/components/FooterWrapper';
@@ -12,31 +13,10 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AutoSchema } from '@/components/AutoSchema';
 import ScrollToTop from '@/components/ScrollToTop';
 
-// Load Montserrat locally for headings
-const montserrat = localFont({
-  src: [
-    {
-      path: '../../public/fonts/montserrat-400.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/montserrat-500.woff2',
-      weight: '500',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/montserrat-600.woff2',
-      weight: '600',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/montserrat-700.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-montserrat',
+// Load Source Serif 4 from Google Fonts for headings
+const sourceSerif4 = Source_Serif_4({
+  subsets: ['latin'],
+  variable: '--font-source-serif',
   display: 'swap',
 });
 
@@ -113,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${montserrat.variable} ${openSans.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${sourceSerif4.variable} ${openSans.variable}`}>
       <body className="min-h-screen antialiased">
         {/* Ghost-style automatic schema - invisible to content creators */}
         <AutoSchema type="organization" />

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Typography**: Replaced Montserrat with Source Serif 4 serif font for headings, giving the site an editorial feel
+- **Homepage**: Redesigned stats ribbon as horizontal row, added featured case study card, replaced card grids with text lists
+- **Case Study Listing**: Added sidebar faceted filters with checkbox filtering by Industry, Algorithm, and Role with counts
+- **Content Cards**: Updated badge styling to amber pill design showing related industries and algorithms
+
 ### Added
 - **Config-Driven CMS Engine**: New `src/cms/` module replaces 9 duplicated content type implementations with a unified system. Content types are defined declaratively via `defineContentType()` with auto-generated Zod schemas, generic CRUD operations, relationship management, and ISR revalidation. All 9 types (algorithms, case studies, industries, personas, blog posts, quantum software/hardware/companies, partner companies) now share ~500 lines of engine code instead of ~4,000 lines of per-type boilerplate.
 

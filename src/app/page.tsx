@@ -1,50 +1,35 @@
 // src/app/page.tsx
 import Link from 'next/link';
 import {
-  User,
-  Building2,
-  CircuitBoard,
-  ArrowRight,
   Github,
   Users,
-  BookOpen,
-  Database,
-  ExternalLink,
-  Code,
-  Cpu,
-  Factory,
-  Handshake
 } from 'lucide-react';
 import { AutoSchema } from '@/components/AutoSchema';
 import { SOCIAL_LINKS } from '@/lib/external-links';
 import SearchCard from '@/components/SearchCard';
 import NewsletterSignup from '@/components/NewsletterSignup';
-import { getBuildTimeContentList, fetchSearchData, getStaticContentList } from '@/lib/content-fetchers';
+import { FeaturedCaseStudy } from '@/components/FeaturedCaseStudy';
+import { LatestList } from '@/components/LatestList';
+import { getBuildTimeContentList, fetchSearchData } from '@/lib/content-fetchers';
+import { getCaseStudyRelationshipMap } from '@/lib/relationship-queries';
 import type { BlogPost, DbCaseStudy } from '@/lib/types';
 import { draftMode } from 'next/headers';
 
 // Force this page to be statically generated at build time
 export const dynamic = 'force-static'
 
-interface CategoryStats {
-  title: string;
-  count: number;
-  icon: React.ReactNode;
-  href: string;
-}
-
 
 export default async function HomePage() {
   // Check if we're in preview mode
   const { isEnabled: isPreview } = await draftMode();
-  
+
   // Fetch optimized search data (streamlined payload for performance)
   const searchData = await fetchSearchData();
 
   // Get actual content counts from database
   // In preview mode, show all content including drafts
   const publishedFilter = isPreview ? {} : { published: true };
-  
+
   const [
     caseStudies,
     algorithms,
@@ -73,75 +58,29 @@ export default async function HomePage() {
   const blogPosts = blogPostsData as BlogPost[];
   const latestCaseStudies = latestCaseStudiesData as DbCaseStudy[];
 
-  // Primary content stats
-  const primaryStats: CategoryStats[] = [
-    {
-      title: "Case Studies",
-      count: caseStudies.length,
-      icon: <BookOpen className="w-4 h-4" />,
-      href: "/case-study"
-    },
-    {
-      title: "Algorithms",
-      count: algorithms.length,
-      icon: <CircuitBoard className="w-4 h-4" />,
-      href: "/paths/algorithm"
-    },
-    {
-      title: "Industries",
-      count: industries.length,
-      icon: <Building2 className="w-4 h-4" />,
-      href: "/paths/industry"
-    },
-    {
-      title: "Roles",
-      count: personas.length,
-      icon: <User className="w-4 h-4" />,
-      href: "/paths/persona"
-    }
-  ];
+  const caseStudyIds = latestCaseStudies.map(cs => cs.id);
+  const relationshipMap = caseStudyIds.length > 0
+    ? await getCaseStudyRelationshipMap(caseStudyIds)
+    : {};
 
-  // Ecosystem stats (new content types)
-  const ecosystemStats: CategoryStats[] = [
-    {
-      title: "Software",
-      count: quantumSoftware.length,
-      icon: <Code className="w-4 h-4" />,
-      href: "/paths/quantum-software"
-    },
-    {
-      title: "Hardware",
-      count: quantumHardware.length,
-      icon: <Cpu className="w-4 h-4" />,
-      href: "/paths/quantum-hardware"
-    },
-    {
-      title: "Companies",
-      count: quantumCompanies.length,
-      icon: <Factory className="w-4 h-4" />,
-      href: "/paths/quantum-companies"
-    },
-    {
-      title: "Partners",
-      count: partnerCompanies.length,
-      icon: <Handshake className="w-4 h-4" />,
-      href: "/paths/partner-companies"
-    }
+  const stats = [
+    { label: 'Case Studies', count: caseStudies.length },
+    { label: 'Algorithms', count: algorithms.length },
+    { label: 'Industries', count: industries.length },
+    { label: 'Roles', count: personas.length },
   ];
 
   return (
     <div className="flex flex-col">
-      {/* Automatic schema markup for SEO */}
       <AutoSchema type="organization" />
       <AutoSchema type="website" />
       <AutoSchema type="faq" />
-      
-      {/* Clean Hero Section - Search First */}
+
+      {/* Hero Section - Search First */}
       <section className="relative bg-background">
         <div className="max-w-4xl mx-auto px-4 pt-12 pb-8 md:pt-16 md:pb-12">
-          {/* Centered Header */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground tracking-tight mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight mb-4">
               Quantum Computing Case Studies
             </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -150,111 +89,97 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* Search Bar - Prominent & Wide */}
           <div className="max-w-3xl mx-auto mb-10">
             <SearchCard searchData={searchData} />
           </div>
 
-          {/* Stats - Symmetrical 4x2 Grid */}
-          <div className="max-w-2xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3">
-              {[...primaryStats, ...ecosystemStats].map((stat) => (
-                <Link
-                  key={stat.title}
-                  href={stat.href}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-card border border-border rounded-lg text-sm hover:border-primary hover:bg-primary/5 transition-colors group whitespace-nowrap"
-                >
-                  <span className="text-muted-foreground group-hover:text-primary">{stat.icon}</span>
-                  <span className="font-medium text-primary">{stat.count}</span>
-                  <span className="text-muted-foreground">{stat.title}</span>
-                </Link>
+          {/* Stats Ribbon — horizontal row between rules */}
+          <div className="max-w-3xl mx-auto">
+            <div className="flex justify-center gap-8 md:gap-12 py-4 border-y border-border">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-primary">
+                    {stat.count}
+                  </div>
+                  <div className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">
+                    {stat.label}
+                  </div>
+                </div>
               ))}
             </div>
+            <p className="text-center text-sm text-muted-foreground mt-3">
+              Covering {quantumSoftware.length} software tools · {quantumHardware.length} hardware platforms · {quantumCompanies.length} companies · {partnerCompanies.length} partners
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Featured Content Section */}
+      {/* Featured Case Study */}
+      {latestCaseStudies.length > 0 && (() => {
+        const featured = latestCaseStudies[0];
+        const featuredRels = relationshipMap[featured.id];
+        const featuredPills = featuredRels
+          ? [...featuredRels.industries.map(i => i.name), ...featuredRels.algorithms.map(a => a.name)].slice(0, 4)
+          : [];
+        return (
+          <section className="px-4 pb-8">
+            <div className="max-w-4xl mx-auto">
+              <FeaturedCaseStudy
+                title={featured.title}
+                description={featured.description || 'Explore this quantum computing implementation.'}
+                slug={featured.slug}
+                pills={featuredPills}
+              />
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Latest Sections — text lists */}
       <section className="py-12 md:py-16 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Latest Case Studies */}
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-foreground">Latest Case Studies</h2>
-                <Link href="/case-study" className="inline-flex items-center text-primary hover:underline text-sm font-medium">
-                  View all {caseStudies.length}
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-              </div>
+            <LatestList
+              title="Latest Case Studies"
+              viewAllHref="/case-study"
+              viewAllCount={caseStudies.length}
+              items={latestCaseStudies.slice(1).map((cs) => {
+                const rels = relationshipMap[cs.id];
+                const pills = rels
+                  ? [...rels.industries.map(i => i.name), ...rels.algorithms.map(a => a.name)].slice(0, 3)
+                  : [];
+                return {
+                  title: cs.title,
+                  description: cs.description || 'Explore this quantum computing implementation.',
+                  href: `/case-study/${cs.slug}`,
+                  pills,
+                };
+              })}
+            />
 
-              <div className="space-y-3">
-                {latestCaseStudies.length > 0 ? (
-                  latestCaseStudies.map((caseStudy) => (
-                    <Link key={caseStudy.id} href={`/case-study/${caseStudy.slug}`} className="block group">
-                      <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center elevation-interactive hover:border-primary">
-                        <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                          {caseStudy.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                          {caseStudy.description || 'Explore this quantum computing implementation.'}
-                        </p>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center">
-                    <p className="text-sm text-muted-foreground">Case studies coming soon.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Latest Blog Posts */}
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-foreground">Latest Blog Posts</h2>
-                <Link href="/blog" className="inline-flex items-center text-primary hover:underline text-sm font-medium">
-                  View all
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                {blogPosts.length > 0 ? (
-                  blogPosts.map((blogPost) => (
-                    <Link key={blogPost.id} href={`/blog/${blogPost.slug}`} className="block group">
-                      <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center elevation-interactive hover:border-primary">
-                        <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                          {blogPost.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                          {blogPost.description || 'Read more about this topic.'}
-                        </p>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="bg-card rounded-lg border border-border px-5 py-4 h-[140px] flex flex-col justify-center">
-                    <p className="text-sm text-muted-foreground">Blog posts coming soon.</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <LatestList
+              title="Latest Blog Posts"
+              viewAllHref="/blog"
+              items={blogPosts.map((post) => ({
+                title: post.title,
+                description: post.description || 'Read more about this topic.',
+                href: `/blog/${post.slug}`,
+                meta: post.published_at
+                  ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : undefined,
+              }))}
+            />
           </div>
         </div>
       </section>
 
-      {/* Newsletter & Community */}
+      {/* Newsletter & Community — unchanged */}
       <section className="py-12 md:py-16 px-4 bg-muted/30 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            {/* Newsletter */}
             <div>
               <NewsletterSignup />
             </div>
-
-            {/* Community Links */}
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-6">Open Source & Community</h2>
               <div className="space-y-4">
@@ -271,7 +196,6 @@ export default async function HomePage() {
                   </div>
                   <span className="sr-only">(opens in new tab)</span>
                 </Link>
-
                 <Link
                   href="/contact"
                   className="flex items-center gap-4 bg-card rounded-lg border border-border px-5 py-4 elevation-interactive hover:border-primary group"
@@ -287,7 +211,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }
