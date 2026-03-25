@@ -39,7 +39,8 @@ export default async function HomePage() {
     quantumCompanies,
     partnerCompanies,
     blogPostsData,
-    latestCaseStudiesData
+    latestCaseStudiesData,
+    featuredData
   ] = await Promise.all([
     getBuildTimeContentList('case_studies', { filters: publishedFilter }),
     getBuildTimeContentList('algorithms', { filters: publishedFilter }),
@@ -50,16 +51,28 @@ export default async function HomePage() {
     getBuildTimeContentList('quantum_companies', { filters: publishedFilter }),
     getBuildTimeContentList('partner_companies', { filters: publishedFilter }),
     getBuildTimeContentList('blog_posts', { filters: publishedFilter, limit: 5 }),
-    getBuildTimeContentList('case_studies', { filters: publishedFilter, limit: 5 })
+    getBuildTimeContentList('case_studies', { filters: publishedFilter, limit: 5 }),
+    getBuildTimeContentList('case_studies', { filters: { ...publishedFilter, featured: true }, limit: 1 })
   ]);
 
   // Type the blog posts and latest case studies properly
   const blogPosts = blogPostsData as BlogPost[];
   const latestCaseStudies = latestCaseStudiesData as DbCaseStudy[];
+  const featuredCaseStudyData = featuredData as DbCaseStudy[];
 
-  const caseStudyIds = latestCaseStudies.map(cs => cs.id);
-  const relationshipMap = caseStudyIds.length > 0
-    ? await getCaseStudyRelationshipMap(caseStudyIds)
+  // Use explicitly featured case study, or fall back to most recent
+  const featuredCaseStudy = featuredCaseStudyData[0] || latestCaseStudies[0] || null;
+  // Remove featured from the regular list to avoid duplication
+  const regularCaseStudies = featuredCaseStudy
+    ? latestCaseStudies.filter(cs => cs.id !== featuredCaseStudy.id)
+    : latestCaseStudies;
+
+  const allDisplayedIds = [
+    ...(featuredCaseStudy ? [featuredCaseStudy.id] : []),
+    ...regularCaseStudies.map(cs => cs.id),
+  ];
+  const relationshipMap = allDisplayedIds.length > 0
+    ? await getCaseStudyRelationshipMap(allDisplayedIds)
     : {};
 
   const stats = [
@@ -121,20 +134,19 @@ export default async function HomePage() {
               title="Latest Case Studies"
               viewAllHref="/case-study"
               viewAllCount={caseStudies.length}
-              featured={latestCaseStudies.length > 0 ? (() => {
-                const featured = latestCaseStudies[0];
-                const featuredRels = relationshipMap[featured.id];
+              featured={featuredCaseStudy ? (() => {
+                const featuredRels = relationshipMap[featuredCaseStudy.id];
                 const featuredPills = featuredRels
                   ? [...featuredRels.industries.map(i => i.name), ...featuredRels.algorithms.map(a => a.name)].slice(0, 4)
                   : [];
                 return {
-                  title: featured.title,
-                  description: featured.description || 'Explore this quantum computing implementation.',
-                  href: `/case-study/${featured.slug}`,
+                  title: featuredCaseStudy.title,
+                  description: featuredCaseStudy.description || 'Explore this quantum computing implementation.',
+                  href: `/case-study/${featuredCaseStudy.slug}`,
                   pills: featuredPills,
                 };
               })() : undefined}
-              items={latestCaseStudies.slice(1).map((cs) => {
+              items={regularCaseStudies.map((cs) => {
                 const rels = relationshipMap[cs.id];
                 const pills = rels
                   ? [...rels.industries.map(i => i.name), ...rels.algorithms.map(a => a.name)].slice(0, 3)
