@@ -35,6 +35,10 @@ export default async function HomePage() {
     algorithms,
     industries,
     personas,
+    quantumSoftware,
+    quantumHardware,
+    quantumCompanies,
+    partnerCompanies,
     blogPostsData,
     latestCaseStudiesData
   ] = await Promise.all([
@@ -42,6 +46,10 @@ export default async function HomePage() {
     getBuildTimeContentList('algorithms', { filters: publishedFilter }),
     getBuildTimeContentList('industries', { filters: publishedFilter }),
     getBuildTimeContentList('personas', { filters: publishedFilter }),
+    getBuildTimeContentList('quantum_software', { filters: publishedFilter }),
+    getBuildTimeContentList('quantum_hardware', { filters: publishedFilter }),
+    getBuildTimeContentList('quantum_companies', { filters: publishedFilter }),
+    getBuildTimeContentList('partner_companies', { filters: publishedFilter }),
     getBuildTimeContentList('blog_posts', { filters: publishedFilter, limit: 5 }),
     getBuildTimeContentList('case_studies', { filters: publishedFilter, limit: 5 })
   ]);
@@ -86,7 +94,7 @@ export default async function HomePage() {
           </div>
 
           {/* Stats Ribbon — horizontal row between rules */}
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <div className="flex justify-center gap-8 md:gap-12 py-4 border-y border-border">
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
@@ -99,6 +107,9 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
+            <p className="text-center text-sm text-muted-foreground mt-3">
+              Covering {quantumSoftware.length} software tools · {quantumHardware.length} hardware platforms · {quantumCompanies.length} companies · {partnerCompanies.length} partners
+            </p>
           </div>
         </div>
       </section>
