@@ -87,6 +87,10 @@ export default async function HomePage() {
     { label: 'Algorithms', count: algorithms.length },
     { label: 'Industries', count: industries.length },
     { label: 'Roles', count: personas.length },
+    { label: 'Software', count: quantumSoftware.length },
+    { label: 'Hardware', count: quantumHardware.length },
+    { label: 'Companies', count: quantumCompanies.length },
+    { label: 'Partners', count: partnerCompanies.length },
   ];
 
   return (
@@ -112,23 +116,20 @@ export default async function HomePage() {
             <SearchCard searchData={searchData} />
           </div>
 
-          {/* Stats Ribbon — horizontal row between rules */}
-          <div className="max-w-3xl mx-auto">
-            <div className="flex justify-center gap-8 md:gap-12 py-4 border-y border-border">
+          {/* Stats Grid — two equal rows of 4 */}
+          <div className="max-w-3xl mx-auto border-y border-border py-4">
+            <div className="grid grid-cols-4 gap-y-4">
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-2xl md:text-3xl font-bold text-primary">
                     {stat.count}
                   </div>
-                  <div className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">
+                  <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">
                     {stat.label}
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-center text-sm text-muted-foreground mt-3">
-              Covering {quantumSoftware.length} software tools · {quantumHardware.length} hardware platforms · {quantumCompanies.length} companies · {partnerCompanies.length} partners
-            </p>
           </div>
         </div>
       </section>
