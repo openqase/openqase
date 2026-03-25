@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Typography**: Replaced Montserrat with Source Serif 4 serif font for headings, giving the site an editorial feel
-- **Homepage**: Redesigned stats ribbon as horizontal row, added featured case study card, replaced card grids with text lists
+- **Homepage**: Redesigned stats ribbon as horizontal row, integrated featured case study as top-of-feed in Latest Case Studies column (Verge-inspired), replaced card grids with text lists
 - **Case Study Listing**: Added sidebar faceted filters with checkbox filtering by Industry, Algorithm, and Role with counts
 - **Content Cards**: Updated badge styling to amber pill design showing related industries and algorithms
 
