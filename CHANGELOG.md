@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Dependency Audit**: Fixed 4 CVEs — picomatch (high: ReDoS + method injection), brace-expansion (moderate: hang/memory exhaustion), serialize-javascript (moderate: CPU exhaustion DoS)
+- **Dependency Updates**: Updated 17 packages to latest minor/patch versions including Next.js 16.2.2, Sentry 10.47, Supabase 2.101, Vitest 4.1, Framer Motion 12.38, isomorphic-dompurify 3.7
+
 ### Changed
 - **Typography**: Replaced Montserrat with Source Serif 4 serif font for headings, giving the site an editorial feel
 - **Homepage**: Redesigned stats ribbon as horizontal row, integrated featured case study as top-of-feed in Latest Case Studies column (Verge-inspired), replaced card grids with text lists

@@ -128,3 +128,4 @@ src/.cursor/
 
 # Git worktrees
 .worktrees/
+.superpowers/
