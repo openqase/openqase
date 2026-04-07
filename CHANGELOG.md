@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - **Dependency Audit**: Fixed 4 CVEs — picomatch (high: ReDoS + method injection), brace-expansion (moderate: hang/memory exhaustion), serialize-javascript (moderate: CPU exhaustion DoS)
+- **Vite Dev Server**: Pinned Vite to ^7.3.2 via override to patch 3 dev-server advisories (arbitrary file read via WebSocket, `server.fs.deny` bypass, path traversal in optimized deps `.map` handling)
 - **Dependency Updates**: Updated 17 packages to latest minor/patch versions including Next.js 16.2.2, Sentry 10.47, Supabase 2.101, Vitest 4.1, Framer Motion 12.38, isomorphic-dompurify 3.7
 
 ### Changed
