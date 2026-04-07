@@ -140,7 +140,7 @@ export async function fetchContentItem({
         
       if (!relationsError && relations) {
         // Extract the related items
-        const relatedItems = relations.map(relation => relation[relatedTable as keyof typeof relation]);
+        const relatedItems = relations.map((relation: Record<string, unknown>) => relation[relatedTable]);
         (item as Record<string, unknown>)[`related_${relatedTable}`] = relatedItems;
       }
     }

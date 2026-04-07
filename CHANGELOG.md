@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Dependency Audit**: Fixed 4 CVEs — picomatch (high: ReDoS + method injection), brace-expansion (moderate: hang/memory exhaustion), serialize-javascript (moderate: CPU exhaustion DoS)
+- **Dependency Updates**: Updated 17 packages to latest minor/patch versions including Next.js 16.2.2, Sentry 10.47, Supabase 2.101, Vitest 4.1, Framer Motion 12.38, isomorphic-dompurify 3.7
+
 ### Changed
+- **Typography**: Replaced Montserrat with Source Serif 4 serif font for headings, giving the site an editorial feel
+- **Homepage**: Redesigned stats ribbon as horizontal row, integrated featured case study as top-of-feed in Latest Case Studies column (Verge-inspired), replaced card grids with text lists
+- **Case Study Listing**: Added sidebar faceted filters with checkbox filtering by Industry, Algorithm, and Role with counts
+- **Content Cards**: Updated badge styling to amber pill design showing related industries and algorithms
+
+### Added
+- **Config-Driven CMS Engine**: New `src/cms/` module replaces 9 duplicated content type implementations with a unified system. Content types are defined declaratively via `defineContentType()` with auto-generated Zod schemas, generic CRUD operations, relationship management, and ISR revalidation. All 9 types (algorithms, case studies, industries, personas, blog posts, quantum software/hardware/companies, partner companies) now share ~500 lines of engine code instead of ~4,000 lines of per-type boilerplate.
+
+### Changed
+- **All Content Types CMS Migration**: Migrated all 9 content types to the CMS engine — admin server actions reduced to thin wrappers (~30 lines each), API routes simplified to use generic operations, public detail pages use flat relationship shapes instead of nested junction-table structures
+- **Case Studies Bulk Delete Fix**: Bulk delete now cleans all 7 relationship junction tables (was only cleaning 3)
+
+
 - **ISR Revalidation Interval**: Increased ISR safety net from 1 hour to 24 hours across all 18 pages to reduce Vercel ISR write usage (on-demand revalidation still handles CMS changes instantly)
 - **Sentry Sampling Rates**: Reduced client and edge performance trace sampling from 100% to 10% in production; disabled general session replay (error session replay remains at 100%)
 
@@ -28,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Message Sanitization**: Removed `error.message` leaks from 8 API routes — generic messages to clients, full details logged server-side only
 - **Defense-in-Depth**: Added `requireAdmin()` checks to audit-log export and all admin API write routes (17 route handlers) as defense-in-depth beyond middleware
 - **Script Injection**: Escaped `</script>` breakout in AutoSchema JSON-LD output via `\u003c` encoding
+- **Dependency Patches**: Updated Next.js to 16.2.1 (fixes CSRF bypass, request smuggling, DoS), flatted (prototype pollution), tar to 7.5.12 (symlink traversal) — 0 vulnerabilities remaining
+- **CSRF Protection**: Added Origin header validation on all write API routes (POST/PUT/PATCH/DELETE) — rejects cross-origin and missing-origin requests
+- **HTML Sanitization**: Added DOMPurify to markdown renderer — all content sanitized before `dangerouslySetInnerHTML`, preventing stored XSS even if content authoring expands beyond single admin
+- **Dev Mode Hardening**: Renamed `NEXT_PUBLIC_DEV_MODE` to `DEV_MODE_AUTH_BYPASS` — no longer exposed in client bundles
 - **Attack Surface**: Removed Sentry example API route and page (unnecessary test endpoints in production)
 
 ### Changed

@@ -1,0 +1,72 @@
+import { defineContentType } from '../define'
+
+export const caseStudies = defineContentType({
+  slug: 'case-studies',
+  tableName: 'case_studies',
+  label: { singular: 'Case Study', plural: 'Case Studies' },
+  basePath: '/case-study',
+  adminPath: '/admin/case-studies',
+  fields: [
+    { name: 'title', type: 'text', required: true, maxLength: 300 },
+    { name: 'slug', type: 'slug', from: 'title' },
+    { name: 'description', type: 'textarea', maxLength: 1000 },
+    { name: 'main_content', type: 'markdown' },
+    { name: 'featured', type: 'boolean' },
+    { name: 'academic_references', type: 'markdown' },
+    { name: 'resource_links', type: 'textarea' },
+    { name: 'year', type: 'number', required: true, min: 1900, max: 2100 },
+  ],
+  relationships: [
+    {
+      name: 'industries',
+      targetType: 'industries',
+      junction: 'case_study_industry_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'industry_id',
+    },
+    {
+      name: 'algorithms',
+      targetType: 'algorithms',
+      junction: 'algorithm_case_study_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'algorithm_id',
+    },
+    {
+      name: 'personas',
+      targetType: 'personas',
+      junction: 'case_study_persona_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'persona_id',
+    },
+    {
+      name: 'quantum_software',
+      targetType: 'quantum-software',
+      junction: 'case_study_quantum_software_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'quantum_software_id',
+    },
+    {
+      name: 'quantum_hardware',
+      targetType: 'quantum-hardware',
+      junction: 'case_study_quantum_hardware_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'quantum_hardware_id',
+    },
+    {
+      name: 'quantum_companies',
+      targetType: 'quantum-companies',
+      junction: 'case_study_quantum_company_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'quantum_company_id',
+    },
+    {
+      name: 'partner_companies',
+      targetType: 'partner-companies',
+      junction: 'case_study_partner_company_relations',
+      foreignKey: 'case_study_id',
+      targetKey: 'partner_company_id',
+    },
+  ],
+  metadata: { titleField: 'title', descriptionField: 'description' },
+  adminExtensions: [{ position: 'after:resource_links', component: 'ResourceLinksEditor' }],
+})

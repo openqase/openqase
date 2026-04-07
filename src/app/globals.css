@@ -57,7 +57,7 @@
 
     /* Typography */
     --font-sans: var(--font-open-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-heading: var(--font-montserrat), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: var(--font-source-serif), Georgia, 'Times New Roman', serif;
 
     --header-height: 4rem;
     --banner-height: 2.5rem;

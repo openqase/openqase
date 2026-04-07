@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumSoftware, getRelatedQuantumCompanies, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
 type EnrichedQuantumHardware = Database['public']['Tables']['quantum_hardware']['Row'] & {
-  case_study_quantum_hardware_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
+  case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
 
 interface QuantumHardwarePageProps {
@@ -18,9 +18,7 @@ interface QuantumHardwarePageProps {
   }>;
 }
 
-export async function generateStaticParams() {
-  return generateStaticParamsForContentType('quantum_hardware');
-}
+export const generateStaticParams = generateStaticParamsFor('quantum-hardware')
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed company) within 1 hour
@@ -29,11 +27,8 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: QuantumHardwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumHardware = await getStaticContentWithRelationships<EnrichedQuantumHardware>(
-    'quantum_hardware',
-    resolvedParams.slug
-  );
-  
+  const quantumHardware = await fetchContentBySlug('quantum-hardware', resolvedParams.slug) as EnrichedQuantumHardware | null;
+
   if (!quantumHardware) {
     return {
       title: 'Not Found',
@@ -68,10 +63,7 @@ export async function generateMetadata({ params }: QuantumHardwarePageProps) {
 export default async function QuantumHardwareDetailPage({ params }: QuantumHardwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumHardware = await getStaticContentWithRelationships<EnrichedQuantumHardware>(
-    'quantum_hardware',
-    resolvedParams.slug
-  );
+  const quantumHardware = await fetchContentBySlug('quantum-hardware', resolvedParams.slug) as EnrichedQuantumHardware | null;
 
   if (!quantumHardware) {
     notFound();
@@ -83,9 +75,7 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
     : null;
 
   // Extract related case studies
-  const relatedCaseStudies = quantumHardware.case_study_quantum_hardware_relations
-    ?.map(relation => relation.case_studies)
-    .filter((cs): cs is NonNullable<typeof cs> => cs !== null) || [];
+  const relatedCaseStudies = (quantumHardware.case_studies || []);
   
   // Get case study IDs for ecosystem discovery
   const caseStudyIds = relatedCaseStudies.map(cs => cs.id);

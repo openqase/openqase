@@ -81,7 +81,7 @@ Admin routes (`/admin/*`) are protected by:
 
 1. **Middleware authentication check** (`src/middleware.ts`)
 2. **Admin role verification** in `user_preferences` table
-3. **Development mode bypass** via `NEXT_PUBLIC_DEV_MODE=true`
+3. **Development mode bypass** via `DEV_MODE_AUTH_BYPASS=true`
 
 ### Service Role Usage
 
@@ -142,7 +142,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Development Mode (bypasses admin auth)
-NEXT_PUBLIC_DEV_MODE=false
+DEV_MODE_AUTH_BYPASS=false
 
 # Content Access Control
 REQUIRE_AUTH_FOR_CONTENT=false
@@ -233,7 +233,7 @@ For local development, you can bypass authentication checks:
 
 ```bash
 # .env.local
-NEXT_PUBLIC_DEV_MODE=true
+DEV_MODE_AUTH_BYPASS=true
 ```
 
 **⚠️ Security Warning:**
@@ -587,7 +587,7 @@ CREATE POLICY "Users can update own preferences"
 Before deploying to production:
 
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` is set and secure
-- [ ] `NEXT_PUBLIC_DEV_MODE` is NOT set or set to `false`
+- [ ] `DEV_MODE_AUTH_BYPASS` is NOT set or set to `false`
 - [ ] Admin users have strong passwords (8+ chars, mixed case, numbers)
 - [ ] RLS policies are enabled on all tables
 - [ ] Public content queries only access `published = true` rows

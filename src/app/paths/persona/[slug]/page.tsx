@@ -1,18 +1,17 @@
 // src/app/paths/persona/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalPersonaDetailLayout from '@/components/ui/professional-persona-detail-layout';
-import ContentCard from '@/components/ui/content-card';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { processMarkdown } from '@/lib/markdown-server';
 import { AutoSchema } from '@/components/AutoSchema';
 
-// Define enriched types that match the actual relationship queries
+// Define enriched types using flat relationship shapes from the CMS engine
 type EnrichedPersona = Database['public']['Tables']['personas']['Row'] & {
-  persona_industry_relations?: { industries: { id: string; name: string; slug?: string | null } | null }[];
-  case_study_persona_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
+  industries?: { id: string; name: string; slug?: string | null }[];
+  algorithms?: { id: string; name: string; slug?: string | null }[];
+  case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
 
 // Simple type for case studies from persona relations (only includes fetched fields)
@@ -24,26 +23,24 @@ type PersonaRelatedCaseStudy = {
   published_at: string;
 };
 
-// Define an enriched type for CaseStudy that includes relations
-type EnrichedCaseStudyForPersonaPage = Database['public']['Tables']['case_studies']['Row'] & {
-  case_study_industry_relations?: { industries: { id: string; name: string; slug?: string | null } | null }[];
-  // Add other relations here if fetched in the future, e.g., for algorithms
-};
-
-type Persona = Database['public']['Tables']['personas']['Row'];
-type CaseStudy = Database['public']['Tables']['case_studies']['Row'];
-
 interface PageParams {
   params: Promise<{
     slug: string;
   }>;
 }
 
+// Generate static params for all published personas
+export const generateStaticParams = generateStaticParamsFor('personas')
+
+// ISR safety net: on-demand revalidation handles most updates immediately,
+// but this catches cross-entity staleness (e.g. a renamed industry) within 24 hours
+export const revalidate = 86400;
+
 // Get metadata for the page
 export async function generateMetadata({ params }: PageParams) {
   const resolvedParams = await params;
-  
-  const persona = await getStaticContentWithRelationships('personas', resolvedParams.slug) as EnrichedPersona;
+
+  const persona = await fetchContentBySlug('personas', resolvedParams.slug) as EnrichedPersona | null;
 
   if (!persona) {
     return {
@@ -73,33 +70,18 @@ export async function generateMetadata({ params }: PageParams) {
   };
 }
 
-// Generate static params for all published personas
-export async function generateStaticParams() {
-  return generateStaticParamsForContentType('personas');
-}
-
-// ISR safety net: on-demand revalidation handles most updates immediately,
-// but this catches cross-entity staleness (e.g. a renamed industry) within 1 hour
-export const revalidate = 86400;
-
 export default async function PersonaPage({ params }: PageParams) {
   const resolvedParams = await params;
-  
-  // Get the persona and its related industries and case studies
-  const persona = await getStaticContentWithRelationships('personas', resolvedParams.slug) as EnrichedPersona;
+
+  // Get the persona and its related industries, algorithms, and case studies
+  const persona = await fetchContentBySlug('personas', resolvedParams.slug) as EnrichedPersona | null;
 
   if (!persona) {
     notFound();
   }
 
-  // Extract related case studies from the persona data
-  const caseStudies: PersonaRelatedCaseStudy[] = persona.case_study_persona_relations?.map((relation: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }) => relation.case_studies ? ({
-    id: relation.case_studies.id,
-    title: relation.case_studies.title,
-    slug: relation.case_studies.slug,
-    description: relation.case_studies.description || '',
-    published_at: relation.case_studies.published_at,
-  }) : null).filter((cs): cs is PersonaRelatedCaseStudy => cs !== null) || [];
+  // Flat relationship shape from the CMS engine
+  const caseStudies = (persona.case_studies || []) as PersonaRelatedCaseStudy[];
 
   // Process markdown content with server-side processor
   const renderedContent = processMarkdown(persona.main_content);
@@ -109,15 +91,15 @@ export default async function PersonaPage({ params }: PageParams) {
     <>
       {/* Ghost-style automatic course schema */}
       <AutoSchema type="course" data={persona} courseType="persona" />
-      <AutoSchema 
-        type="breadcrumb" 
+      <AutoSchema
+        type="breadcrumb"
         breadcrumbs={[
           { name: 'Home', url: '/' },
           { name: 'Professional Roles', url: '/paths/persona' },
           { name: persona.name, url: `/paths/persona/${persona.slug}` }
-        ]} 
+        ]}
       />
-      
+
       <ProfessionalPersonaDetailLayout
         title={persona.name}
         description={persona.description || ''}

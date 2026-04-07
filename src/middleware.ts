@@ -62,29 +62,29 @@ export async function middleware(req: NextRequest) {
       return res
     }
     
-    /**
-     * SECURITY NOTE: CSRF Protection Assessment
-     * 
-     * Admin API routes currently use cookie-based authentication WITHOUT CSRF tokens.
-     * This is a KNOWN and ACCEPTED risk because:
-     * 
-     * 1. SINGLE ADMIN SYSTEM - Only one trusted admin user exists
-     * 2. LOW VALUE TARGET - Beta site with no financial transactions or sensitive data
-     * 3. TARGETED ATTACK REQUIRED - Attacker would need to specifically target this admin
-     * 4. IMPLEMENTATION RISK - Adding CSRF could break admin functionality
-     * 
-     * Future mitigation options when moving beyond single-admin beta:
-     * - Implement CSRF tokens (complex state management)
-     * - Migrate to Next.js Server Actions (built-in CSRF protection)
-     * - Add Origin/Referer checking (simple but can break)
-     * - Use SameSite=Strict cookies (already default in modern browsers)
-     * 
-     * This is NOT a critical vulnerability in the current single-admin architecture.
-     * Do not report as security issue without understanding the context.
-     */
-    
-    // For write operations (POST, PUT, PATCH, DELETE), require authentication
+    // For write operations (POST, PUT, PATCH, DELETE), require authentication + Origin check
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method || '')) {
+      // CSRF protection: verify Origin header matches the site
+      const origin = req.headers.get('origin')
+      const host = req.headers.get('host')
+      if (origin && host) {
+        const originHost = new URL(origin).host
+        if (originHost !== host) {
+          return NextResponse.json(
+            { error: 'Invalid origin' },
+            { status: 403 }
+          )
+        }
+      } else if (!origin || !host) {
+        // Block requests with no Origin header for state-changing methods
+        // (legitimate browser requests always include Origin for cross-origin and same-origin POST)
+        // Also block if Host is missing (defensive — should never happen in practice)
+        return NextResponse.json(
+          { error: 'Missing origin header' },
+          { status: 403 }
+        )
+      }
+
       if (!user) {
         return NextResponse.json(
           { error: 'Authentication required' }, 
@@ -118,7 +118,7 @@ export async function middleware(req: NextRequest) {
   // For admin routes, check if user has admin role
   if (isAdminRoute) {
     // Check if dev mode is enabled AND we're on localhost
-    const devMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true' && 
+    const devMode = process.env.DEV_MODE_AUTH_BYPASS === 'true' &&
                     (req.headers.get('host')?.includes('localhost') || 
                      req.headers.get('host')?.includes('127.0.0.1'))
     

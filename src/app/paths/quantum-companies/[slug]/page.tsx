@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -8,7 +8,7 @@ import { ExternalLink, Building2, Users, MapPin, FileText, Cpu, Code, Briefcase 
 import { getRelatedQuantumSoftware, getRelatedQuantumHardware, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
 type EnrichedQuantumCompany = Database['public']['Tables']['quantum_companies']['Row'] & {
-  case_study_quantum_company_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
+  case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
 
 interface QuantumCompanyPageProps {
@@ -17,9 +17,7 @@ interface QuantumCompanyPageProps {
   }>;
 }
 
-export async function generateStaticParams() {
-  return generateStaticParamsForContentType('quantum_companies');
-}
+export const generateStaticParams = generateStaticParamsFor('quantum-companies')
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed partner) within 1 hour
@@ -28,11 +26,8 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: QuantumCompanyPageProps) {
   const resolvedParams = await params;
   
-  const quantumCompany = await getStaticContentWithRelationships<EnrichedQuantumCompany>(
-    'quantum_companies',
-    resolvedParams.slug
-  );
-  
+  const quantumCompany = await fetchContentBySlug('quantum-companies', resolvedParams.slug) as EnrichedQuantumCompany | null;
+
   if (!quantumCompany) {
     return {
       title: 'Not Found',
@@ -64,10 +59,7 @@ export async function generateMetadata({ params }: QuantumCompanyPageProps) {
 export default async function QuantumCompanyDetailPage({ params }: QuantumCompanyPageProps) {
   const resolvedParams = await params;
   
-  const quantumCompany = await getStaticContentWithRelationships<EnrichedQuantumCompany>(
-    'quantum_companies',
-    resolvedParams.slug
-  );
+  const quantumCompany = await fetchContentBySlug('quantum-companies', resolvedParams.slug) as EnrichedQuantumCompany | null;
 
   if (!quantumCompany) {
     notFound();
@@ -79,9 +71,7 @@ export default async function QuantumCompanyDetailPage({ params }: QuantumCompan
     : null;
 
   // Extract related case studies
-  const relatedCaseStudies = quantumCompany.case_study_quantum_company_relations
-    ?.map(relation => relation.case_studies)
-    .filter((cs): cs is NonNullable<typeof cs> => cs !== null) || [];
+  const relatedCaseStudies = (quantumCompany.case_studies || []);
   
   // Get case study IDs for ecosystem discovery
   const caseStudyIds = relatedCaseStudies.map(cs => cs.id);

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -10,7 +10,7 @@ import { getRelatedQuantumHardware, getRelatedQuantumCompanies, getRelatedPartne
 import { AutoSchema } from '@/components/AutoSchema';
 
 type EnrichedQuantumSoftware = Database['public']['Tables']['quantum_software']['Row'] & {
-  case_study_quantum_software_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
+  case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
 
 interface QuantumSoftwarePageProps {
@@ -19,9 +19,7 @@ interface QuantumSoftwarePageProps {
   }>;
 }
 
-export async function generateStaticParams() {
-  return generateStaticParamsForContentType('quantum_software');
-}
+export const generateStaticParams = generateStaticParamsFor('quantum-software')
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed company) within 1 hour
@@ -30,11 +28,8 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: QuantumSoftwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumSoftware = await getStaticContentWithRelationships<EnrichedQuantumSoftware>(
-    'quantum_software',
-    resolvedParams.slug
-  );
-  
+  const quantumSoftware = await fetchContentBySlug('quantum-software', resolvedParams.slug) as EnrichedQuantumSoftware | null;
+
   if (!quantumSoftware) {
     return {
       title: 'Not Found',
@@ -69,10 +64,7 @@ export async function generateMetadata({ params }: QuantumSoftwarePageProps) {
 export default async function QuantumSoftwareDetailPage({ params }: QuantumSoftwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumSoftware = await getStaticContentWithRelationships<EnrichedQuantumSoftware>(
-    'quantum_software',
-    resolvedParams.slug
-  );
+  const quantumSoftware = await fetchContentBySlug('quantum-software', resolvedParams.slug) as EnrichedQuantumSoftware | null;
 
   if (!quantumSoftware) {
     notFound();
@@ -84,9 +76,7 @@ export default async function QuantumSoftwareDetailPage({ params }: QuantumSoftw
     : null;
 
   // Extract related case studies
-  const relatedCaseStudies = quantumSoftware.case_study_quantum_software_relations
-    ?.map(relation => relation.case_studies)
-    .filter((cs): cs is NonNullable<typeof cs> => cs !== null) || [];
+  const relatedCaseStudies = (quantumSoftware.case_studies || []);
   
   // Get case study IDs for ecosystem discovery
   const caseStudyIds = relatedCaseStudies.map(cs => cs.id);

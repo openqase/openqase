@@ -1,6 +1,6 @@
 // src/app/paths/algorithm/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { getStaticContentWithRelationships, generateStaticParamsForContentType } from '@/lib/content-fetchers';
+import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalAlgorithmDetailLayout from '@/components/ui/professional-algorithm-detail-layout';
 import { Badge } from '@/components/ui/badge';
@@ -10,13 +10,11 @@ import { ReferencesRenderer, processContentWithReferences } from '@/components/u
 import { AutoSchema } from '@/components/AutoSchema';
 import Link from 'next/link';
 
-// Define enriched types
+// Define enriched types using flat relationship shapes from the CMS engine
 type EnrichedAlgorithm = Database['public']['Tables']['algorithms']['Row'] & {
-  steps?: string;
-  academic_references?: string;
-  algorithm_industry_relations?: { industries: { id: string; name: string; slug?: string | null } | null }[];
-  persona_algorithm_relations?: { personas: { id: string; name: string; slug?: string | null } | null }[];
-  algorithm_case_study_relations?: { case_studies: { id: string; title: string; slug: string; description: string; published_at: string } | null }[];
+  industries?: { id: string; name: string; slug?: string | null }[];
+  personas?: { id: string; name: string; slug?: string | null }[];
+  case_studies?: { id: string; title: string; slug: string; description: string; published_at: string; published: boolean | null }[];
 };
 
 type CaseStudy = {
@@ -25,11 +23,6 @@ type CaseStudy = {
   slug: string;
   description: string;
   industries: string[];
-};
-
-// Define an enriched type for CaseStudy that includes relations
-type EnrichedCaseStudyForAlgorithmPage = Database['public']['Tables']['case_studies']['Row'] & {
-  case_study_industry_relations?: { industries: { id: string; name: string; slug?: string | null } | null }[];
 };
 
 interface AlgorithmPageProps {
@@ -41,9 +34,9 @@ interface AlgorithmPageProps {
 // Get metadata for the page
 export async function generateMetadata({ params }: AlgorithmPageProps) {
   const resolvedParams = await params;
-  
-  const algorithm = await getStaticContentWithRelationships('algorithms', resolvedParams.slug) as EnrichedAlgorithm;
-  
+
+  const algorithm = await fetchContentBySlug('algorithms', resolvedParams.slug) as EnrichedAlgorithm | null;
+
   if (!algorithm) {
     return {
       title: 'Not Found',
@@ -76,9 +69,7 @@ export async function generateMetadata({ params }: AlgorithmPageProps) {
 }
 
 // Generate static params for all published algorithms
-export async function generateStaticParams() {
-  return generateStaticParamsForContentType('algorithms');
-}
+export const generateStaticParams = generateStaticParamsFor('algorithms')
 
 // ISR safety net: on-demand revalidation handles most updates immediately,
 // but this catches cross-entity staleness (e.g. a renamed industry) within 1 hour
@@ -86,31 +77,28 @@ export const revalidate = 86400;
 
 export default async function AlgorithmPage({ params }: AlgorithmPageProps) {
   const resolvedParams = await params;
-  
-  const algorithm = await getStaticContentWithRelationships('algorithms', resolvedParams.slug) as EnrichedAlgorithm;
-  
+
+  const algorithm = await fetchContentBySlug('algorithms', resolvedParams.slug) as EnrichedAlgorithm | null;
+
   if (!algorithm) {
     notFound();
   }
 
-  // Extract related case studies from the algorithm data
-  // The improved relationship filtering ensures case_studies is never null
-  const caseStudies: CaseStudy[] = algorithm.algorithm_case_study_relations?.map((relation: any) => ({
-    id: relation.case_studies?.id || '',
-    title: relation.case_studies?.title || 'Untitled Case Study',
-    slug: relation.case_studies?.slug || '',
-    description: relation.case_studies?.description || '',
-    industries: [] // Case study industries aren't fetched in the algorithm relationship query
-  })).filter(cs => cs.id && cs.slug) || []; // Filter out any malformed entries
+  // Flat relationship shape from the CMS engine
+  const caseStudies: CaseStudy[] = (algorithm.case_studies || []).map(cs => ({
+    id: cs.id,
+    title: cs.title,
+    slug: cs.slug,
+    description: cs.description,
+    industries: [] // Not fetched in algorithm relationship query
+  }));
 
   // Process content with server-side markdown and references
   let processedContent = '';
   if (algorithm.main_content) {
-    // First render markdown to HTML
-    const htmlContent = processMarkdown(algorithm.main_content);
-    // Then process references 
-    const contentWithReferences = processContentWithReferences(htmlContent);
-    processedContent = contentWithReferences;
+    // Process reference citations in raw markdown first, then render + sanitize
+    const contentWithReferences = processContentWithReferences(algorithm.main_content);
+    processedContent = processMarkdown(contentWithReferences);
   }
 
   return (
@@ -132,20 +120,20 @@ export default async function AlgorithmPage({ params }: AlgorithmPageProps) {
         algorithm={algorithm}
       >
         <div dangerouslySetInnerHTML={{ __html: processedContent }} />
-            
+
             {algorithm.steps && (
               <div className="my-12">
-                <hr className="my-12 border-border/50" /> 
+                <hr className="my-12 border-border/50" />
                 <div className="bg-muted/30 rounded-lg p-6 border border-border/50">
-                  <h2 className="text-2xl font-bold mb-6 text-foreground">Implementation Steps</h2> 
+                  <h2 className="text-2xl font-bold mb-6 text-foreground">Implementation Steps</h2>
                   <StepsRenderer stepsMarkup={algorithm.steps} />
                 </div>
               </div>
             )}
-            
+
             {algorithm.academic_references && (
               <div className="my-12">
-                <hr className="my-12 border-border/50" /> 
+                <hr className="my-12 border-border/50" />
                 <div className="bg-muted/30 rounded-lg p-6 border border-border/50">
                   <ReferencesRenderer referencesMarkup={algorithm.academic_references} />
                 </div>
