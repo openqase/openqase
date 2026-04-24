@@ -1,11 +1,13 @@
 import coreWebVitals from "eslint-config-next/core-web-vitals";
 import typescript from "eslint-config-next/typescript";
+import security from "eslint-plugin-security";
 
 const eslintConfig = [
   ...coreWebVitals,
   ...typescript,
+  security.configs.recommended,
   {
-    ignores: ["docs/**", ".next/**", "out/**", ".vercel/**"]
+    ignores: ["docs/**", ".next/**", "out/**", ".vercel/**", ".worktrees/**"]
   },
   {
     rules: {

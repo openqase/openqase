@@ -91,7 +91,7 @@ describeIf('CMS Engine Smoke Tests (real Supabase)', () => {
         expect(data).toHaveProperty('id')
 
         // Flatten relationships and verify shape
-        const flattened = flattenRelationships(data as Record<string, unknown>, contentType)
+        const flattened = flattenRelationships(data as unknown as Record<string, unknown>, contentType)
 
         for (const rel of contentType.relationships) {
           // Each relationship should be a flat array
@@ -110,7 +110,7 @@ describeIf('CMS Engine Smoke Tests (real Supabase)', () => {
         }
 
         // Build the merged result the same way fetchContentBySlug does
-        const base: Record<string, unknown> = { ...(data as Record<string, unknown>) }
+        const base: Record<string, unknown> = { ...(data as unknown as Record<string, unknown>) }
         for (const rel of contentType.relationships) {
           delete base[rel.junction]
         }
@@ -223,7 +223,7 @@ describeIf('CMS Engine Smoke Tests (real Supabase)', () => {
       expect(error).toBeNull()
       expect(data).not.toBeNull()
 
-      const flattened = flattenRelationships(data as Record<string, unknown>, csType)
+      const flattened = flattenRelationships(data as unknown as Record<string, unknown>, csType)
 
       // All 7 relationship names should be present
       const expectedNames = ['industries', 'algorithms', 'personas', 'quantum_software', 'quantum_hardware', 'quantum_companies', 'partner_companies']

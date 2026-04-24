@@ -473,18 +473,13 @@ export async function updatePublishedStatus({
 }) {
   const serviceClient = await createServiceRoleSupabaseClient();
   
-  const updateData: Record<string, any> = {
+  const updateData = {
     published,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    ...(published ? { published_at: new Date().toISOString() } : {})
   };
-  
-  // If publishing, set published_at timestamp
-  if (published) {
-    updateData.published_at = new Date().toISOString();
-  }
-  
-  const { data, error } = await serviceClient
-    .from(contentType)
+
+  const { data, error } = await fromTable(serviceClient, contentType)
     .update(updateData)
     .eq('id', id)
     .select('*')
