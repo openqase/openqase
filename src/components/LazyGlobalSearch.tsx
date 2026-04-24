@@ -57,20 +57,11 @@ const LazyGlobalSearch = forwardRef<LazyGlobalSearchRef, LazyGlobalSearchProps>(
     const [isSearchActive, setIsSearchActive] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Expose focus method through ref
-    useImperativeHandle(ref, () => ({
-      focus: () => {
-        if (!isSearchActive) {
-          activateSearch();
-        }
-      }
-    }), [isSearchActive]);
-
     const activateSearch = async () => {
       if (isSearchActive) return;
-      
+
       setIsLoading(true);
-      
+
       try {
         // Use the provided search data instead of fetching
         setIsSearchActive(true);
@@ -80,6 +71,15 @@ const LazyGlobalSearch = forwardRef<LazyGlobalSearchRef, LazyGlobalSearchProps>(
         setIsLoading(false);
       }
     };
+
+    // Expose focus method through ref
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        if (!isSearchActive) {
+          activateSearch();
+        }
+      }
+    }), [isSearchActive, activateSearch]);
 
     // Show loading state
     if (isLoading) {
