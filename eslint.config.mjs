@@ -5,7 +5,7 @@ const eslintConfig = [
   ...coreWebVitals,
   ...typescript,
   {
-    ignores: ["docs/**", ".next/**", "out/**", ".vercel/**"]
+    ignores: ["docs/**", ".next/**", "out/**", ".vercel/**", ".worktrees/**"]
   },
   {
     rules: {
