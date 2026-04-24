@@ -479,10 +479,8 @@ export async function updatePublishedStatus({
     ...(published ? { published_at: new Date().toISOString() } : {})
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await serviceClient
-    .from(contentType)
-    .update(updateData as any)
+  const { data, error } = await fromTable(serviceClient, contentType)
+    .update(updateData)
     .eq('id', id)
     .select('*')
     .single();
