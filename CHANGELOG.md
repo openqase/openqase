@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Dependency updates**: Updated all packages to latest semver-compatible versions (react 19.2.5, supabase 2.95, vitest 4.1.5, autoprefixer 10.5, postcss 8.5.10, and others)
+- **eslint-plugin-security enabled**: Wired up previously-installed but inactive security linting rules
+- **uuid transitive dep**: Added override to pin `uuid` to >=14.0.0, resolving remaining moderate vulnerability in `resend` → `svix` dependency chain
+- **Next.js DoS patch**: Updated Next.js to 16.2.4 to fix high-severity Server Components DoS (GHSA-q4gf-8mx6-v5v3)
+- **DOMPurify XSS patches**: Updated isomorphic-dompurify to 3.10.0 to fix 4 moderate XSS/prototype-pollution bypass CVEs (GHSA-39q2-94rc-95cp, GHSA-h7mw-gpvr-xq4m, GHSA-crv5-9vww-q3g8, GHSA-v9jr-rg53-9pgp)
+- **Sentry update**: Updated @sentry/nextjs to 10.50.0 to resolve transitive uuid advisory
 - **Dependency Audit**: Fixed 4 CVEs — picomatch (high: ReDoS + method injection), brace-expansion (moderate: hang/memory exhaustion), serialize-javascript (moderate: CPU exhaustion DoS)
 - **Vite Dev Server**: Pinned Vite to ^7.3.2 via override to patch 3 dev-server advisories (arbitrary file read via WebSocket, `server.fs.deny` bypass, path traversal in optimized deps `.map` handling)
 - **Dependency Updates**: Updated 17 packages to latest minor/patch versions including Next.js 16.2.2, Sentry 10.47, Supabase 2.101, Vitest 4.1, Framer Motion 12.38, isomorphic-dompurify 3.7
