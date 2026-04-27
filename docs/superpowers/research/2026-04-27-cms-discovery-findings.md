@@ -12,7 +12,9 @@
 
 You have already specced the right architectural refactor. It's sitting on `feature/cms-engine` (March 23) and is ~70% migrated. The blocker was attention, not code: a parallel project (Marqov) pulled focus and the work paused. Resuming requires unblocking what exists, not redesigning it.
 
-Before any further architectural change, fix three security findings that are exploitable today (one High that becomes Critical when combined with another, and two High). Two more are Critical-in-defense-in-depth terms but not exploitable in the default path — fix them too, but don't let them dominate the urgency.
+**Empirical follow-up materially de-risked Phase B.** Three of the larger Phase B risks collapsed once measured: the migration is genuinely a one-shot script (live content is plain prose, not the rich tangle the original framing assumed); the search/jsonb compatibility concern is now a strict improvement on existing broken behaviour; the ISR cost is a non-issue with substantial headroom. This Phase B is narrower and lower-risk than earlier framing implied.
+
+Before any further architectural change, fix three security findings that are exploitable today (Tier 1: A, B, C). Two more are Critical-in-defense-in-depth terms but not exploitable in the default path — fix them too, but don't let them dominate the urgency.
 
 Then **finish the existing engine work**, **add the editor + block-based content model the existing spec doesn't address**, and stop. Don't restart from scratch.
 
@@ -103,7 +105,9 @@ Full report: `2026-04-27-architectural-audit.md`. Headline findings:
 **Two parallel patterns coexist that should be one.**
 - `src/lib/content-fetchers.ts` (single-item nested) and `src/lib/relationship-queries.ts` (batch). CLAUDE.md justifies both as intentional. In practice they confuse new code paths and the batch one (with proper Set-based dedup) is strictly better. Standardise on it.
 
-**Search infrastructure exists, but is broken.** Empirical finding (full detail in the follow-up memo): every content table has a `ts_content tsvector` column with a GIN index and a `BEFORE INSERT OR UPDATE` trigger. The trigger reads `NEW.content` — but only `blog_posts` has a column named `content`. Every other content type uses `main_content`, so 8 of 9 content types have GIN indexes that contain only title + description text. Body content is silently un-indexed. Search code at `src/lib/content-fetchers.ts:366` uses `.ilike` against `main_content` directly, ignoring the tsvector entirely. This is a quick win that interacts with the Phase B body-format change — see below.
+**Body-content search is broken in production.** Not "infrastructure to improve" — broken. Empirical finding (full detail in the follow-up memo): every content table has a `ts_content tsvector` column with a GIN index and a `BEFORE INSERT OR UPDATE` trigger. The trigger reads `NEW.content`, but only `blog_posts` has a column named `content`. Every other content type uses `main_content`. So for 8 of 9 content types, GIN indexes contain only title + description text — body content has been silently un-indexed for the lifetime of the trigger. Search code at `src/lib/content-fetchers.ts:366` runs `.ilike` against `main_content` directly, which masks the bug because the slow path returns correct results. **Nobody has noticed,** which itself is a useful prior on how much editorial weight body-text search carries today. The fix is part of Phase A (item A7) and the trigger update folds into the Phase B body-format change at no extra cost.
+
+**The existing CMS engine spec has at least one schema mismatch.** The spec lists `algorithms.technical_details` as a field, but that column doesn't exist in the database. If there's one mismatch, there are likely others. Worth a 30-minute cross-check of every field declared in the spec against actual DB columns before A2 starts. Cheap; prevents discovering schema drift mid-migration.
 
 **Clear dead/duplicate code to remove.**
 - `src/types/supabase.ts` vs `src/types/supabase-new.ts` (1443 / 1444 lines, both define `Database`). When picking one, write a comment explaining why so the next person doesn't re-ask the question.
@@ -164,9 +168,10 @@ Estimates are ranges (low / expected / high) with the dominant-budget item per p
 | A4 | **Consolidate relationship patterns.** Delete `content-fetchers.ts` single-item pattern; standardise on the batch pattern. | 1–2 | Mostly mechanical. |
 | A5 | **Drafts + version history.** `content_versions` table; every save writes a version; `restore_version()` action. **Pulled forward from Phase B** because it has no editor dependency and provides a safety net for Phase B's migration. | 2–3 | |
 | A6 | **Scheduled publishing.** `publish_at` column + Vercel Cron job; revalidation already wired. **Pulled forward from Phase B.** | 1–2 | |
-| A7 | **Search migration to existing tsvector.** Fix the `update_ts_content` trigger column-name bug; switch search code from `.ilike` to `.textSearch('ts_content', ...)`; backfill. Independently valuable; sets up the Phase B body-format change. | 1–2 | |
+| A0 | **Schema cross-check.** Walk every field declared in `docs/superpowers/specs/2026-03-23-cms-engine-design.md` against actual DB columns. We already know `algorithms.technical_details` is missing; find the rest before A2 hits a surprise. | 0.5 | Pre-flight for A2. |
+| A7 | **Fix broken-in-production body-text search.** Not a migration — a regression fix. Fix the `update_ts_content` trigger column-name bug so 8 of 9 content types finally index body content. Switch search code from `.ilike` to `.textSearch('ts_content', ...)`. Backfill. Sets up the Phase B body-format change. | 1–2 | The trigger update fold into Phase B's block-derived text extraction. |
 
-**Phase A total: 17–28 days** (single dev). Dominant items: A3 (admin form) and A2 (engine completion).
+**Phase A total: 17.5–28.5 days** (single dev). Dominant items: A3 (admin form) and A2 (engine completion). **Phase A is the longest and riskiest of the three phases; A3 alone is the single largest item across the whole plan.** Where attention should focus first: the relationship-picker abstraction inside A3 — that's the part most likely to push to the high end of the range. Phase B and Phase C are now well-defined and shorter; the project succeeds or fails primarily on whether A3 lands cleanly.
 
 **Acceptance criteria (testable, not a feeling):**
 - Findings A, B, C, D, E no longer reproducible against the dev server.
@@ -183,7 +188,7 @@ Estimates are ranges (low / expected / high) with the dominant-budget item per p
 | # | Item | Range (days) | Notes |
 |---|---|---|---|
 | B1 | **BlockNote customisation spike.** Half-day prototype of one OpenQase-specific block (e.g. `algorithm-ref`) to confirm customisation ceiling. **Gates the rest of Phase B.** | 0.5 | If the spike fails, decision is BlockNote-with-fewer-custom-blocks vs TipTap-from-scratch. |
-| B2 | **Block-based content model.** Schema change: `body jsonb` storing `Block[]`. v1 block types: `RichTextBlock`, `HeadingBlock`, `CitationBlock`. Migration: split-on-H2 for `main_content`; parse `[^N]:` footnotes from `academic_references` into `Citation[]`. Update `update_ts_content` trigger to derive text from blocks. One-shot migration script (validated against actual content shape — see follow-up memo). | 4–7 | |
+| B2 | **Block-based content model.** Schema change: `body jsonb` storing `Block[]`. v1 block types: `RichTextBlock`, `HeadingBlock` (or heading-as-style on text block — see note), `CitationBlock`. Migration: split-on-H2 for `main_content`; parse `[^N]:` footnotes from `academic_references` into `Citation[]`. Update `update_ts_content` trigger to derive text from blocks. Keep `main_content` populated for one release post-migration; renderer reads from `body` if non-empty, else falls back to `main_content`. | 4–7 | |
 | B3 | **BlockNote editor in admin form.** Slash menu inserts the v1 block types. Floating toolbar for inline formatting. | 4–6 | Range depends on B1 outcome. |
 | B4 | **Inline relationship create.** "+ Add new industry" inside the relationship picker. | 1–2 | |
 | B5 | **One Phase 1 OpenQase-specific block** (most likely `algorithm-ref` or `case-study-ref`). Validates the slash-menu "card" UX with a real content type. | 2–3 | |
@@ -193,9 +198,13 @@ Estimates are ranges (low / expected / high) with the dominant-budget item per p
 **Acceptance criteria:**
 - Spike (B1) result documented; editor decision either confirmed or revised.
 - Migration script run against a staging copy: every record has a non-empty `body jsonb`; rendered output on public pages is visually equivalent to the markdown version (manual diff on 5 records).
+- **Migration is idempotent**: re-running the script against already-migrated data leaves rows unchanged (or fails loudly), no data loss either way.
+- **Migration is reversible** for one release: `main_content` is preserved; a renderer feature flag flips back to markdown without restoring from backup. Rollback path tested before B2 is considered done.
 - Editing a record in the new editor produces a `Block[]` round-trip without lossy conversion.
 - Search for body-only text still works after migration (tsvector now derives from block text).
 - Re-measured ISR revalidation latency on a deployed environment is within 2× of the Phase A baseline.
+
+> **Modeling note for B2:** `HeadingBlock` as a separate type vs. heading-as-style on a text block (a `level` attribute) is a small modeling choice, not a settled answer. Both Portable Text and BlockNote use the latter. Migration regex is identical either way. Decide during B1 based on which the editor's slash-menu UX expresses more naturally.
 
 ### Phase C — Polish & visual
 
@@ -224,10 +233,26 @@ The original list had 7. Three are now answered or resolved by empirical data; f
 - ~~Block model ambition (8 types vs minimal)?~~ → 3 types for v1, layer more as authoring needs emerge.
 
 **Remaining for Phase 1:**
-1. **Authoring audience.** Just you for the foreseeable future, or a wider editorial team / contributors? (Affects drafts model: linear vs branching.)
+1. **Authoring audience + drafts model** (merged — they're conditional). Just you for the foreseeable future, or a wider editorial team / contributors? If solo: linear version history is fine (Payload-style). If team: branching becomes worth its cost (Sanity-style `drafts.foo` shadow documents) and concurrent-edit prevention matters. Answer the audience question first; the drafts model falls out of it.
 2. **Editor effort budget.** BlockNote (commit, contingent on the spike) or TipTap (deliberate 4–6 week investment for a fully custom surface)?
-3. **Drafts model.** Linear version history (Payload-style) or branchable shadow-document drafts (Sanity-style)?
-4. **`USING (true)` on junctions** — RLS-side filtering (defense-in-depth, perf cost) or keep JS filtering with finding A patched (perf, narrower defense)?
+3. **`USING (true)` on junctions** — RLS-side filtering (defense-in-depth, perf cost) or keep JS filtering with finding A patched (perf, narrower defense)? **Measure before deciding** — a sample query both ways against realistic data tells you what the cost actually is.
+
+---
+
+## Decision Points & Abandonment Thresholds
+
+This is a side project competing with Marqov for attention. To avoid sunk-cost momentum if any phase goes sideways, here are the pre-committed thresholds for stopping and re-planning rather than pushing through.
+
+| Trigger | Action |
+|---|---|
+| **A3 (generic admin form) exceeds 15 days** | Stop. Re-evaluate whether a registry-driven generic form is the right abstraction at this scale, or whether a less ambitious "shared form components, per-type wrapper" pattern is better suited to OpenQase's content-type count. |
+| **A0 schema cross-check finds >3 mismatches** | Pause A2. The existing engine spec needs a focused revision pass before the migration restarts. |
+| **B1 (BlockNote spike) fails for OpenQase-specific blocks** | Branch decision: (a) accept BlockNote with fewer custom blocks and defer typed embeds; (b) commit to TipTap as the editor with a fresh estimate; (c) defer all rich text — ship the v1 of the rebuild with a markdown editor and revisit blocks in a later cycle. Don't drift between options. |
+| **B2 migration produces non-equivalent rendering on >5% of sampled records** | Pause Phase B. The block model needs more types or the migration needs a richer parser. Re-spec before continuing. |
+| **Three weeks pass with zero progress on the active phase** | Treat as a soft-pause signal (Marqov is winning attention again). Update the running notes; no shame in pausing — the phases are independently shippable for a reason. The danger is half-finished work piling up; the safety is the granular task structure. |
+| **Phase A finishes but Phase B still feels too big** | Ship Phase A as v0.5 (engine + admin + drafts/scheduling + security). Phase B becomes its own scoped project with a fresh spec and budget. |
+
+These aren't binding rules. They're tripwires. The point is to make the "should we stop and re-plan?" question concrete and pre-decided, instead of relying on in-the-moment judgment when momentum is hardest.
 
 ---
 
