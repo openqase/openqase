@@ -1,7 +1,7 @@
 # A1 — Security PR Design Spec
 
 **Date:** 2026-04-28
-**Status:** Proposed (Phase 3 design spec; awaits owner approval)
+**Status:** Approved (signed off 2026-04-28)
 **Slice:** A1 in `docs/superpowers/plans/2026-04-27-cms-rebuild-roadmap.md`
 **Vision spec:** `docs/superpowers/specs/2026-04-27-cms-vision-design.md` (Approved 2026-04-27)
 **Audit:** `docs/superpowers/research/2026-04-27-security-audit.md`
