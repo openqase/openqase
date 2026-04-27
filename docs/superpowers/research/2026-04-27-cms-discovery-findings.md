@@ -154,7 +154,7 @@ Full report: `2026-04-27-competitive-research.md`. Patterns worth stealing, rank
 
 This isn't a rebuild. It's three sequenced, independently shippable phases on top of what you have.
 
-Estimates are ranges (low / expected / high) with the dominant-budget item per phase called out.
+Estimates are ranges (low / expected / high) with the dominant-budget item per phase called out. **Note (2026-04-27):** the ranges were sized for stop-and-go attention competing with Marqov. With the owner's sustained-focus commitment, realistic actuals trend toward the low end of each range — the high-end values mostly priced in context-reload overhead from interruption. The day budget freed up by sustained focus is **reinvested in quality** (test coverage, code review for the `publicQuery()` invariant, polish on the relationship-picker abstraction), not used to compress the schedule below the quality floor.
 
 ### Phase A — Land what you've already specced + de-risking pieces
 
@@ -252,7 +252,7 @@ This is a side project competing with Marqov for attention. To avoid sunk-cost m
 | **A0 schema cross-check finds >3 mismatches** | Pause A2. The existing engine spec needs a focused revision pass before the migration restarts. |
 | **B1 (BlockNote spike) fails for OpenQase-specific blocks** | **Default: defer rich text — ship v1 with a markdown editor.** Block model and storage shape still ship; only the in-editor surface defers. Per the vision spec (Decision 5), TipTap is *not* the default fallback because a 4–6 week custom-editor build doesn't fit a side-project budget. TipTap only viable after a follow-up spike confirms 6-week budget — by definition, only when Marqov is in a quiet phase. |
 | **B2 migration produces non-equivalent rendering on >5% of sampled records** | Pause Phase B. The block model needs more types or the migration needs a richer parser. Re-spec before continuing. |
-| **Three weeks pass with zero progress on the active phase** | Treat as a soft-pause signal (Marqov is winning attention again). Update the running notes; no shame in pausing — the phases are independently shippable for a reason. The danger is half-finished work piling up; the safety is the granular task structure. |
+| **Three weeks pass with zero progress on the active phase** | Originally written as a soft-pause tripwire when Marqov competed for attention. **Updated 2026-04-27: owner has committed sustained focus to this work.** The tripwire is retained as insurance but is no longer load-bearing. If it ever fires, treat it as a signal that something has *changed* — re-evaluate whether attention budget shifted or a real blocker emerged, rather than auto-pausing. The phases are still independently shippable; the safety still applies. |
 | **Phase A finishes but Phase B still feels too big** | Ship Phase A as v0.5 (engine + admin + drafts/scheduling + security). Phase B becomes its own scoped project with a fresh spec and budget. |
 
 These aren't binding rules. They're tripwires. The point is to make the "should we stop and re-plan?" question concrete and pre-decided, instead of relying on in-the-moment judgment when momentum is hardest.
