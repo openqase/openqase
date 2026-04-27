@@ -1,7 +1,7 @@
 # OpenQase CMS — Phase 1 Vision Spec
 
 **Date:** 2026-04-27
-**Status:** Proposed (Phase 1 vision; awaits owner approval)
+**Status:** Approved (signed off 2026-04-27)
 **Companion:** `docs/superpowers/research/2026-04-27-cms-discovery-findings.md`
 
 ---
@@ -93,7 +93,7 @@ The synthesis already contains a draft Phase A/B/C plan with day ranges and aban
 | Phase | Output | Status |
 |---|---|---|
 | 0 — Discovery | Findings + audits + competitive research + empirical follow-up | ✅ Complete |
-| 1 — Vision | This document | 🟡 Proposed |
+| 1 — Vision | This document | ✅ Approved |
 | 2 — Slice & sequence | Refine the draft Phase A/B/C plan; confirm slice boundaries; identify v0.5 ship target | ⏳ Next |
 | 3 — Per-slice design specs | A0 schema cross-check, A1 security PR, A2 engine completion, A3 generic admin form, A5 drafts/versioning, A7 search fix, B1 BlockNote spike, B2 block model, etc. | ⏳ |
 
