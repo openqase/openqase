@@ -1,9 +1,10 @@
 # Architectural Audit — Raw Findings
 
-**Date:** 2026-04-27
+**Date:** 2026-04-27 (revised after reviewer feedback + empirical follow-up)
 **Scope:** OpenQase CMS codebase
-**Method:** Deep-read of CMS engine, content fetchers, admin slice (case-studies), middleware, and half-finished rebuild artifacts
+**Method:** Deep-read of CMS engine, content fetchers, admin slice (case-studies), middleware, and half-finished rebuild artifacts. Empirical follow-up adds measured ISR baseline and content-shape sampling.
 **Status:** Discovery — no code changes
+**Companion:** `2026-04-27-empirical-followup.md`
 
 ---
 
@@ -37,7 +38,11 @@
 
 **`src/lib/dual-newsletter-service.ts` (414 lines).** Wraps both Beehiiv and Resend with switchable config. No A/B testing or rollout flag in the actual route handler. Looks like an incomplete migration from one newsletter service to another. `testConnections()` is never called. `preferredService: 'beehiiv'` config sets a default no code uses. **Severity 3.**
 
+> **Before deleting:** verify no env-toggled code path reaches it in production. Incomplete migrations sometimes have one live caller hidden behind a feature flag. `git grep dual-newsletter` plus a check that `BEEHIIV_API_KEY` and `RESEND_API_KEY` are not both set in any production deployment.
+
 **`src/types/supabase.ts` (1443 lines) vs `src/types/supabase-new.ts` (1444 lines).** Both define `Database` type. Neither has comments explaining the difference. Classic abandoned migration artifact. **Severity 2.**
+
+> **When picking one to keep:** add a short header comment explaining why. Otherwise the next person hitting this re-asks the same question and spends an hour re-deriving the answer. The comment is the deliverable, not just deletion.
 
 **Nine archived rebuild documents in `/docs/archive/`.** Propose solutions never executed. The transitive-relationship bug was diagnosed in `fix-relationship-pattern-plan.md` and still exists in the live code. **Severity 3.**
 
@@ -57,11 +62,49 @@ No rich-text editor. No markdown preview. No syntax highlighting. No autosave. N
 
 ## 7. Performance / Scale
 
-No issues at current scale. SSG + 24h ISR + `revalidatePath()` is sound. Future watch:
+**ISR baseline (measured 2026-04-27):** full clean build is 18s; static generation of 367 pages takes 4.1s with 9 parallel workers (~100 ms per-page CPU). Single-page revalidation should land in 100 ms – 1 s, dominated by the Supabase round-trip rather than rendering. Not a constraint for any current or proposed Phase B work. Re-measure on the deployed Vercel environment as a Phase A acceptance check.
+
+Future watch (no current issues):
 
 1. `flattenRelationships()` loads *all* related entities per page. With 50 related items × 7 relationship types per case study × thousands of case studies, ISR revalidation degrades.
-2. `src/lib/content-fetchers.ts:349–387` does full-text ilike searches across all content types with no DB index strategy noted.
+2. `src/lib/content-fetchers.ts:349–387` does full-text ilike searches across all content types with no DB index strategy noted (see Section 7a — the index strategy already exists, it's just unused and partly broken).
 3. Newsletter dual service makes calls to Beehiiv AND Resend AND DB on every subscribe — a viral moment could overload.
+
+## 7a. Search Infrastructure — Latent Bug + Unused Indexes
+
+Empirical finding (full detail in `2026-04-27-empirical-followup.md`):
+
+**Every content table has a `ts_content tsvector` column with a GIN index** and a `BEFORE INSERT OR UPDATE` trigger calling `update_ts_content()`:
+
+```sql
+CREATE OR REPLACE FUNCTION public.update_ts_content() RETURNS trigger AS $$
+BEGIN
+    NEW.ts_content =
+        setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(NEW.description, '')), 'B') ||
+        setweight(to_tsvector('english', coalesce(NEW.content, '')), 'C');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+**The bug:** the trigger reads `NEW.content`, but only `blog_posts` has a column named `content`. Every other content type uses `main_content`. So 8 of 9 content types have GIN indexes that contain only title + description text. Body content is silently un-indexed. **Severity 2.**
+
+**The compounding fact:** `src/lib/content-fetchers.ts:366` ignores the tsvector entirely and runs `.ilike` against `title`, `description`, and `main_content` directly — slow, unindexed, no relevance ranking. So:
+
+1. The fast indexed path exists but is unused.
+2. The slow ilike path produces correct results because it queries the live columns directly.
+3. The combination silently masks the trigger bug — search "works" because the unindexed path is the only one running.
+
+**Implication for the proposed Phase B body→jsonb change:** this is a pre-existing problem the migration solves rather than introduces. The search story becomes:
+
+1. Fix the trigger to derive text from the new `body jsonb` column when present (else fall back to `main_content`/`content`). Use `jsonb_path_query_array` to walk the block tree and concatenate text leaves.
+2. Switch search code from `.ilike` to `.textSearch('ts_content', ...)`.
+3. Backfill `ts_content` for legacy rows.
+
+All three steps are part of the migration with no extra cost, and the result is strictly better than today: indexed, ranked, and now actually covering body content.
+
+This finding alone should be on the Phase A fix list independent of the block migration; the Phase B work then absorbs steps 2 and 3 with the trigger update merging into the body-format change.
 
 ## 8. Testability
 
@@ -100,16 +143,13 @@ Environment configuration is implicit. No `.env.example`. `DEV_MODE_AUTH_BYPASS`
 
 **Recommendation: Incremental refactor, not full rebuild.**
 
-1. The CMS engine is 70% complete and sound. Finish migrating personas, industries, blog_posts. **3–5 day sprint.**
-2. The admin UI is the real problem. Build one generic admin editor that reads `ContentTypeDefinition` from the registry; delete the 9 old files. **5–7 day sprint.**
-3. Consolidate relationship patterns. Delete the single-entity pattern; standardize on the batch pattern. **1 day.**
-4. **Don't** rebuild Supabase layer, middleware, or soft-delete. Solid as-is.
-5. **Don't** add rich-text editing yet. Separate spike after admin consolidation.
+Estimates as ranges (low / expected / high). Single-point estimates on items that span unknowns are the kind of thing that bites at the high end.
 
-**Sequence (rough):**
-- Week 1: Merge `feature/cms-engine`. Resolve `supabase-new.ts`.
-- Week 2: Generic admin editor. Delete 9 old client components. Update 8 importers off `supabase.ts`.
-- Week 3: Consolidate relationship patterns. Delete archive docs.
-- Week 4: Admin path test coverage, audit log polish, env onboarding docs.
+1. **Finish the CMS engine.** Migrate personas, industries, blog_posts. Engine itself is sound. **3–5 days.**
+2. **Generic admin editor (★ dominant budget).** One generic `<SchemaForm>` reading from the registry; delete the 9 old per-type client components. Must support per-type validation, custom field types (the engine's `selectFields` admin pages currently ignore), the relationship-picker abstraction (per-relationship inline create), and an injection point for the future block editor. **8–12 days.** High end if the relationship picker proves messy.
+3. **Consolidate relationship patterns.** Delete the single-entity pattern; standardise on the batch pattern with Set-based dedup. **1–2 days.**
+4. **Search migration to the existing tsvector** (see Section 7a). Fix the column-name bug; switch from `.ilike` to `.textSearch`. **1–2 days.** Independently valuable; sets up the Phase B body-format change.
+5. **Don't** rebuild Supabase layer, middleware, or soft-delete. Solid as-is.
+6. **Don't** add rich-text editing yet. Phase B work, after the engine + admin form land.
 
 **Cost of ignoring:** Each new content type adds 500+ lines of duplicated admin code. Each relationship change requires edits to 9 places. Feature velocity degrades 10–15% per new type. Within 2 years, the codebase is unmaintainable.
