@@ -1,19 +1,34 @@
 # Security Audit — Raw Findings
 
-**Date:** 2026-04-27
+**Date:** 2026-04-27 (revised after reviewer feedback)
 **Scope:** OpenQase Next.js + Supabase application
 **Method:** Code review of middleware, server actions, API routes, RLS policies, dependency tree
 **Status:** Discovery — no code changes
 
 ---
 
-## Top 5 — Fix These First
+## Two Tiers, Not One
 
-1. **Public GET API leaks unpublished/soft-deleted content** (High) — Add `published=true` and `deleted_at IS NULL` filters to `fetchContentBySlug`, or gate slug GETs behind admin auth.
-2. **Server actions don't re-check admin role** (Critical) — Add `requireAdmin()` to every `'use server'` function under `src/app/admin/*/[id]/actions.ts`.
-3. **Audit log readable by all authenticated users** (Medium) — Tighten the `deletion_audit_log` SELECT RLS policy to admin-only. Currently exposes draft snapshots.
-4. **`DEV_MODE_AUTH_BYPASS` not gated by `NODE_ENV`** (High) — Gate with `NODE_ENV === 'development'`, switch substring `host` check to exact comparison, assert at startup that flag is false in prod.
-5. **Excessive table-level GRANTs to anon/authenticated** (High) — `REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM anon, authenticated;` so RLS is no longer the only line of defense.
+The original "Top 5" framing conflated two different urgency profiles. Splitting them:
+
+### Tier 1 — Exploitable today (3)
+
+These have working exploit paths in the default configuration. Fix in the security PR.
+
+1. **Public GET API leaks unpublished/soft-deleted content** (High, finding 1.1) — Anonymous request to `/api/case-studies?slug=<draft>` returns full draft content. **Direct data leak today.**
+2. **`DEV_MODE_AUTH_BYPASS` not gated by `NODE_ENV`** (High, finding 1.4) — Becomes a full admin bypass if the env var ever lands in prod (Vercel mis-set, accidentally copied from `.env.local`). The substring `host` match (`includes('localhost')`) compounds the risk by accepting `evil-localhost.example.com`.
+3. **Excessive table-level GRANTs to anon/authenticated** (High, finding 2.1) — RLS is the only line of defense. One disabled RLS or dropped policy → wide open. Compounds 1.1 because the data fetch already runs with service role; if RLS is the next defense and it's not, the leak surface is total.
+
+### Tier 2 — Critical via misconfiguration (2)
+
+These are real risks but the exploit chain requires a misconfiguration or a future routing change. Fix in the same PR (cheap insurance), but don't let the "Critical" label pull attention from Tier 1.
+
+4. **Server actions don't re-check admin role** (finding 1.3) — Defense-in-depth gap. Middleware does block the route in the default path; the exploit chain runs through finding 1.4 or a Next.js middleware misconfiguration. Adding `requireAdmin()` is a one-line fix per file × 9 files.
+5. **`deletion_audit_log` readable by every authenticated user** (Medium, finding 2.3) — `metadata` JSONB contains full content snapshots of deleted records. Authenticated, not anonymous, so signup is the gate. Important to fix; not a today-exploit.
+
+### Architectural tradeoff, not a fix
+
+Finding 2.2 (`USING (true)` on junction tables) is in real tension with CLAUDE.md's documented decision to filter relationships in JS for performance. See the dedicated section below — it does not belong on a "fix list."
 
 ---
 
@@ -28,14 +43,16 @@ Middleware short-circuits all `GET` requests under `/api` with a comment "(This 
 
 **Fix:** Add `.eq('published', true).is('deleted_at', null)` in `fetchContentBySlug` for non-preview reads, OR gate public GET handlers behind `requireAdmin()` for slug lookups, OR remove the GET-bypass in middleware.
 
-### 1.3 Server actions don't re-check admin role (Critical)
+### 1.3 Server actions don't re-check admin role (Critical via misconfiguration — see Tier 2)
 **Location:** `src/app/admin/case-studies/[id]/actions.ts:26-64` (and parallel `actions.ts` for all 9 content types).
 
 All `'use server'` functions call `createContent`/`updateContent`/`publishContent`/`unpublishContent` which use `createServiceRoleSupabaseClient()` to write directly. **No `requireAdmin()` call inside these actions.**
 
-**Impact:** Server actions are invoked via POST to the originating page. The middleware matcher includes `/admin/:path*` so the role check does run, but: (a) middleware redirects on `Response.redirect` may not stop server-action body execution in some Next.js misconfigurations; (b) future routes added without `/admin/` prefix would expose these; (c) if `DEV_MODE_AUTH_BYPASS` is true and a localhost-spoofed Host header passes, the action runs unauthorized.
+**Why this is Tier 2, not Tier 1:** server actions are invoked via POST to the originating page. The middleware matcher includes `/admin/:path*`, so the role check **does** run in the default path and **does** block unauthorised callers. The exploit chain only closes if (a) the middleware is misconfigured / future routes land outside `/admin/`, (b) Next.js mishandles `Response.redirect` in server-action context (a hypothetical, not an observed bug), or (c) finding 1.4 fires and `DEV_MODE_AUTH_BYPASS` is true with a spoofed Host. None of these is exploitable today in the default configuration.
 
-**Fix:** Add `await requireAdmin()` at the top of every `'use server'` function. Defense-in-depth — `auth.ts` already exists for this.
+**Why fix it anyway:** the cost is one line per file × 9 files. The defense-in-depth value is real — middleware is one matcher edit away from gapping. Pair this fix with 1.4 in the same PR.
+
+**Fix:** Add `await requireAdmin()` at the top of every `'use server'` function. `auth.ts` already exists for this.
 
 ### 1.4 `DEV_MODE_AUTH_BYPASS` not gated by `NODE_ENV` (High)
 **Location:** `src/middleware.ts:121-127`; `scripts/enable-dev-mode.js`.
@@ -66,21 +83,33 @@ After the cleanup migration, several tables (`algorithm_industry_relations`, `ca
 
 **Fix:** `REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM anon, authenticated;`. Keep only `SELECT, REFERENCES`. Service role bypasses RLS, so admin writes go through it via the API.
 
-### 2.2 Junction-table SELECT policies are `USING (true)`, leaking soft-deleted relationships (Medium)
+### 2.2 Junction-table SELECT policies are `USING (true)` — architectural tradeoff, not a fix
 **Location:** `migrations/20260110101340_remote_schema.sql:1979-2170`.
 
-All junction tables have `for select to public using (true)`. Junction tables have `deleted_at` columns, and parent content tables have `published`/`deleted_at`. Public SELECT exposes relationships of soft-deleted or unpublished items.
+All junction tables have `for select to public using (true)`. Junction tables have `deleted_at` columns; parent content tables have `published`/`deleted_at`. Public SELECT exposes relationships of soft-deleted or unpublished items — UUID-to-UUID rows that confirm a relationship exists, but no content fields.
 
-**Impact:** Information disclosure — attacker can enumerate soft-deleted content IDs and discover relationships even though the parent is `published=false`. Combined with finding 1.1, IDs can be dereferenced via the API.
+**Why this is a tradeoff, not a one-line fix:**
 
-**Fix:** Replace `USING (true)` with `USING (deleted_at IS NULL AND EXISTS (SELECT 1 FROM <parent_table> p WHERE p.id = <fk> AND p.published = true AND p.deleted_at IS NULL))`. This contradicts CLAUDE.md's "JS-side relationship filtering" but RLS itself can do this — small perf cost.
+CLAUDE.md documents an explicit decision to filter relationships in JS rather than at the database, citing PostgREST limits on filtering joined entities. The RLS-side fix proposed in earlier review notes (a subquery into the parent table per relationship row) directly contradicts that decision. It's not wrong; it's a different architectural choice with a different cost profile.
 
-### 2.3 `deletion_audit_log` readable by every authenticated user (Medium)
+**Two positions:**
+
+- **Position 1 — RLS-side filtering.** Defense-in-depth via the database. The `USING` clause becomes `(deleted_at IS NULL AND EXISTS (SELECT 1 FROM <parent_table> p WHERE p.id = <fk> AND p.published = true AND p.deleted_at IS NULL))`. Adds a subquery on every relationship read. Performance cost depends on join cardinality and index coverage — unmeasured. Strictly safer.
+
+- **Position 2 — Keep JS filtering, depend on finding 1.1's fix.** Accept that junction rows leak (UUIDs only, not content). Prevent dereferencing via the Tier 1 fix to `fetchContentBySlug`. Performance unchanged. Single line of defense; if the Tier 1 fix regresses, junction enumeration becomes useful again to attackers.
+
+**This decision belongs in Phase 1**, not Phase A. It interacts with: how often relationships are read on hot paths, how confident we are in the Tier 1 fix holding over time, and the team's broader stance on database-level vs. application-level enforcement.
+
+The right next step is **measure**: run a sample query both ways against a realistic dataset, see what the cost actually is, then choose. Treating it as "just a Medium finding to tick off" loses information.
+
+### 2.3 `deletion_audit_log` readable by every authenticated user (Medium — Tier 2)
 **Location:** `migrations/20260111_create_deletion_audit_log.sql:29-33`.
 
 Policy is `FOR SELECT TO authenticated USING (true)`. Comment says "Admin checking is done at application level." Any logged-in user can SELECT all audit rows, including `metadata` JSONB which contains full content snapshots of deleted records.
 
-**Impact:** Privilege escalation — any account can read draft/unpublished content via `metadata->'content_snapshot'`, plus admin user IDs.
+**Why Tier 2:** the gate is signup. An anonymous attacker cannot reach this; they must register an account first. If signup is open and no rate limit / verification gate exists, this becomes Tier 1. (Open question: is signup open? It's worth confirming as part of the security PR.)
+
+**Impact:** Privilege escalation post-signup — any account can read draft/unpublished content via `metadata->'content_snapshot'`, plus admin user IDs.
 
 **Fix:** `USING (EXISTS (SELECT 1 FROM user_preferences WHERE id = (SELECT auth.uid()) AND role = 'admin'))`.
 
