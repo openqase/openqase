@@ -99,7 +99,27 @@ The synthesis already contains a draft Phase A/B/C plan with day ranges and aban
 
 The synthesis's draft phase plan is the input to Phase 2, not its output — Phase 2 takes those slices and asks: are the boundaries right? Is the order right? What ships if Phase B stalls? Where are the natural release points (v0.5, v0.6, v0.7)?
 
-**Explicit Phase 2 deliverable: define the v0.5 ship target.** The Phase 0 abandonment-thresholds table authorises shipping Phase A as v0.5 if Phase B still feels too big at A's close. Phase 2 must commit, in advance, to *what* v0.5 ships as: an internal-only release behind admin auth, a public release with a "rich editing coming soon" banner, or a feature flag that exposes the new admin form to admins while public pages keep rendering from the old path. That decision shapes A3's acceptance criteria — specifically, whether the new admin form must reach feature parity with the old per-type forms before A3 is considered done, or whether a narrower internal-release scope is acceptable. Pre-deciding this prevents A3 from over-scoping in pursuit of an undefined v0.5.
+**Explicit Phase 2 deliverable: define the v0.5 ship target.** The Phase 0 abandonment-thresholds table authorises shipping Phase A as v0.5 if Phase B still feels too big at A's close. Phase 2 must commit, in advance, to *what* v0.5 ships as. The decision factors along two independent axes:
+
+- **Admin path scope** — who uses the new registry-driven form: admins only / all editors / no one yet (gated until Phase B).
+- **Public rendering scope** — what the public site renders from: old path / new path / new path with a "rich editing coming soon" banner.
+
+A conservative default combination is *new admin path for admins; old public path* — battle-tests the new form on real content before flipping public rendering. A more aggressive cutover ships both paths together. Phase 2 picks the combination based on A3's risk profile, and that decision shapes A3's acceptance criteria — specifically, whether the new admin form must reach full parity with the old per-type forms before A3 is considered done, or whether a narrower internal-release scope is acceptable. Pre-deciding this prevents A3 from over-scoping in pursuit of an undefined v0.5.
+
+## Signals to watch — when the vision itself needs re-examining
+
+The "edit in place" discipline below keeps the spec current. This section answers a different question: what would force re-reading the *load-bearing decisions themselves*, not just updating the deliverables that flow from them? One signal per major decision, so future-you has a concrete tripwire instead of vague unease.
+
+| Decision | Signal that re-examination is warranted |
+|---|---|
+| 1. **Stack stays Supabase** | Monthly Supabase bill exceeds tolerance (set a number now — e.g. $100/mo); *or* a specific Postgres extension or operational need is blocked by Supabase's hosting model |
+| 2. **Ghost-pattern security** | More than one Finding-A-class regression per quarter — the "private by discipline" pattern isn't holding; revisit RLS-as-primary-defense |
+| 3. **Linear last-write-wins workflow** | Active editor count grows past 4 *and* overwrite-loss incidents become weekly; the workflow model needs real-time collab or a checkout/lock pattern |
+| 4. **Typed blocks as `jsonb`** | Block validation routinely fails on externally-generated content; the block contract is editor-coupled despite the B2 design check |
+| 5. **BlockNote editor** | Customising BlockNote for new block types becomes the bottleneck on shipping new content patterns — at that point the half-day spike's prior probability of success is no longer valid |
+| 6. **Registry-driven admin form** | A3 lands but adding the 11th content type still requires React work — the registry abstraction failed at scale; revisit a "shared form components, per-type wrapper" pattern |
+
+Editing-in-place handles incremental drift. Signals-to-watch handle structural failure of the underlying decision. Different mechanisms, different triggers; both needed.
 
 ## Success criterion (and its counterpart)
 
