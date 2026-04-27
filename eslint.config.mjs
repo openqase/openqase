@@ -27,6 +27,38 @@ const eslintConfig = [
       "react-hooks/purity": "warn",
       "prefer-const": "warn",
     }
+  },
+  // Restrict imports of internal-queries to the allow-list.
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['**/lib/internal-queries', '@/lib/internal-queries'],
+          message:
+            'Direct content-table access is restricted. Use publicQuery() ' +
+            'from @/lib/public-query for anonymous reads. If you legitimately ' +
+            'need raw access (build-time SSG, admin write, service-role ' +
+            'operation), add this file to the allow-list in eslint.config.mjs ' +
+            'and document the reason in the commit message.'
+        }]
+      }]
+    }
+  },
+  // Override for allow-listed paths.
+  {
+    files: [
+      'src/lib/public-query.ts',
+      'src/lib/public-query.test.ts',
+      'src/cms/page-helpers.ts',
+      'src/cms/operations/**/*.{ts,tsx}',
+      'src/app/admin/**/*.{ts,tsx}',
+      'src/lib/internal-queries.ts',
+      'src/lib/internal-queries.test.ts',
+    ],
+    rules: {
+      'no-restricted-imports': 'off'
+    }
   }
 ];
 
