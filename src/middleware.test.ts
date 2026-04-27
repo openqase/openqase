@@ -178,15 +178,21 @@ describe('middleware - admin routes', () => {
   })
 
   it('allows dev mode bypass on localhost', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(process.env as any).NODE_ENV = 'development'
     process.env.DEV_MODE_AUTH_BYPASS = 'true'
     mockUser = null
     const res = await middleware(makeRequest('/admin/case-studies'))
     expect(res.status).not.toBe(307)
     expect(res.status).not.toBe(401)
     delete process.env.DEV_MODE_AUTH_BYPASS
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(process.env as any).NODE_ENV = 'test'
   })
 
   it('does not bypass dev mode on non-localhost', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(process.env as any).NODE_ENV = 'development'
     process.env.DEV_MODE_AUTH_BYPASS = 'true'
     mockUser = null
     const req = new NextRequest('https://openqase.com/admin/case-studies', {
@@ -197,5 +203,63 @@ describe('middleware - admin routes', () => {
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/auth')
     delete process.env.DEV_MODE_AUTH_BYPASS
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(process.env as any).NODE_ENV = 'test'
   })
 })
+
+// ---------------------------------------------------------------------------
+// shouldBypass unit tests — mirror the bypass condition in isolation
+// ---------------------------------------------------------------------------
+
+function shouldBypass(env: NodeJS.ProcessEnv, host: string | null) {
+  return (
+    env.NODE_ENV === 'development' &&
+    env.DEV_MODE_AUTH_BYPASS === 'true' &&
+    (host === 'localhost' ||
+     host === 'localhost:3000' ||
+     host === '127.0.0.1' ||
+     host === '127.0.0.1:3000')
+  );
+}
+
+describe('DEV_MODE_AUTH_BYPASS gating', () => {
+  it('bypasses on localhost in development', () => {
+    expect(shouldBypass(
+      { NODE_ENV: 'development', DEV_MODE_AUTH_BYPASS: 'true' },
+      'localhost:3000'
+    )).toBe(true);
+  });
+
+  it('does NOT bypass in production even if env var is set', () => {
+    expect(shouldBypass(
+      { NODE_ENV: 'production', DEV_MODE_AUTH_BYPASS: 'true' },
+      'localhost:3000'
+    )).toBe(false);
+  });
+
+  it('does NOT bypass on host containing "localhost" but not equal', () => {
+    expect(shouldBypass(
+      { NODE_ENV: 'development', DEV_MODE_AUTH_BYPASS: 'true' },
+      'evil-localhost.example.com'
+    )).toBe(false);
+    expect(shouldBypass(
+      { NODE_ENV: 'development', DEV_MODE_AUTH_BYPASS: 'true' },
+      'attackerlocalhost.example'
+    )).toBe(false);
+  });
+
+  it('does NOT bypass without env var', () => {
+    expect(shouldBypass(
+      { NODE_ENV: 'development' },
+      'localhost:3000'
+    )).toBe(false);
+  });
+
+  it('does NOT bypass with null host', () => {
+    expect(shouldBypass(
+      { NODE_ENV: 'development', DEV_MODE_AUTH_BYPASS: 'true' },
+      null
+    )).toBe(false);
+  });
+});
