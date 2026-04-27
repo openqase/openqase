@@ -30,11 +30,21 @@ We do *not* take: Strapi's GUI content-type builder, Directus's generic admin, L
 These are the decisions whose reversal would ripple through everything else. Surfaced so future-self knows what's intentional vs. incidental.
 
 1. **Stack: Next.js + Supabase, indefinitely.** DB choice is implementation detail under the Ghost pattern. The Ghost-pattern commitment makes the database choice less load-bearing, not more. No migration to AWS, Neon, or anywhere else without a concrete cost or feature reason.
-2. **Security model: app-layer enforcement (the "Ghost pattern").** The database is private *by discipline*, not by network topology. Every public content read goes through a single `publicQuery()` chokepoint that applies `published=true` and `deleted_at IS NULL`. RLS on content tables is belt-and-braces, not load-bearing. Junction-table `USING (true)` policies stay; the leak surface (UUID metadata) is acceptable for an editorial knowledge base where content is intentionally findable.
+2. **Security model: app-layer enforcement (the "Ghost pattern").** The database is private *by discipline*, not by network topology. Every public content read goes through a single `publicQuery()` chokepoint that applies `published=true` and `deleted_at IS NULL`. RLS on content tables is belt-and-braces, not load-bearing.
+
+   > **Invariant (named, load-bearing).** `publicQuery()` is the only function that returns content data to anonymous requests. Any new public read path that does not use it is a security-review trigger and must be flagged in PR review. Enforce by convention; ideally also by lint rule (forbid direct `client.from('case_studies').select(...)` outside the wrapper) or grep-based CI check. Without this invariant, "the database is private by discipline" is one PR away from being false.
+
+   Junction-table `USING (true)` policies stay; the leak surface (UUID metadata) is acceptable for an editorial knowledge base where content is intentionally findable. **This is contingent on the `publicQuery()` invariant holding** — the junction leak only stays acceptable while content tables refuse to dereference unpublished UUIDs. If Finding A regresses, the junction leak compounds: attackers learn UUID pairs *and* can fetch the content they reference. Treat any regression of A as a Sev-1 incident.
 3. **Workflow model: Ghost-shaped, linear.** Multi-author with role gradations (`admin`, `editor` for v1; extensible). Per-record `created_by` and `last_edited_by`. Last-write-wins with an "X edited this 30s ago" banner. No shadow-document drafts, no real-time collaboration, no concurrent-edit mutex.
+
+   > **Scale ceiling.** The linear last-write-wins + banner model is sized for ~3–4 simultaneously active editors. Two editors with rare overlap is fine; five editors with daily overlap will start losing work to silent overwrites that the banner doesn't always catch. Beyond the ~4-editor ceiling, the workflow choice should be revisited (real-time collab or a checkout/lock pattern — both currently out of scope).
 4. **Content model: typed blocks as `jsonb`.** Body becomes `body jsonb` storing `Block[]`. v1 ships **three** block types — `RichTextBlock`, `HeadingBlock` (or heading-as-style; small modeling choice deferred to B1), `CitationBlock`. Future-authoring blocks (callout, image, code, algorithm-ref, case-study-ref, industry-ref) are layered in later as authoring need emerges, not pre-built.
-5. **Editor: BlockNote, contingent on the B1 spike.** Half-day prototype of one OpenQase-specific custom block confirms the customisation ceiling. Pre-committed fallbacks if B1 fails: TipTap (4–6 weeks) or defer rich text and ship v1 with markdown editor. Pre-decided in the Phase 0 abandonment-thresholds table; not an in-the-moment choice.
-6. **Admin form: registry-driven.** One generic `<SchemaForm config={...}>` rendered from `defineContentType()` config replaces nine per-type React clients. The relationship-picker abstraction within `<SchemaForm>` is the single highest-risk piece of the rebuild.
+5. **Editor: BlockNote, contingent on the B1 spike.** Half-day prototype of one OpenQase-specific custom block confirms the customisation ceiling.
+
+   > **Pre-committed fallback if B1 fails: defer rich text and ship v1 with a markdown editor.** Block model and storage shape still ship; only the in-editor surface defers to a later cycle. TipTap is *not* the default fallback because a 4–6 week custom-editor build doesn't fit a side-project budget that already competes with Marqov for attention. TipTap only becomes viable if a follow-up spike (separate decision, separate session) confirms a 6-week budget is genuinely available — which by definition means Marqov is in a quiet phase.
+
+   This is a real pre-commitment, not a "consider the options when we get there." The Phase 0 abandonment-thresholds table will be updated to match.
+6. **Admin form: registry-driven.** One generic `<SchemaForm config={...}>` rendered from `defineContentType()` config replaces nine per-type React clients. The relationship-picker abstraction within `<SchemaForm>` is the single highest-risk piece of the rebuild — see the Phase 0 abandonment-thresholds table: if A3 (generic admin form) exceeds 15 days, stop and re-evaluate whether a registry-driven generic form is the right abstraction at this scale, vs. a less ambitious "shared form components, per-type wrapper" pattern.
 
 ## Quality bars
 
@@ -53,7 +63,7 @@ These are deliberately deferred. Not "we'll never do them"; "they don't earn the
 
 - Real-time collaborative editing (presence indicators, live cursors, multiplayer)
 - Click-to-edit live preview overlays (Sanity Presentation pattern)
-- AI-assisted authoring
+- AI-assisted authoring as an in-editor feature *(but see design check below — the block contract should accept externally-generated `Block[]` arrays cleanly)*
 - A public API for external consumers (the existing `/api/*` routes stay; no new public surface)
 - Multi-tenancy
 - Granular RBAC beyond `admin` + `editor` (extensible schema, but only two roles in v1)
@@ -61,6 +71,11 @@ These are deliberately deferred. Not "we'll never do them"; "they don't earn the
 - Newsletter / membership / paywall stack (existing Beehiiv/Resend integration stays as-is; not redesigned)
 - Comments / community features on public pages
 - Automated content quality scoring or moderation workflow
+- Migration tooling for importing from third-party CMSes (WordPress, Ghost, Notion, etc.) — the existing Qookie-import pipeline stays as the only inbound channel
+
+### Design check (not a feature): block contract accepts external generators
+
+The block contract (`Block[]` shape, validation rules, storage path) should be clean enough that an external process — a one-off import script, the existing Qookie-import pipeline, a future AI generator — can produce valid `Block[]` arrays without going through the in-app editor. This is a 30-second sanity check during B2, not a feature: ensure block validation and the database write path don't depend on editor-specific state. If they do, that's an unintended coupling worth fixing.
 
 ## Open follow-ups (deferred to specific phases, not unanswered)
 
@@ -84,6 +99,14 @@ The synthesis already contains a draft Phase A/B/C plan with day ranges and aban
 
 The synthesis's draft phase plan is the input to Phase 2, not its output — Phase 2 takes those slices and asks: are the boundaries right? Is the order right? What ships if Phase B stalls? Where are the natural release points (v0.5, v0.6, v0.7)?
 
-## Success criterion for this spec
+**Explicit Phase 2 deliverable: define the v0.5 ship target.** The Phase 0 abandonment-thresholds table authorises shipping Phase A as v0.5 if Phase B still feels too big at A's close. Phase 2 must commit, in advance, to *what* v0.5 ships as: an internal-only release behind admin auth, a public release with a "rich editing coming soon" banner, or a feature flag that exposes the new admin form to admins while public pages keep rendering from the old path. That decision shapes A3's acceptance criteria — specifically, whether the new admin form must reach feature parity with the old per-type forms before A3 is considered done, or whether a narrower internal-release scope is acceptable. Pre-deciding this prevents A3 from over-scoping in pursuit of an undefined v0.5.
 
-This document succeeds if, six months from now, the question "should we add real-time collaboration?" or "should we move to AWS?" or "should we build a plugin system?" can be answered by re-reading the relevant section here, rather than re-deriving the answer from first principles. The point of a vision spec is to make load-bearing decisions explicit so they don't quietly rot into accidental architecture.
+## Success criterion (and its counterpart)
+
+**Success.** This document succeeds if, six months from now, the question "should we add real-time collaboration?" or "should we move to AWS?" or "should we build a plugin system?" can be answered by re-reading the relevant section here, rather than re-deriving the answer from first principles.
+
+**Failure.** This document fails if, six months from now, the answer to a load-bearing question is "we changed our mind but didn't update this doc." Vision specs rot when reality diverges silently.
+
+**The discipline that makes success possible.** When a load-bearing decision changes — Supabase-vs-something-else, Ghost-pattern-vs-RLS-load-bearing, BlockNote-vs-something-else — *edit this document* rather than supplementing it with a new doc that contradicts it. Versioned, in-place edits with git history beat append-only memos. If a decision genuinely shifts, the corresponding section here is the deliverable. Treat the vision spec as a living document with a rate-limited update cycle (revisit at the close of each phase, plus on-demand when a load-bearing question gets re-asked).
+
+The point of a vision spec is to make load-bearing decisions explicit so they don't quietly rot into accidental architecture. The point of editing it in place is to make that explicitness *survive*.
