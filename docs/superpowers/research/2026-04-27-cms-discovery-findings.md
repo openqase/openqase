@@ -162,24 +162,26 @@ Estimates are ranges (low / expected / high) with the dominant-budget item per p
 
 | # | Item | Range (days) | Notes |
 |---|---|---|---|
+| A0 | **Schema cross-check (pre-flight for A2).** Walk every field declared in `docs/superpowers/specs/2026-03-23-cms-engine-design.md` against actual DB columns for all 9 content types. We already know `algorithms.technical_details` is missing; find the rest before A2 hits a surprise. | 0.5 | Block A2 if mismatches > 3. |
 | A1 | **Security PR.** Findings A, B, C, D, E above. Plus `setup_admin_role` REVOKE. | 1–2 | Independent of everything; ship first. |
 | A2 | **Finish `feature/cms-engine`.** Migrate personas, industries, blog_posts. Resolve `supabase-new.ts` (with explanatory comment). Update 8 importers off deprecated `supabase.ts`. | 3–5 | Engine work mostly done; risk is in the import surgery. |
 | A3 | **Generic admin form from registry.** ★ Dominant budget. Replace 9 per-type client components with one generic `<SchemaForm config={...}>` reading from the registry. Must support per-type validation, custom field types (the engine's `selectFields` admin pages currently ignore), and an injection point for the future block editor. | **8–12** | High end if the relationship picker abstraction proves messy. |
 | A4 | **Consolidate relationship patterns.** Delete `content-fetchers.ts` single-item pattern; standardise on the batch pattern. | 1–2 | Mostly mechanical. |
 | A5 | **Drafts + version history.** `content_versions` table; every save writes a version; `restore_version()` action. **Pulled forward from Phase B** because it has no editor dependency and provides a safety net for Phase B's migration. | 2–3 | |
 | A6 | **Scheduled publishing.** `publish_at` column + Vercel Cron job; revalidation already wired. **Pulled forward from Phase B.** | 1–2 | |
-| A0 | **Schema cross-check.** Walk every field declared in `docs/superpowers/specs/2026-03-23-cms-engine-design.md` against actual DB columns. We already know `algorithms.technical_details` is missing; find the rest before A2 hits a surprise. | 0.5 | Pre-flight for A2. |
-| A7 | **Fix broken-in-production body-text search.** Not a migration — a regression fix. Fix the `update_ts_content` trigger column-name bug so 8 of 9 content types finally index body content. Switch search code from `.ilike` to `.textSearch('ts_content', ...)`. Backfill. Sets up the Phase B body-format change. | 1–2 | The trigger update fold into Phase B's block-derived text extraction. |
+| A7 | **Fix broken-in-production body-text search.** Not a migration — a regression fix. Fix the `update_ts_content` trigger column-name bug so 8 of 9 content types finally index body content. Switch search code from `.ilike` to `.textSearch('ts_content', ...)`. **Backfill method:** for each content table, run a no-op update (`UPDATE <table> SET id = id WHERE deleted_at IS NULL`) to force the trigger to fire on existing rows. Or compute `ts_content` directly in a single statement without relying on the trigger. Pick one and document; "backfill" without a method is the kind of step that gets skipped or done wrong. | 1–2 | Trigger update folds into Phase B's block-derived text extraction. |
 
-**Phase A total: 17.5–28.5 days** (single dev). Dominant items: A3 (admin form) and A2 (engine completion). **Phase A is the longest and riskiest of the three phases; A3 alone is the single largest item across the whole plan.** Where attention should focus first: the relationship-picker abstraction inside A3 — that's the part most likely to push to the high end of the range. Phase B and Phase C are now well-defined and shorter; the project succeeds or fails primarily on whether A3 lands cleanly.
+**Phase A total: ~18–29 days** (single dev). Dominant items: A3 (admin form) and A2 (engine completion). **Phase A is the longest and riskiest of the three phases; A3 alone is the single largest item across the whole plan.** Where attention should focus first: the relationship-picker abstraction inside A3 — that's the part most likely to push to the high end of the range. Phase B and Phase C are now well-defined and shorter; the project succeeds or fails primarily on whether A3 lands cleanly.
 
 **Acceptance criteria (testable, not a feeling):**
+- A0 schema cross-check completed; spec divergences documented or repaired before A2 starts.
 - Findings A, B, C, D, E no longer reproducible against the dev server.
 - All 9 content types managed via the same generic admin form.
 - `git grep "from '@/lib/supabase'"` returns zero results outside the deprecated file's own re-exports (or the file is deleted).
 - A save action writes a row to `content_versions`; `restore_version()` round-trip restores prior state.
 - A scheduled `publish_at` time triggers publication via cron in dev.
 - Search query for body-only text returns matching items via `.textSearch`.
+- ISR revalidation latency measured on the deployed Vercel environment (not local). Whatever number this produces becomes the **baseline** for Phase B's "within 2× of baseline" check — the 2× threshold is calibrated against deployed reality, not the local 18s build.
 
 ### Phase B — Make authoring excellent
 
@@ -202,7 +204,7 @@ Estimates are ranges (low / expected / high) with the dominant-budget item per p
 - **Migration is reversible** for one release: `main_content` is preserved; a renderer feature flag flips back to markdown without restoring from backup. Rollback path tested before B2 is considered done.
 - Editing a record in the new editor produces a `Block[]` round-trip without lossy conversion.
 - Search for body-only text still works after migration (tsvector now derives from block text).
-- Re-measured ISR revalidation latency on a deployed environment is within 2× of the Phase A baseline.
+- Re-measured ISR revalidation latency on the deployed environment is within 2× of the Phase A baseline (whatever that turned out to be — calibrated against the A-phase deployed measurement, not the local 18s build).
 
 > **Modeling note for B2:** `HeadingBlock` as a separate type vs. heading-as-style on a text block (a `level` attribute) is a small modeling choice, not a settled answer. Both Portable Text and BlockNote use the latter. Migration regex is identical either way. Decide during B1 based on which the editor's slash-menu UX expresses more naturally.
 
@@ -234,8 +236,9 @@ The original list had 7. Three are now answered or resolved by empirical data; f
 
 **Remaining for Phase 1:**
 1. **Authoring audience + drafts model** (merged — they're conditional). Just you for the foreseeable future, or a wider editorial team / contributors? If solo: linear version history is fine (Payload-style). If team: branching becomes worth its cost (Sanity-style `drafts.foo` shadow documents) and concurrent-edit prevention matters. Answer the audience question first; the drafts model falls out of it.
-2. **Editor effort budget.** BlockNote (commit, contingent on the spike) or TipTap (deliberate 4–6 week investment for a fully custom surface)?
-3. **`USING (true)` on junctions** — RLS-side filtering (defense-in-depth, perf cost) or keep JS filtering with finding A patched (perf, narrower defense)? **Measure before deciding** — a sample query both ways against realistic data tells you what the cost actually is.
+2. **`USING (true)` on junctions** — RLS-side filtering (defense-in-depth, perf cost) or keep JS filtering with finding A patched (perf, narrower defense)? **Measure before deciding** — a sample query both ways against realistic data tells you what the cost actually is.
+
+The "BlockNote vs TipTap" question that previously lived here is folded into B1's spike outcome. Default path: BlockNote (the spike confirms or revises). If B1 fails, the choice between TipTap (4–6 week custom build) and deferring rich text entirely is a contingent decision spelled out in the abandonment-thresholds table below — not an open question for the vision conversation.
 
 ---
 
