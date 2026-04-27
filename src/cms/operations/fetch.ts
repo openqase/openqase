@@ -1,7 +1,8 @@
 import { cache } from 'react'
+import { draftMode } from 'next/headers'
 import { getContentType } from '../registry'
 import { buildRelationshipSelect, flattenRelationships } from './relationships'
-import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
 
 async function _fetchContentBySlug(
@@ -11,13 +12,38 @@ async function _fetchContentBySlug(
   const ct = getContentType(typeSlug)
   if (!ct) return null
 
-  const supabase = createServiceRoleSupabaseClient()
   const selectStr = buildRelationshipSelect(ct)
+
+  // Preview mode: use service role + skip published filter.
+  // Draft mode can only be enabled via admin /api/preview, which itself
+  // requires a valid PREVIEW_SECRET. Not a public-facing bypass.
+  const { isEnabled: isPreview } = await draftMode()
+  if (isPreview) {
+    const adminClient = createServiceRoleSupabaseClient()
+    const { data, error } = await fromTable(adminClient, ct.tableName)
+      .select(selectStr)
+      .eq('slug', slug)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error || !data) return null
+    const relationships = flattenRelationships(data as Record<string, unknown>, ct)
+    const base: Record<string, unknown> = { ...(data as Record<string, unknown>) }
+    for (const rel of ct.relationships) {
+      delete base[rel.junction]
+    }
+    Object.assign(base, relationships)
+    return base
+  }
+
+  // Runtime (non-preview): RLS-respecting client + mandatory published/deleted_at filters.
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await fromTable(supabase, ct.tableName)
     .select(selectStr)
     .eq('slug', slug)
-    .single()
+    .eq('published', true)
+    .is('deleted_at', null)
+    .maybeSingle()
 
   if (error || !data) return null
 

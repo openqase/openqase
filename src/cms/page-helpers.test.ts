@@ -8,15 +8,26 @@ vi.mock('react', async () => {
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
+// Mock next/headers draftMode — return isEnabled: false so tests exercise
+// the non-preview (published-filter) path by default.
+vi.mock('next/headers', () => ({
+  draftMode: vi.fn().mockResolvedValue({ isEnabled: false }),
+  cookies: vi.fn().mockResolvedValue({}),
+}))
+
 // Mock Supabase
+const mockMaybeSingle = vi.fn()
 const mockSingle = vi.fn()
+const mockIs = vi.fn()
 const mockEq = vi.fn()
-mockEq.mockReturnValue({ single: mockSingle, eq: mockEq })
-const mockSelect = vi.fn(() => ({ eq: mockEq }))
+mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+const mockSelect = vi.fn(() => ({ eq: mockEq, is: mockIs }))
 const mockFrom = vi.fn(() => ({ select: mockSelect }))
 
 vi.mock('@/lib/supabase-server', () => ({
   createServiceRoleSupabaseClient: () => ({ from: mockFrom }),
+  createServerSupabaseClient: async () => ({ from: mockFrom }),
 }))
 
 const { generateStaticParamsFor, generateMetadataFor } = await import('./page-helpers')
@@ -24,8 +35,9 @@ const { generateStaticParamsFor, generateMetadataFor } = await import('./page-he
 beforeEach(() => {
   vi.clearAllMocks()
   // Reset default chain behaviour after clearAllMocks
-  mockEq.mockReturnValue({ single: mockSingle, eq: mockEq })
-  mockSelect.mockReturnValue({ eq: mockEq })
+  mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+  mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+  mockSelect.mockReturnValue({ eq: mockEq, is: mockIs })
   mockFrom.mockReturnValue({ select: mockSelect })
 })
 
@@ -56,9 +68,10 @@ describe('generateStaticParamsFor', () => {
 
 describe('generateMetadataFor', () => {
   it('returns metadata with title and description', async () => {
-    // fetchContentBySlug calls: .from(tableName).select(selectStr).eq('slug', slug).single()
+    // fetchContentBySlug calls: .from(tableName).select(selectStr).eq('slug', slug)
+    //   .eq('published', true).is('deleted_at', null).maybeSingle()
     // The data must include junction keys so flattenRelationships can process them
-    mockSingle.mockResolvedValueOnce({
+    mockMaybeSingle.mockResolvedValueOnce({
       data: {
         id: '1',
         name: 'Finance',
@@ -89,7 +102,7 @@ describe('generateMetadataFor', () => {
   })
 
   it('returns empty object when item not found', async () => {
-    mockSingle.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
 
     const fn = generateMetadataFor('industries')
     const metadata = await fn({ params: Promise.resolve({ slug: 'missing' }) })
@@ -97,7 +110,7 @@ describe('generateMetadataFor', () => {
   })
 
   it('returns empty string description when description field is falsy', async () => {
-    mockSingle.mockResolvedValueOnce({
+    mockMaybeSingle.mockResolvedValueOnce({
       data: {
         id: '2',
         name: 'Tech',

@@ -55,6 +55,10 @@ const eslintConfig = [
       'src/app/admin/**/*.{ts,tsx}',
       'src/lib/internal-queries.ts',
       'src/lib/internal-queries.test.ts',
+      // Integration test fixtures use service-role client to seed/teardown
+      // test data. This is a test-only seeding use, not a public read path.
+      'src/__tests__/**/*.{ts,tsx}',
+      'src/security/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-imports': 'off'

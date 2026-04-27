@@ -6,20 +6,31 @@ vi.mock('react', async () => {
   return { ...actual, cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn }
 })
 
+// Mock next/headers draftMode — return isEnabled: false so tests exercise
+// the non-preview (published-filter) path by default.
+vi.mock('next/headers', () => ({
+  draftMode: vi.fn().mockResolvedValue({ isEnabled: false }),
+  cookies: vi.fn().mockResolvedValue({}),
+}))
+
 // Mock Supabase client
+const mockMaybeSingle = vi.fn()
 const mockSingle = vi.fn()
 const mockRange = vi.fn(() => ({ data: [], count: 0, error: null }))
 const mockOrder = vi.fn(() => ({ range: mockRange }))
 const mockIlike = vi.fn()
-// mockEq is used for both single-item queries (returns { single, eq }) and list queries (returns chainable object with order)
+const mockIs = vi.fn()
+// mockEq chains through eq, is, maybeSingle, single, order, ilike
 const mockEq = vi.fn()
-mockEq.mockReturnValue({ single: mockSingle, eq: mockEq, order: mockOrder, ilike: mockIlike })
+mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs, order: mockOrder, ilike: mockIlike })
+mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
 mockIlike.mockReturnValue({ order: mockOrder, eq: mockEq })
-const mockSelect = vi.fn(() => ({ eq: mockEq, order: mockOrder, ilike: mockIlike }))
+const mockSelect = vi.fn(() => ({ eq: mockEq, order: mockOrder, ilike: mockIlike, is: mockIs }))
 const mockFrom = vi.fn(() => ({ select: mockSelect }))
 
 vi.mock('@/lib/supabase-server', () => ({
   createServiceRoleSupabaseClient: () => ({ from: mockFrom }),
+  createServerSupabaseClient: async () => ({ from: mockFrom }),
 }))
 
 // Must import after mocks
@@ -27,11 +38,17 @@ const { fetchContentBySlug, listContent } = await import('./fetch')
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // Re-establish default chain after clearAllMocks
+  mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs, order: mockOrder, ilike: mockIlike })
+  mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+  mockIlike.mockReturnValue({ order: mockOrder, eq: mockEq })
+  mockSelect.mockReturnValue({ eq: mockEq, order: mockOrder, ilike: mockIlike, is: mockIs })
+  mockFrom.mockReturnValue({ select: mockSelect })
 })
 
 describe('fetchContentBySlug', () => {
   it('returns flattened item when found', async () => {
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValue({
       data: {
         id: '1', name: 'Finance', slug: 'finance',
         case_study_industry_relations: [
@@ -46,7 +63,7 @@ describe('fetchContentBySlug', () => {
   })
 
   it('returns null when not found', async () => {
-    mockSingle.mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
     const result = await fetchContentBySlug('industries', 'nonexistent')
     expect(result).toBeNull()
   })
@@ -57,7 +74,7 @@ describe('fetchContentBySlug', () => {
   })
 
   it('removes junction table keys from the returned object', async () => {
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValue({
       data: {
         id: '1', name: 'Finance', slug: 'finance',
         case_study_industry_relations: [],
