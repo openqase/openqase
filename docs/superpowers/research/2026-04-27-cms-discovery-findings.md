@@ -1,17 +1,22 @@
 # OpenQase CMS — Phase 0 Discovery Findings
 
-**Date:** 2026-04-27
+**Date:** 2026-04-27 (revised after reviewer feedback + empirical follow-up)
 **Author:** Claude Code (with parallel research agents)
 **Status:** Discovery complete — vision conversation pending
 **Audience:** Project owner (overnight read)
+**Companion:** `2026-04-27-empirical-followup.md` — measured data on content shape and ISR baseline
 
 ---
 
 ## TL;DR
 
-You have already specced the right architectural refactor. It's sitting on `feature/cms-engine` (March 23) and is ~70% migrated. The blocker is not what to build — it's that the work never landed. Before any further architectural change, fix five specific security findings (one Critical, three High). Then **finish the existing engine work**, **add a real editor + block-based content model** (the existing spec doesn't address this), and stop. Don't restart from scratch.
+You have already specced the right architectural refactor. It's sitting on `feature/cms-engine` (March 23) and is ~70% migrated. The blocker was attention, not code: a parallel project (Marqov) pulled focus and the work paused. Resuming requires unblocking what exists, not redesigning it.
 
-The competitive research and codebase audit converge on one recommendation: **OpenQase needs a Payload-class authoring surface bolted onto its existing Supabase backend, not a CMS migration.**
+Before any further architectural change, fix three security findings that are exploitable today (one High that becomes Critical when combined with another, and two High). Two more are Critical-in-defense-in-depth terms but not exploitable in the default path — fix them too, but don't let them dominate the urgency.
+
+Then **finish the existing engine work**, **add the editor + block-based content model the existing spec doesn't address**, and stop. Don't restart from scratch.
+
+The destination — what the system should look like once shipped — resembles **Payload's authoring surface bolted onto your existing Supabase backend**. That's a description of where you're heading, not a constraint to design around. The actual goal is: editorial workflow that doesn't fight you, and structured content that's queryable.
 
 ---
 
@@ -22,7 +27,9 @@ You wrote two design specs five weeks ago:
 1. **`docs/superpowers/specs/2026-03-23-cms-engine-design.md`** — config-driven content types, shared CRUD, generic operations layer. Linked to GitHub Issue #201.
 2. **`docs/superpowers/specs/2026-03-24-editorial-redesign-design.md`** — Source Serif 4 typography, faceted filters, tag pills. Visual only.
 
-Both have implementation plans under `docs/superpowers/plans/`. Both have unmerged feature branches with substantial code. The CMS engine spec is genuinely good — it matches almost exactly what an independent architectural audit would propose today. **You don't need a new architecture spec; you need to finish the one you have, plus three things it doesn't cover.**
+Both have implementation plans under `docs/superpowers/plans/`. Both have unmerged feature branches with substantial code. The CMS engine spec is genuinely good — it matches almost exactly what an independent architectural audit would propose today.
+
+**Stall reason (now confirmed):** Marqov pulled focus, and the OpenQase rebuild was paused, not abandoned. Not a technical blocker. This matters because it means the existing specs are still valid inputs — we don't need to rederive the architecture, only to add the things they don't cover.
 
 What the existing specs cover ✅
 - Engine refactor: `defineContentType()` + registry + transport-agnostic operations
@@ -34,29 +41,49 @@ What the existing specs don't cover ❌
 - **The editor.** Still plain `<Textarea>` + markdown. The visual redesign doesn't touch authoring.
 - **The content model.** Body remains a markdown string. No blocks, no Portable Text, no typed embeds.
 - **Drafts / versioning / scheduling.** No version history table; no `publish_at`.
+- **Search.** Existing tsvector trigger has a column-name bug (see below) — not from the engine spec, but interacts directly with the content-model change.
 - **Security.** Several findings live in middleware, RLS, and server actions independent of the engine.
-- **Why the rebuild stalled.** Process question, not technical.
 
 ---
 
-## CRITICAL — Fix Before Anything Else
+## Security — Two Tiers, Not One
 
-These are the security findings the owner should see first. Full report: `2026-04-27-security-audit.md`.
+Full report: `2026-04-27-security-audit.md`. The headline urgency split:
+
+### Exploitable today (fix in the security PR)
 
 | # | Finding | Severity | Location |
 |---|---------|----------|----------|
-| 1 | **Server actions don't re-check admin role.** All `'use server'` functions write via service-role client with no `requireAdmin()` inside. | Critical | `src/app/admin/*/[id]/actions.ts` (×9) |
-| 2 | **Public GET API leaks unpublished/soft-deleted content.** `fetchContentBySlug` has no `published`/`deleted_at` filter; reachable anonymously via `/api/case-studies?slug=<draft>`. | High | `src/cms/operations/fetch.ts:7-39`; `src/middleware.ts:61-63` |
-| 3 | **`DEV_MODE_AUTH_BYPASS` not gated by `NODE_ENV`.** Substring host check (`includes('localhost')`) matches `evil-localhost.example.com`. If env var ever leaks to prod → full admin bypass. | High | `src/middleware.ts:121-127` |
-| 4 | **Excessive table-level GRANTs to `anon`/`authenticated`.** RLS is the only line of defense; one dropped policy or disabled RLS → wide open. | High | `migrations/20260110101340_remote_schema.sql:928+` |
-| 5 | **`deletion_audit_log` readable by every authenticated user.** RLS policy `USING (true)`. Audit `metadata` JSONB contains full content snapshots of deleted records. | Medium | `migrations/20260111_create_deletion_audit_log.sql:29-33` |
+| A | **Public GET API leaks unpublished/soft-deleted content.** `fetchContentBySlug` has no `published`/`deleted_at` filter; reachable anonymously via `/api/case-studies?slug=<draft>`. | High | `src/cms/operations/fetch.ts:7-39`; `src/middleware.ts:61-63` |
+| B | **`DEV_MODE_AUTH_BYPASS` not gated by `NODE_ENV`.** Substring host check (`includes('localhost')`) matches `evil-localhost.example.com`. If env var ever leaks to prod → full admin bypass. | High | `src/middleware.ts:121-127` |
+| C | **Excessive table-level GRANTs to `anon`/`authenticated`.** RLS is the only line of defense; one dropped policy or disabled RLS → wide open. | High | `migrations/20260110101340_remote_schema.sql:928+` |
 
-These are independent of the engine work and can be fixed today as a small dedicated PR. Recommend doing this first.
+A is a direct data-leak today. B is a misconfiguration risk that becomes a full admin bypass if it ever fires. C is a defense-in-depth weakening that compounds any missed RLS policy. All three are short to fix.
 
-Additional findings (Medium/Low) in the full audit:
-- Junction-table SELECT policies are `USING (true)` (leaks soft-deleted relationship data)
-- `setup_admin_role(text)` SQL function lacks REVOKE
-- Public GET handlers use service-role client (single missed filter = exposure)
+### Critical in defense-in-depth terms (fix in the same PR; don't let "Critical" framing pull attention from A/B/C)
+
+| # | Finding | Severity | Notes |
+|---|---------|----------|-------|
+| D | **Server actions don't re-check admin role.** Defense-in-depth gap. Middleware does block the route in the default path; the exploit chain requires B or a Next.js middleware misconfiguration. | Critical via misconfig | `src/app/admin/*/[id]/actions.ts` (×9) |
+| E | **`deletion_audit_log` readable by every authenticated user.** RLS policy `USING (true)`. Audit `metadata` JSONB contains full content snapshots of deleted records — but only authenticated users; signup is gated. | Medium | `migrations/20260111_create_deletion_audit_log.sql:29-33` |
+
+D is the kind of finding that's "Critical" because the impact is admin-level data write *if* the chain ever closes — but the chain doesn't close in the default path. Worth fixing immediately as cheap insurance, not panic.
+
+### Architectural choice, not a fix — `USING (true)` on junction tables
+
+The audit also flagged that all junction tables have `for select to public using (true)`, leaking soft-deleted relationship data. The "fix" is RLS-side filtering via subquery into the parent table — but this contradicts CLAUDE.md's explicit decision to filter relationships in JS for performance reasons.
+
+This is an **architectural tradeoff, not a one-line fix:**
+
+- **Option 1 — RLS-side filtering.** Defense-in-depth via the database. Adds a subquery on every relationship read. Performance cost depends on join cardinality; unmeasured.
+- **Option 2 — Keep JS filtering, document the leak surface.** Accept that junction rows leak (they only contain IDs, not content), and prevent dereferencing via finding A. The data exposed is "this UUID relates to this UUID," which is meaningful but not catastrophic if A is fixed.
+
+This decision belongs in Phase 1, not Phase A. Surface in the vision conversation.
+
+### Smaller findings (not in the urgency table)
+
+- `setup_admin_role(text)` SQL function lacks `REVOKE` on EXECUTE
+- Public GET handlers use service-role client (single missed filter = exposure; same root cause as A)
 - Bulk delete endpoints accept arbitrary `id`/`ids` without UUID validation
 - 5 moderate npm advisories (transitive postcss / GHSA-qx2v-qp2m-jg93)
 - Email PII may reach Sentry (`sendDefaultPii` not set to false)
@@ -69,17 +96,19 @@ Additional findings (Medium/Low) in the full audit:
 Full report: `2026-04-27-architectural-audit.md`. Headline findings:
 
 **The half-finished rebuild is real and salvageable.**
-- `feature/cms-engine` worktree: engine is *working*, tests pass, 6 of 9 content types migrated. Personas, industries, blog_posts not yet migrated. Estimated 3–5 days to finish migration.
+- `feature/cms-engine` worktree: engine is *working*, tests pass, 6 of 9 content types migrated. Personas, industries, blog_posts not yet migrated. Estimated **3–5 days** to finish migration.
 - `feature/editorial-redesign` worktree: orthogonal frontend work, also unmerged.
 - The admin UI rewrite (Issue #202 referenced in the spec) was never started. Still 9 per-type client components, ~3,576 lines, ~80% overlap.
 
 **Two parallel patterns coexist that should be one.**
-- `src/lib/content-fetchers.ts` (single-item nested) and `src/lib/relationship-queries.ts` (batch). CLAUDE.md justifies both as intentional. In practice they confuse new code paths and the batch one (with proper Set-based dedup) is strictly better. Standardize on it.
+- `src/lib/content-fetchers.ts` (single-item nested) and `src/lib/relationship-queries.ts` (batch). CLAUDE.md justifies both as intentional. In practice they confuse new code paths and the batch one (with proper Set-based dedup) is strictly better. Standardise on it.
+
+**Search infrastructure exists, but is broken.** Empirical finding (full detail in the follow-up memo): every content table has a `ts_content tsvector` column with a GIN index and a `BEFORE INSERT OR UPDATE` trigger. The trigger reads `NEW.content` — but only `blog_posts` has a column named `content`. Every other content type uses `main_content`, so 8 of 9 content types have GIN indexes that contain only title + description text. Body content is silently un-indexed. Search code at `src/lib/content-fetchers.ts:366` uses `.ilike` against `main_content` directly, ignoring the tsvector entirely. This is a quick win that interacts with the Phase B body-format change — see below.
 
 **Clear dead/duplicate code to remove.**
-- `src/types/supabase.ts` vs `src/types/supabase-new.ts` (1443 / 1444 lines, both define `Database`)
+- `src/types/supabase.ts` vs `src/types/supabase-new.ts` (1443 / 1444 lines, both define `Database`). When picking one, write a comment explaining why so the next person doesn't re-ask the question.
 - `src/lib/supabase.ts` marked `@deprecated` — 8 importers still use it
-- `src/lib/dual-newsletter-service.ts` (414 lines) — likely an incomplete migration; `testConnections()` never called, `preferredService` config unused
+- `src/lib/dual-newsletter-service.ts` (414 lines) — likely an incomplete migration; `testConnections()` never called, `preferredService` config unused. **Verify no env-toggled live caller before deleting.**
 - `/docs/archive/` rebuild docs documenting bugs that still exist
 
 **Plain textarea + markdown for authoring.** Single biggest editorial weakness. Not addressed by either existing spec.
@@ -95,20 +124,20 @@ Full report: `2026-04-27-architectural-audit.md`. Headline findings:
 
 ## What "Excellent" Looks Like — Competitive Insights
 
-Full report: `2026-04-27-competitive-research.md`. Patterns worth stealing, ranked:
+Full report: `2026-04-27-competitive-research.md`. Patterns worth stealing, ranked by leverage:
 
-1. **Typed-blocks content model.** Replace markdown body with `Block[]` stored as `jsonb`. Steal Payload's Blocks pattern or Sanity's Portable Text. Unlocks structured rendering, queryability, per-block UI. **Single highest-leverage change.**
-2. **Notion-style block editor.** Slash menu, drag handles, floating toolbar. Use **BlockNote** to ship in weeks; **TipTap** for fully custom (4–6 weeks). Skip Lexical.
-3. **Schema-as-code drives admin forms too.** OpenQase already has `RELATIONSHIP_MAPS`. The existing engine spec extends this to the API layer; extend further to drive admin UI from the same registry. Directus's strongest idea — done right.
-4. **Drafts / autosave / version history.** A `content_versions` table + `restore_version()` RPC. A weekend's work, changes editorial confidence dramatically.
-5. **Slash-menu "cards" for typed embeds.** `/case-study` inserts a styled reference card; `/algorithm` embeds an algorithm card; `/figure` adds a captioned image. Maps directly onto your relationship graph.
-6. **Scheduled publishing.** `publish_at` timestamp + cron worker. Cheap, high editorial value.
+1. **Typed-blocks content model.** Replace markdown body with `Block[]` stored as `jsonb`. Steal Payload's Blocks pattern or Sanity's Portable Text. Unlocks structured rendering, queryability, per-block UI. **Single highest-leverage change.** Empirical evidence (see follow-up memo) suggests the v1 block taxonomy needs only **3 types** (RichText, Heading, Citation), not the 8 originally listed.
+2. **Notion-style block editor.** Slash menu, drag handles, floating toolbar. Use **BlockNote** to ship in weeks; **TipTap** for fully custom (4–6 weeks). Skip Lexical. **First task in Phase B is a half-day BlockNote spike** prototyping one OpenQase-specific custom block (e.g. `algorithm-ref`) to confirm the customisation ceiling clears before committing to the editor choice.
+3. **Schema-as-code drives admin forms too.** OpenQase already has `RELATIONSHIP_MAPS`. The existing engine spec extends this to the API layer; extend further to drive admin UI from the same registry.
+4. **Drafts / autosave / version history.** A `content_versions` table + `restore_version()` RPC. Backend-only change with no editor dependencies. Doubles as a safety net for the Phase B block migration.
+5. **Slash-menu "cards" for typed embeds.** `/case-study` inserts a styled reference card; `/algorithm` embeds an algorithm card; `/figure` adds a captioned image. Maps directly onto your relationship graph. Future-authoring, not legacy-migration.
+6. **Scheduled publishing.** `publish_at` timestamp + cron worker. No editor dependencies.
 7. **Inline create from relationships.** Editing a case study → create a missing industry without navigating away.
-8. **Click-to-edit live preview.** Sanity Presentation pattern. Higher effort, defer.
-9. **Reusable shared blocks (Citation, Author bio, etc.)** across content types. Payload Blocks idea.
+8. **Click-to-edit live preview.** Sanity Presentation pattern. Higher effort, defer to Phase C or later.
+9. **Reusable shared blocks (Citation, etc.)** across content types. Payload Blocks idea.
 10. **Components for repeating field groups.** Strapi Components.
 
-**Editor stack recommendation:** **BlockNote** for v1.
+**Editor stack recommendation:** **BlockNote** for v1, contingent on the Phase B spike clearing.
 
 **Don't:**
 - Adopt Ghost — its content model can't represent OpenQase's relational shape.
@@ -117,59 +146,94 @@ Full report: `2026-04-27-competitive-research.md`. Patterns worth stealing, rank
 
 ---
 
-## Synthesized Recommendation: Refactor → Author → Polish
+## Synthesised Recommendation: Refactor → Author → Polish
 
 This isn't a rebuild. It's three sequenced, independently shippable phases on top of what you have.
 
-### Phase A — Land what you've already specced (2 weeks)
+Estimates are ranges (low / expected / high) with the dominant-budget item per phase called out.
 
-**Goal:** unblock the existing rebuild work and remove debt.
+### Phase A — Land what you've already specced + de-risking pieces
 
-1. **Security PR first** — top 5 findings above. Independent of everything else. Day 1–2.
-2. **Finish `feature/cms-engine`** — migrate the last 3 content types (personas, industries, blog_posts). Resolve `supabase-new.ts`. Update 8 importers off the deprecated `supabase.ts`. Days 3–7.
-3. **Generic admin form from registry** — the unstarted Issue #202. Replace 9 per-type client components with one generic `<SchemaForm config={...}>` reading from the registry. Days 8–12.
-4. **Consolidate relationship patterns** — delete `content-fetchers.ts` single-item pattern; standardize on the batch pattern. Day 13–14.
+**Goal:** unblock the existing rebuild work, close the security gaps, and ship two visible improvements (drafts + scheduling) before touching the editor.
 
-Outcome: ~4,000 lines deleted, security holes closed, one admin form drives all 9 content types, adding a 10th type is a config file + migration.
+| # | Item | Range (days) | Notes |
+|---|---|---|---|
+| A1 | **Security PR.** Findings A, B, C, D, E above. Plus `setup_admin_role` REVOKE. | 1–2 | Independent of everything; ship first. |
+| A2 | **Finish `feature/cms-engine`.** Migrate personas, industries, blog_posts. Resolve `supabase-new.ts` (with explanatory comment). Update 8 importers off deprecated `supabase.ts`. | 3–5 | Engine work mostly done; risk is in the import surgery. |
+| A3 | **Generic admin form from registry.** ★ Dominant budget. Replace 9 per-type client components with one generic `<SchemaForm config={...}>` reading from the registry. Must support per-type validation, custom field types (the engine's `selectFields` admin pages currently ignore), and an injection point for the future block editor. | **8–12** | High end if the relationship picker abstraction proves messy. |
+| A4 | **Consolidate relationship patterns.** Delete `content-fetchers.ts` single-item pattern; standardise on the batch pattern. | 1–2 | Mostly mechanical. |
+| A5 | **Drafts + version history.** `content_versions` table; every save writes a version; `restore_version()` action. **Pulled forward from Phase B** because it has no editor dependency and provides a safety net for Phase B's migration. | 2–3 | |
+| A6 | **Scheduled publishing.** `publish_at` column + Vercel Cron job; revalidation already wired. **Pulled forward from Phase B.** | 1–2 | |
+| A7 | **Search migration to existing tsvector.** Fix the `update_ts_content` trigger column-name bug; switch search code from `.ilike` to `.textSearch('ts_content', ...)`; backfill. Independently valuable; sets up the Phase B body-format change. | 1–2 | |
 
-### Phase B — Make authoring excellent (2–3 weeks)
+**Phase A total: 17–28 days** (single dev). Dominant items: A3 (admin form) and A2 (engine completion).
+
+**Acceptance criteria (testable, not a feeling):**
+- Findings A, B, C, D, E no longer reproducible against the dev server.
+- All 9 content types managed via the same generic admin form.
+- `git grep "from '@/lib/supabase'"` returns zero results outside the deprecated file's own re-exports (or the file is deleted).
+- A save action writes a row to `content_versions`; `restore_version()` round-trip restores prior state.
+- A scheduled `publish_at` time triggers publication via cron in dev.
+- Search query for body-only text returns matching items via `.textSearch`.
+
+### Phase B — Make authoring excellent
 
 **Goal:** turn the CMS into a tool writers want to use.
 
-5. **Block-based content model.** Schema change: `main_content` becomes `body jsonb` storing `Block[]`. Migrate existing markdown into a single `RichTextBlock` per record (one-shot script). Define ~8 block types: rich-text, callout, image, quote, citation, code, plus 3 OpenQase-specific (algorithm-ref, case-study-ref, industry-ref).
-6. **BlockNote editor** in the generic admin form. Slash menu inserts the block types above. Floating toolbar for inline formatting.
-7. **Drafts + version history.** `content_versions` table; every save writes a version; `restore_version()` action.
-8. **Scheduled publishing.** `publish_at` column + Vercel Cron job; revalidation already wired.
-9. **Inline relationship create.** "+ Add new industry" inside the relationship picker.
+| # | Item | Range (days) | Notes |
+|---|---|---|---|
+| B1 | **BlockNote customisation spike.** Half-day prototype of one OpenQase-specific block (e.g. `algorithm-ref`) to confirm customisation ceiling. **Gates the rest of Phase B.** | 0.5 | If the spike fails, decision is BlockNote-with-fewer-custom-blocks vs TipTap-from-scratch. |
+| B2 | **Block-based content model.** Schema change: `body jsonb` storing `Block[]`. v1 block types: `RichTextBlock`, `HeadingBlock`, `CitationBlock`. Migration: split-on-H2 for `main_content`; parse `[^N]:` footnotes from `academic_references` into `Citation[]`. Update `update_ts_content` trigger to derive text from blocks. One-shot migration script (validated against actual content shape — see follow-up memo). | 4–7 | |
+| B3 | **BlockNote editor in admin form.** Slash menu inserts the v1 block types. Floating toolbar for inline formatting. | 4–6 | Range depends on B1 outcome. |
+| B4 | **Inline relationship create.** "+ Add new industry" inside the relationship picker. | 1–2 | |
+| B5 | **One Phase 1 OpenQase-specific block** (most likely `algorithm-ref` or `case-study-ref`). Validates the slash-menu "card" UX with a real content type. | 2–3 | |
 
-Outcome: editorial workflow on par with Ghost/Payload; structured body content is queryable; drafts are non-destructive.
+**Phase B total: 12–18 days.** Dominant items: B2 (model + migration) and B3 (editor integration).
 
-### Phase C — Polish & visual (1–2 weeks)
+**Acceptance criteria:**
+- Spike (B1) result documented; editor decision either confirmed or revised.
+- Migration script run against a staging copy: every record has a non-empty `body jsonb`; rendered output on public pages is visually equivalent to the markdown version (manual diff on 5 records).
+- Editing a record in the new editor produces a `Block[]` round-trip without lossy conversion.
+- Search for body-only text still works after migration (tsvector now derives from block text).
+- Re-measured ISR revalidation latency on a deployed environment is within 2× of the Phase A baseline.
 
-10. **Land `feature/editorial-redesign`** (Source Serif 4 + faceted filters + tag pills). Unblocks the frontend work that was ready in March.
-11. **Block rendering on public pages** (per-block React components map to the typed `Block[]`).
-12. **Live preview** (split-pane iframe; click-to-edit deferred to v3).
+### Phase C — Polish & visual
 
-Outcome: site looks editorial; admin and public side both consume the same typed content model.
+| # | Item | Range (days) | Notes |
+|---|---|---|---|
+| C1 | **Land `feature/editorial-redesign`** (Source Serif 4 + faceted filters + tag pills). | 2–4 | Spec already complete; this is execution. |
+| C2 | **Block rendering on public pages.** Per-block React components map to the typed `Block[]`. | 3–5 | |
+| C3 | **Live preview** (split-pane iframe). Click-to-edit deferred to v3. | 2–3 | |
+
+**Phase C total: 7–12 days.**
+
+**Acceptance criteria:**
+- Editorial redesign visually shipped on production.
+- Each v1 block type has a public renderer; no record falls back to "raw markdown" on the live site.
+- Editor preview and live render diverge by no more than typography styling.
 
 ---
 
 ## Open Questions — For the Phase 1 Vision Conversation
 
-These shape the spec we'd write next. Not asking now — listing so the owner can mull them overnight.
+The original list had 7. Three are now answered or resolved by empirical data; four remain for the vision conversation.
 
-1. **Authoring audience.** Just you for the foreseeable future, or a wider editorial team / contributors?
-2. **Block model ambition.** Conservative (markdown + a couple of typed embeds) or full Notion-style (every paragraph is a block)?
-3. **Editor effort budget.** BlockNote (ship in 1–2 weeks, less customizable) or TipTap (4–6 weeks, fully custom)?
-4. **Drafts model.** Linear version history (Payload) or branchable (Sanity-style `drafts.foo` shadow documents)?
-5. **Migration appetite.** Are existing case studies "good enough" as one big `RichTextBlock` after migration, or would you re-author them into proper blocks (algorithm-ref, citation, etc.)?
-6. **What "excellent" feels like to you.** Pure writing surface (Ghost taste) or rich structured editor (Notion / Sanity)?
-7. **Why did the March rebuild stall?** Time? Confidence in the spec? An unforeseen blocker? Knowing this changes how we de-risk the next attempt.
+**Resolved:**
+- ~~Why did the March rebuild stall?~~ → Marqov pulled focus; not technical.
+- ~~Migration appetite (one big RichTextBlock vs proper blocks)?~~ → Empirical content shape says split-on-H2 + parse academic_references is the right migration; no need for a "good enough" fallback.
+- ~~Block model ambition (8 types vs minimal)?~~ → 3 types for v1, layer more as authoring needs emerge.
+
+**Remaining for Phase 1:**
+1. **Authoring audience.** Just you for the foreseeable future, or a wider editorial team / contributors? (Affects drafts model: linear vs branching.)
+2. **Editor effort budget.** BlockNote (commit, contingent on the spike) or TipTap (deliberate 4–6 week investment for a fully custom surface)?
+3. **Drafts model.** Linear version history (Payload-style) or branchable shadow-document drafts (Sanity-style)?
+4. **`USING (true)` on junctions** — RLS-side filtering (defense-in-depth, perf cost) or keep JS filtering with finding A patched (perf, narrower defense)?
 
 ---
 
 ## Appendices
 
+- `2026-04-27-empirical-followup.md` — measured content shape + ISR baseline + search-trigger bug
 - `2026-04-27-architectural-audit.md` — full architectural audit
 - `2026-04-27-security-audit.md` — full security audit, all 15 categories
 - `2026-04-27-competitive-research.md` — Ghost / Sanity / Payload / Strapi / Directus / editor stacks
