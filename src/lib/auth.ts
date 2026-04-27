@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-// Self-import so that vi.spyOn(authModule, 'requireAdmin') in tests can
-// intercept the call made inside withAdmin(). In Vitest's module system the
-// exports object is shared, so the spy replacement is visible here at
-// invocation time.
-import * as authSelf from './auth'
 
 /**
  * Verify that the current request is from an authenticated admin user.
@@ -58,20 +53,25 @@ export async function requireAdmin(): Promise<
  * the error to the client. We do not return the NextResponse from
  * requireAdmin() here because server actions are not HTTP handlers.
  *
+ * Do NOT use this wrapper in API route handlers (src/app/api/...) — those
+ * should call requireAdmin() directly and return auth.error as the response.
+ *
  * This is defense-in-depth (Tier 2 finding 1.3): the middleware already
  * blocks unauthorised access in the default path. withAdmin closes the gap
  * for misconfigurations or future routing changes.
- *
- * NOTE: calls requireAdmin via the module namespace object (authSelf) so that
- * vi.spyOn(authModule, 'requireAdmin') in tests can intercept the call.
  */
 export function withAdmin<TArgs extends unknown[], TResult>(
   action: (...args: TArgs) => Promise<TResult>
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs) => {
-    const auth = await authSelf.requireAdmin();
+    const auth = await requireAdmin();
     if (auth.error) {
-      throw new Error('Unauthorized: admin access required');
+      const status = (auth.error as Response).status;
+      throw new Error(
+        status === 401
+          ? 'Unauthorized: not signed in'
+          : 'Forbidden: admin role required'
+      );
     }
     return action(...args);
   };
