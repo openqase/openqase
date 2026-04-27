@@ -2,7 +2,7 @@ import { cache } from 'react'
 import { getContentType } from '../registry'
 import { buildRelationshipSelect, flattenRelationships } from './relationships'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
+import { fromTable } from '@/lib/internal-queries'
 
 async function _fetchContentBySlug(
   typeSlug: string,

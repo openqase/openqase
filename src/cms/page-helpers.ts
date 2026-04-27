@@ -1,7 +1,7 @@
 import { getContentType } from './registry'
 import { fetchContentBySlug } from './operations'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
+import { fromTable } from '@/lib/internal-queries'
 
 export function generateStaticParamsFor(typeSlug: string) {
   return async function generateStaticParams() {

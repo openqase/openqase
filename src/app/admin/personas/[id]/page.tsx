@@ -1,5 +1,5 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
-import { fromTable } from '@/lib/supabase-untyped';
+import { fromTable } from '@/lib/internal-queries';
 import { Database } from '@/types/supabase';
 import { notFound } from 'next/navigation';
 import { PersonaForm } from './client';
