@@ -42,7 +42,7 @@ These are the decisions made in this phase. They become inputs to Phase 3.
 The owner has explicitly committed sustained focus and stated quality code is crucial. Concrete implications:
 
 - Each slice has a **test coverage requirement** as part of acceptance, not a follow-up TODO.
-- The `publicQuery()` invariant (vision spec Decision 2) is enforced by **a lint or grep CI check**, not just code review. This ships in A1.
+- The `publicQuery()` invariant (vision spec Decision 2) is enforced **architecturally via a module boundary**, not just code review or a grep regex. **Mechanism (chosen 2026-04-28):** raw `.from(<content_table>).select(...)` calls live in a single `src/lib/internal-queries.ts` module that only build-time SSG, admin server actions, and service-role-write paths import. The `publicQuery()` wrapper is the only sanctioned export for anonymous content reads. CI check is "no file outside the allow-list imports from `internal-queries`" — far harder to bypass accidentally than a regex over `.from()` calls, because legitimate service-role queries (admin writes, build-time SSG) genuinely need to bypass `publicQuery()` and a flat regex would over-flag them. Module boundary cleanly separates the two. This ships in A1.
 - The **relationship-picker abstraction** (the highest-risk piece per Decision 6) gets a dedicated review checkpoint mid-A3, not just at A3's completion.
 - The **B2 migration** is tested for **idempotency and reversibility** in CI before it's considered complete (already in the synthesis acceptance criteria; restated here for emphasis).
 - **No silent code rot:** any TODO/FIXME/`// removed` comment introduced during the rebuild is either resolved before the slice ships or moved to a tracked issue. Carry-over debt does not accumulate across slices.
@@ -89,7 +89,7 @@ The synthesis's slice numbering (A0–A7, B1–B5, C1–C3) is preserved so cros
 
 **Ships:**
 - **B1** — BlockNote customisation spike (gates B3; pre-committed fallback per vision spec Decision 5: defer rich text, ship markdown editor in v0.6 if B1 fails)
-- **B2** — Block-based content model (`body jsonb`; v1 block taxonomy: `RichTextBlock`, `HeadingBlock` *or* heading-as-style on text block, `CitationBlock`; one-shot migration; updated `update_ts_content` trigger; **`main_content` preserved for one release as rollback**)
+- **B2** — Block-based content model (`body jsonb` + `body_format_version smallint`; v1 block taxonomy: `RichTextBlock`, `HeadingBlock` *or* heading-as-style on text block, `CitationBlock`; one-shot migration script targets `WHERE body_format_version IS NULL` and sets it to `1`; updated `update_ts_content` trigger; **`main_content` preserved for one release as rollback**)
 - **B3** — BlockNote editor in admin form (slash menu, floating toolbar)
 - **B4** — Inline relationship create ("+ Add new industry" inside relationship picker)
 - **B5** — One OpenQase-specific block (most likely `algorithm-ref`; validates the slash-menu "card" UX with a real content type)
@@ -97,8 +97,8 @@ The synthesis's slice numbering (A0–A7, B1–B5, C1–C3) is preserved so cros
 **v0.6 acceptance:**
 - B1 result documented; editor decision either confirmed (BlockNote) or executed via fallback (markdown editor, blocks deferred).
 - Migration script run against staging copy: every record has non-empty `body jsonb`; rendered output visually equivalent to markdown version (manual diff on 5 records).
-- **Migration is idempotent** (re-run is no-op or fails loudly).
-- **Migration is reversible**: `main_content` preserved; renderer feature flag flips back to markdown without restoring from backup. Rollback path tested before B2 is considered done.
+- **Migration is idempotent via a `body_format_version` smallint discriminator.** Script targets `WHERE body_format_version IS NULL` and sets `body_format_version = 1` on write. Re-running is a no-op for already-migrated rows. The version column also gives clean upgrade paths when block taxonomy changes in later releases — each future migration script targets a specific source version.
+- **Migration is reversible**: `main_content` preserved; renderer feature flag flips back to markdown without restoring from backup. Rollback sets `body = NULL` (or `body_format_version = 0`) and flips the renderer flag. Rollback path tested before B2 is considered done.
 - Editing a record in the new editor produces `Block[]` round-trip without lossy conversion.
 - Body-text search continues to work after migration (tsvector now derives from block text).
 - Re-measured ISR revalidation latency on deployed Vercel is **within 2× of the v0.5 baseline** (calibrated against actual deployed numbers, not local 18s build).
