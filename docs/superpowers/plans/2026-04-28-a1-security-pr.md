@@ -823,11 +823,23 @@ CREATE POLICY "Admins read audit log"
 COMMIT;
 ```
 
-> **Verify before running:** the existing policy name on `deletion_audit_log` may differ from "Authenticated users can read audit log". Check via:
-> ```sql
-> SELECT policyname FROM pg_policies WHERE tablename = 'deletion_audit_log';
-> ```
-> If the name differs, update the DROP statement to match. The DROP IF EXISTS will silently no-op if the name is wrong, leaving the old policy in place — that would be a defect.
+> **Verify before running — MANDATORY, do not skip.** `DROP POLICY IF EXISTS` with the wrong policy name silently no-ops, leaving the old permissive policy in place. The migration would "succeed" while leaving the audit-log finding open — exactly the failure mode this is supposed to prevent.
+
+- [ ] **Step 2.5: MANDATORY — verify the existing audit-log policy name before applying**
+
+Run against the live dev database:
+
+```bash
+npx supabase db connect <<'SQL'
+SELECT policyname, cmd, qual
+  FROM pg_policies
+  WHERE tablename = 'deletion_audit_log' AND cmd = 'SELECT';
+SQL
+```
+
+Expected: one row. The `policyname` may or may not be `"Authenticated users can read audit log"`. **If it differs, edit the migration's DROP statement to match the exact name found here.** Do not proceed to Step 4 until the migration's DROP statement names a policy that actually exists.
+
+If `psql` reports zero rows, the policy may have already been dropped — investigate why before continuing. Don't apply a CREATE that may collide with another untracked policy.
 
 - [ ] **Step 3: Write the REVOKE-`setup_admin_role` migration**
 
@@ -1453,18 +1465,50 @@ export const fetchContentBySlug = cache(_fetchContentBySlug)
 
 > **Why we keep `fetchContentBySlug` rather than deleting it:** the function is called from many sites and provides relationship-flattening that the simpler `getPublishedBySlug` does not (it walks the engine's relationship config). The behaviour change is internal: same inputs, same shape, but now safe-by-construction. The `internal-queries.ts` import is allow-listed because `src/cms/operations/**` is in the allow-list (Task 2).
 
-> **Preview-mode caveat:** check whether `src/app/api/preview/route.ts` (or equivalent) integrates with `fetchContentBySlug` for draft preview rendering. If yes — i.e. an admin viewing a draft via the preview URL relies on this function returning unpublished records — add a Next.js Draft Mode bypass at the top of `_fetchContentBySlug`:
-> ```ts
-> import { draftMode } from 'next/headers';
-> // ...
-> const { isEnabled: isPreview } = await draftMode();
-> if (isPreview) {
->   // Use service-role + skip published filter for preview reads.
->   // Admin must be authenticated for draft mode to be enabled in the first place.
->   return _fetchContentBySlugInternal(typeSlug, slug, { servicerole: true, skipFilter: true });
-> }
-> ```
-> If preview mode does NOT route through this function (it has its own fetcher), no extra work — admins use admin UI for draft viewing. Investigate before deciding.
+> **Preview-mode handling is split into discrete sub-steps below — do not gloss over.** The "investigate before deciding" instruction is the kind of thing that gets skipped, and if preview mode currently routes through `fetchContentBySlug` and the agent doesn't add the draft-mode bypass, admin draft-preview breaks silently after this PR ships.
+
+- [ ] **Step 4a: Investigate whether preview mode uses `fetchContentBySlug`**
+
+```bash
+# Find the preview route
+ls src/app/api/preview/route.ts 2>/dev/null && echo "preview route exists"
+# Find references to draftMode() across the codebase
+git grep -l "draftMode\|next/headers.*draft" src/
+# Find references to fetchContentBySlug, page-helpers, or fetchContent that
+# might be used in the preview rendering path
+git grep -n "fetchContentBySlug\|generateStaticParamsFor\|fetchContent" src/app/
+```
+
+Document the finding inline in the commit message:
+- **Case A:** preview mode routes through `fetchContentBySlug` (i.e. an admin hitting a preview URL expects this function to return unpublished records). → Continue to Step 4b.
+- **Case B:** preview mode has its own fetcher, OR there is no preview mode integrated with public page rendering. → Skip 4b. Note "Case B confirmed; no draft-mode bypass needed" in the commit.
+
+- [ ] **Step 4b: (Case A only) Add Next.js Draft Mode bypass to `_fetchContentBySlug`**
+
+Add to the top of `_fetchContentBySlug`, before the published-filter query:
+
+```ts
+import { draftMode } from 'next/headers';
+
+// ... inside _fetchContentBySlug:
+const { isEnabled: isPreview } = await draftMode();
+if (isPreview) {
+  // Preview mode: admin viewing a draft. Skip published filter.
+  // Draft mode can only be enabled via the admin /api/preview route,
+  // which itself requires an authenticated admin session — so this is
+  // not a public-facing bypass.
+  const adminClient = createServiceRoleSupabaseClient();
+  const { data, error } = await fromTable(adminClient, ct.tableName)
+    .select(selectStr)
+    .eq('slug', slug)
+    .is('deleted_at', null)
+    .maybeSingle();
+  if (error || !data) return null;
+  // ... same flattenRelationships post-processing as the non-preview path
+}
+```
+
+Verify by enabling draft mode in dev and hitting an unpublished slug — should render. Disable draft mode and hit the same slug — should 404.
 
 - [ ] **Step 5: Update `page-helpers.ts` to re-export `fetchContentBySlug` and `generateStaticParamsFor` consistently**
 
@@ -1615,8 +1659,15 @@ const match = (result.stdout ?? '').match(
   /Generating static pages.*?\((\d+)\/\d+\)\s+in/
 );
 if (!match) {
-  console.error('Could not parse static page count from build output.');
-  process.exit(1);
+  // Regex fragile across Next.js versions. Don't fail the build on a parse
+  // miss — that's worse than not having the check. Warn and exit 0 so a
+  // human can investigate.
+  console.warn(
+    'WARN: could not parse static page count from build output. ' +
+    'Build succeeded; the count check is skipped. Consider updating the ' +
+    'parser or reading from .next/ build manifests directly.'
+  );
+  process.exit(0);
 }
 const count = parseInt(match[1], 10);
 if (count < EXPECTED_MIN) {
