@@ -59,6 +59,33 @@ const eslintConfig = [
     rules: {
       'no-restricted-imports': 'off'
     }
+  },
+  // Enforce that every export in admin server-action files is wrapped in withAdmin().
+  {
+    files: ['src/app/admin/**/actions.ts'],
+    rules: {
+      'no-restricted-syntax': ['error',
+        {
+          // Disallow exported async function declarations.
+          // e.g. `export async function saveCaseStudy(...) { ... }`
+          selector: 'ExportNamedDeclaration > FunctionDeclaration',
+          message:
+            'Server actions must be wrapped in withAdmin() from @/lib/auth. ' +
+            'Use: export const NAME = withAdmin(async (...) => { ... }).'
+        },
+        {
+          // Disallow exported variable declarations whose initializer is NOT
+          // a CallExpression with callee.name === 'withAdmin'.
+          selector:
+            'ExportNamedDeclaration > VariableDeclaration > ' +
+            "VariableDeclarator:not([init.callee.name='withAdmin'])",
+          message:
+            'Server actions must be wrapped in withAdmin() from @/lib/auth. ' +
+            'Helpers and non-action exports do not belong in actions.ts files; ' +
+            'move them elsewhere.'
+        }
+      ]
+    }
   }
 ];
 
