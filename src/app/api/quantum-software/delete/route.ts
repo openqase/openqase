@@ -1,24 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { requireAdmin } from '@/lib/auth';
+import { BulkActionSchema } from '@/lib/schemas/bulk-action';
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
 
-    const supabase = createServiceRoleSupabaseClient();
-    const { id } = await request.json();
-    
-    if (!id) {
-      return NextResponse.json({ error: 'ID required' }, { status: 400 });
+    const body = await request.json();
+    const parsed = BulkActionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
+    const { id } = parsed.data;
+
+    const supabase = createServiceRoleSupabaseClient();
     
     // Soft delete by setting deleted_at timestamp
     const { error } = await supabase
       .from('quantum_software')
       .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id!);
       
     if (error) {
       console.error('Error deleting quantum software:', error);

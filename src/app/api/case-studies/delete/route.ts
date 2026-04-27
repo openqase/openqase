@@ -2,17 +2,22 @@ import { createServiceRoleSupabaseClient, createServerSupabaseClient } from '@/l
 import { NextRequest, NextResponse } from 'next/server'
 import { deleteContentItem } from '@/utils/content-management'
 import { requireAdmin } from '@/lib/auth'
+import { BulkActionSchema } from '@/lib/schemas/bulk-action'
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin()
     if (auth.error) return auth.error
 
-    const { id, ids } = await request.json()
-
-    if (!id && !ids) {
-      return NextResponse.json({ error: 'ID or IDs are required' }, { status: 400 })
+    const body = await request.json()
+    const parsed = BulkActionSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parsed.error.flatten() },
+        { status: 400 }
+      )
     }
+    const { id, ids } = parsed.data
 
     // Get current user for audit logging (using server client with cookies)
     const userClient = await createServerSupabaseClient()
@@ -20,7 +25,7 @@ export async function POST(request: NextRequest) {
     const userId = user?.id || null
 
     // Handle both single and bulk delete
-    const idsToDelete = ids ? ids : [id]
+    const idsToDelete = ids || (id ? [id] : [])
 
     // Define relationship configs for case studies
     const relationshipConfigs = [
