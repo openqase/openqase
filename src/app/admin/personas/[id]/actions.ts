@@ -1,6 +1,7 @@
 'use server'
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { withAdmin } from '@/lib/auth'
 
 interface PersonaFormData {
   id?: string
@@ -13,7 +14,7 @@ interface PersonaFormData {
   industry?: string[]  // relationship IDs sent from admin form
 }
 
-export async function savePersona(values: PersonaFormData) {
+export const savePersona = withAdmin(async (values: PersonaFormData) => {
   const { id, industry, ...data } = values
   const relationships = industry ? { industries: industry } : undefined
 
@@ -26,14 +27,14 @@ export async function savePersona(values: PersonaFormData) {
   const result = await createContent('personas', data, relationships)
   if (result.error) throw new Error(result.error)
   return result.data
-}
+})
 
-export async function publishPersona(id: string): Promise<void> {
+export const publishPersona = withAdmin(async (id: string): Promise<void> => {
   const result = await publishContent('personas', id)
   if (!result.success) throw new Error(result.error || 'Failed to publish')
-}
+})
 
-export async function unpublishPersona(id: string): Promise<void> {
+export const unpublishPersona = withAdmin(async (id: string): Promise<void> => {
   const result = await unpublishContent('personas', id)
   if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-}
+})

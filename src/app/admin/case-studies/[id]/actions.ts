@@ -1,6 +1,7 @@
 'use server'
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { withAdmin } from '@/lib/auth'
 import type { TablesInsert } from '@/types/supabase'
 
 interface CaseStudyFormData {
@@ -23,7 +24,7 @@ interface CaseStudyFormData {
   partner_companies?: string[]
 }
 
-export async function saveCaseStudy(values: CaseStudyFormData): Promise<{ caseStudy?: TablesInsert<'case_studies'>; success: boolean; error?: string }> {
+export const saveCaseStudy = withAdmin(async (values: CaseStudyFormData): Promise<{ caseStudy?: TablesInsert<'case_studies'>; success: boolean; error?: string }> => {
   try {
     const { id, industries, algorithms, personas, quantum_software, quantum_hardware, quantum_companies, partner_companies, ...data } = values
 
@@ -49,16 +50,16 @@ export async function saveCaseStudy(values: CaseStudyFormData): Promise<{ caseSt
     const message = error instanceof Error ? error.message : 'Failed to save case study'
     return { success: false, error: message }
   }
-}
+})
 
-export async function publishCaseStudy(id: string, slug: string): Promise<{ success: boolean; error?: string }> {
+export const publishCaseStudy = withAdmin(async (id: string, slug: string): Promise<{ success: boolean; error?: string }> => {
   const result = await publishContent('case-studies', id)
   if (!result.success) return { success: false, error: result.error || 'Failed to publish' }
   return { success: true }
-}
+})
 
-export async function unpublishCaseStudy(id: string, slug: string): Promise<{ success: boolean; error?: string }> {
+export const unpublishCaseStudy = withAdmin(async (id: string, slug: string): Promise<{ success: boolean; error?: string }> => {
   const result = await unpublishContent('case-studies', id)
   if (!result.success) return { success: false, error: result.error || 'Failed to unpublish' }
   return { success: true }
-}
+})

@@ -1,6 +1,7 @@
 'use server'
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { withAdmin } from '@/lib/auth'
 import type { TablesInsert } from '@/types/supabase'
 
 interface AlgorithmFormData {
@@ -19,7 +20,7 @@ interface AlgorithmFormData {
   related_personas?: string[]
 }
 
-export async function saveAlgorithm(values: AlgorithmFormData): Promise<TablesInsert<'algorithms'>> {
+export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promise<TablesInsert<'algorithms'>> => {
   const { id, related_case_studies, related_industries, related_personas, ...data } = values
 
   const relationships = {
@@ -37,14 +38,14 @@ export async function saveAlgorithm(values: AlgorithmFormData): Promise<TablesIn
   const result = await createContent('algorithms', data, relationships)
   if (result.error) throw new Error(result.error)
   return result.data as TablesInsert<'algorithms'>
-}
+})
 
-export async function publishAlgorithm(id: string): Promise<void> {
+export const publishAlgorithm = withAdmin(async (id: string): Promise<void> => {
   const result = await publishContent('algorithms', id)
   if (!result.success) throw new Error(result.error || 'Failed to publish')
-}
+})
 
-export async function unpublishAlgorithm(id: string): Promise<void> {
+export const unpublishAlgorithm = withAdmin(async (id: string): Promise<void> => {
   const result = await unpublishContent('algorithms', id)
   if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-}
+})
