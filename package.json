@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/assert-env.js",
     "build": "next build",
     "build:static": "NEXT_STATIC_EXPORT=true next build",
     "build:analyze": "ANALYZE=true next build",
