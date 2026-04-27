@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+// Self-import so that vi.spyOn(authModule, 'requireAdmin') in tests can
+// intercept the call made inside withAdmin(). In Vitest's module system the
+// exports object is shared, so the spy replacement is visible here at
+// invocation time.
+import * as authSelf from './auth'
 
 /**
  * Verify that the current request is from an authenticated admin user.
@@ -41,4 +46,33 @@ export async function requireAdmin(): Promise<
   }
 
   return { user: { id: user.id, email: user.email }, error: null }
+}
+
+/**
+ * Higher-order wrapper for server actions.
+ *
+ * INVARIANT: every export under src/app/admin/.../actions.ts must be wrapped
+ * in withAdmin(). Enforced by an ESLint no-restricted-syntax rule.
+ *
+ * Throws on auth failure. Server actions can throw — Next.js will surface
+ * the error to the client. We do not return the NextResponse from
+ * requireAdmin() here because server actions are not HTTP handlers.
+ *
+ * This is defense-in-depth (Tier 2 finding 1.3): the middleware already
+ * blocks unauthorised access in the default path. withAdmin closes the gap
+ * for misconfigurations or future routing changes.
+ *
+ * NOTE: calls requireAdmin via the module namespace object (authSelf) so that
+ * vi.spyOn(authModule, 'requireAdmin') in tests can intercept the call.
+ */
+export function withAdmin<TArgs extends unknown[], TResult>(
+  action: (...args: TArgs) => Promise<TResult>
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args: TArgs) => {
+    const auth = await authSelf.requireAdmin();
+    if (auth.error) {
+      throw new Error('Unauthorized: admin access required');
+    }
+    return action(...args);
+  };
 }
