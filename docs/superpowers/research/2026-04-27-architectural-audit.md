@@ -18,6 +18,8 @@
 
 ## 2. The Half-Finished Rebuild
 
+**The existing CMS engine spec has at least one schema mismatch.** The March 2026 spec (`docs/superpowers/specs/2026-03-23-cms-engine-design.md`) lists `algorithms.technical_details` as a field. **That column does not exist in the database.** Empirically confirmed by sampling. If there's one mismatch, there are likely others. Pre-A2 work item: a 30-minute pass cross-checking every field declared in the spec against actual DB columns for all 9 content types. Cheap; prevents discovering schema drift mid-migration.
+
 **Two active worktrees**, both unmerged:
 - `/.worktrees/cms-engine` (`feature/cms-engine`) — the engine refactor, 70% migrated. Engine is *working*; tests pass at `src/cms/operations/*.test.ts`. 6 of 9 content types migrated (case-studies, algorithms, partner-companies, quantum-companies, quantum-hardware, quantum-software). Personas, industries, blog_posts not yet migrated.
 - `/.worktrees/editorial-redesign` (`feature/editorial-redesign`) — frontend visual changes only, orthogonal to the engine work.
@@ -70,7 +72,9 @@ Future watch (no current issues):
 2. `src/lib/content-fetchers.ts:349–387` does full-text ilike searches across all content types with no DB index strategy noted (see Section 7a — the index strategy already exists, it's just unused and partly broken).
 3. Newsletter dual service makes calls to Beehiiv AND Resend AND DB on every subscribe — a viral moment could overload.
 
-## 7a. Search Infrastructure — Latent Bug + Unused Indexes
+## 7a. Body-Content Search Is Broken in Production — Severity 1
+
+This is not a "latent bug to clean up." This is a production regression that has been silently affecting 8 of 9 content types for an unknown period and nobody has noticed.
 
 Empirical finding (full detail in `2026-04-27-empirical-followup.md`):
 
@@ -88,13 +92,15 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-**The bug:** the trigger reads `NEW.content`, but only `blog_posts` has a column named `content`. Every other content type uses `main_content`. So 8 of 9 content types have GIN indexes that contain only title + description text. Body content is silently un-indexed. **Severity 2.**
+**The bug:** the trigger reads `NEW.content`, but only `blog_posts` has a column named `content`. Every other content type uses `main_content`. So 8 of 9 content types have GIN indexes that contain only title + description text. Body content has been silently un-indexed for the lifetime of the trigger. **Severity 1 — production regression.**
 
 **The compounding fact:** `src/lib/content-fetchers.ts:366` ignores the tsvector entirely and runs `.ilike` against `title`, `description`, and `main_content` directly — slow, unindexed, no relevance ranking. So:
 
 1. The fast indexed path exists but is unused.
 2. The slow ilike path produces correct results because it queries the live columns directly.
 3. The combination silently masks the trigger bug — search "works" because the unindexed path is the only one running.
+
+**Why nobody noticed:** the `.ilike` fallback against `main_content` means search results are correct, just slow. Title/description matches probably cover most actual queries (case studies have descriptive titles). The fact that this hasn't been caught is a useful prior on **how much editorial weight body-text search currently carries** — likely not much. Worth keeping in mind when scoping search UX in Phase B/C.
 
 **Implication for the proposed Phase B body→jsonb change:** this is a pre-existing problem the migration solves rather than introduces. The search story becomes:
 
