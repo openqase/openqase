@@ -61,6 +61,13 @@ const eslintConfig = [
     }
   },
   // Enforce that every export in admin server-action files is wrapped in withAdmin().
+  //
+  // Known limitation: this rule's `withAdmin` identity check is structural
+  // (matches the identifier name), not semantic. It does NOT detect:
+  //   - `import { withAdmin as wrap } from '@/lib/auth'` (false flag)
+  //   - `const withAdmin = (fn) => fn; export const x = withAdmin(...)` (false negative)
+  // Neither pattern exists in the current codebase. If either becomes an issue,
+  // migrate to a custom ESLint rule that resolves the import binding.
   {
     files: ['src/app/admin/**/actions.ts'],
     rules: {
@@ -83,6 +90,34 @@ const eslintConfig = [
             'Server actions must be wrapped in withAdmin() from @/lib/auth. ' +
             'Helpers and non-action exports do not belong in actions.ts files; ' +
             'move them elsewhere.'
+        },
+        {
+          // Disallow `export default async function rootAction() {}`.
+          selector: 'ExportDefaultDeclaration',
+          message:
+            'Default exports are not allowed in admin actions.ts. ' +
+            'Use: import { withAdmin } from "@/lib/auth"; export const NAME = withAdmin(async (...) => { ... }).'
+        },
+        {
+          // Disallow `export * from './other-actions'`.
+          selector: 'ExportAllDeclaration',
+          message:
+            'Re-exports (export *) are not allowed in admin actions.ts. ' +
+            'Server actions must be defined and wrapped in withAdmin() in this file.'
+        },
+        {
+          // Disallow `export { foo } from './other'`.
+          selector: 'ExportNamedDeclaration[source]',
+          message:
+            'Re-exports (export { x } from ...) are not allowed in admin actions.ts. ' +
+            'Server actions must be defined and wrapped in withAdmin() in this file.'
+        },
+        {
+          // Disallow specifier-form exports: `export { localAction }`.
+          selector: 'ExportNamedDeclaration[declaration=null] > ExportSpecifier',
+          message:
+            'Specifier-form exports (export { x }) are not allowed in admin actions.ts. ' +
+            'Use: import { withAdmin } from "@/lib/auth"; export const NAME = withAdmin(async (...) => { ... }).'
         }
       ]
     }
