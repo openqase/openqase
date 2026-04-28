@@ -22,7 +22,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "verify:build": "node scripts/assert-build-pages.js"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
