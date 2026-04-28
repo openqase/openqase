@@ -18,6 +18,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync, existsSync } from 'node:fs'
+import { glob } from 'glob'
 
 // Mock React cache as pass-through so the cache wrapper is transparent.
 vi.mock('react', async () => {
@@ -205,5 +207,61 @@ describe('fetchPreviewContentBySlug: preview mode branch', () => {
 
     const result = await fetchPreviewContentBySlug('nonexistent-type', 'slug')
     expect(result).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Finding 1.3 — Server actions wrapped in withAdmin
+// ---------------------------------------------------------------------------
+describe('Finding 1.3 — Server actions wrapped in withAdmin', () => {
+  it('all admin server actions are wrapped in withAdmin', async () => {
+    const files = await glob('src/app/admin/*/[[]id[]]/actions.ts')
+    expect(files.length).toBeGreaterThan(0)  // sanity check the glob is picking up files
+    for (const file of files) {
+      const src = readFileSync(file, 'utf8')
+      // No bare `export async function` declarations.
+      expect(src, `${file}: bare 'export async function' found`).not.toMatch(/^export\s+async\s+function\b/m)
+      // Every exported `const` should be wrapped in withAdmin(.
+      const exports = src.match(/^export\s+const\s+\w+\s*=\s*[^\n]+/gm) ?? []
+      for (const e of exports) {
+        expect(e, `${file}: export not wrapped in withAdmin: ${e}`).toMatch(/withAdmin\(/)
+      }
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Finding 1.4 — DEV_MODE_AUTH_BYPASS gating
+// ---------------------------------------------------------------------------
+describe('Finding 1.4 — DEV_MODE_AUTH_BYPASS gating', () => {
+  it.todo('blocks bypass when NODE_ENV=production (covered by middleware unit tests + scripts/assert-env.test.js)')
+})
+
+// ---------------------------------------------------------------------------
+// Finding 2.1 — REVOKE writes from anon/authenticated migration present
+// ---------------------------------------------------------------------------
+describe('Finding 2.1 — REVOKE writes from anon/authenticated migration present', () => {
+  it('migration file exists', () => {
+    expect(existsSync('supabase/migrations/20260428_a1_revoke_anon_writes.sql')).toBe(true)
+  })
+  it('migration content includes REVOKE INSERT, UPDATE, DELETE, TRUNCATE', () => {
+    const sql = readFileSync('supabase/migrations/20260428_a1_revoke_anon_writes.sql', 'utf8')
+    expect(sql).toMatch(/REVOKE\s+INSERT,\s*UPDATE,\s*DELETE,\s*TRUNCATE/i)
+    expect(sql).toMatch(/FROM\s+anon,\s*authenticated/i)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Finding 2.3 — deletion_audit_log admin-only migration present
+// ---------------------------------------------------------------------------
+describe('Finding 2.3 — deletion_audit_log admin-only migration present', () => {
+  it('migration file exists', () => {
+    expect(existsSync('supabase/migrations/20260428_a1_audit_log_admin_only.sql')).toBe(true)
+  })
+  it('migration drops the old permissive policy and creates the admin-only one', () => {
+    const sql = readFileSync('supabase/migrations/20260428_a1_audit_log_admin_only.sql', 'utf8')
+    expect(sql).toMatch(/DROP\s+POLICY\s+IF\s+EXISTS\s+"Authenticated users can view audit logs"/)
+    expect(sql).toMatch(/CREATE\s+POLICY\s+"Admins read audit log"/)
+    expect(sql).toMatch(/role\s*=\s*'admin'/)
   })
 })
