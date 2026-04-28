@@ -1,6 +1,6 @@
 // src/app/case-study/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalCaseStudyLayout from '@/components/ui/professional-case-study-layout';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ interface CaseStudyPageProps {
 export async function generateMetadata({ params }: CaseStudyPageProps) {
   const resolvedParams = await params;
 
-  const caseStudy = await fetchContentBySlug('case-studies', resolvedParams.slug) as EnrichedCaseStudy | null;
+  const caseStudy = await fetchPreviewContentBySlug('case-studies', resolvedParams.slug) as EnrichedCaseStudy | null;
 
   if (!caseStudy) {
     return {
@@ -70,7 +70,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
-  const caseStudy = await fetchContentBySlug('case-studies', slug) as EnrichedCaseStudy | null;
+  const caseStudy = await fetchPreviewContentBySlug('case-studies', slug) as EnrichedCaseStudy | null;
 
   if (!caseStudy) {
     return notFound();

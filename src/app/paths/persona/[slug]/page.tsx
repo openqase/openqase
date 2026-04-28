@@ -1,6 +1,6 @@
 // src/app/paths/persona/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalPersonaDetailLayout from '@/components/ui/professional-persona-detail-layout';
 import Link from 'next/link';
@@ -40,7 +40,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: PageParams) {
   const resolvedParams = await params;
 
-  const persona = await fetchContentBySlug('personas', resolvedParams.slug) as EnrichedPersona | null;
+  const persona = await fetchPreviewContentBySlug('personas', resolvedParams.slug) as EnrichedPersona | null;
 
   if (!persona) {
     return {
@@ -74,7 +74,7 @@ export default async function PersonaPage({ params }: PageParams) {
   const resolvedParams = await params;
 
   // Get the persona and its related industries, algorithms, and case studies
-  const persona = await fetchContentBySlug('personas', resolvedParams.slug) as EnrichedPersona | null;
+  const persona = await fetchPreviewContentBySlug('personas', resolvedParams.slug) as EnrichedPersona | null;
 
   if (!persona) {
     notFound();

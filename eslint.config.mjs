@@ -58,7 +58,6 @@ const eslintConfig = [
       // Integration test fixtures use service-role client to seed/teardown
       // test data. This is a test-only seeding use, not a public read path.
       'src/__tests__/**/*.{ts,tsx}',
-      'src/security/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-imports': 'off'

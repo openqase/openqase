@@ -43,6 +43,7 @@ export async function getByIdForBuild(table: ContentTable, id: string) {
   return fromTable(client, table)
     .select('*')
     .eq('id', id)
+    .is('deleted_at', null)
     .maybeSingle();
 }
 
@@ -66,5 +67,8 @@ export function generateMetadataFor(typeSlug: string) {
   }
 }
 
-// Re-export fetchContentBySlug for page components (already React.cache'd in fetch.ts)
-export { fetchContentBySlug } from './operations'
+// Re-export fetch helpers for page components (already React.cache'd in fetch.ts).
+// Use fetchContentBySlug for static/ISR pages (stays ● in build output).
+// Use fetchPreviewContentBySlug for pages that are redirect targets of /api/preview
+// (case-study, algorithm, industry, persona, blog) — these become ƒ (dynamic).
+export { fetchContentBySlug, fetchPreviewContentBySlug } from './operations'

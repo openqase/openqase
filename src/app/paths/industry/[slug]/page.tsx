@@ -1,5 +1,5 @@
 // src/app/paths/industry/[slug]/page.tsx
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import { Database } from '@/types/supabase';
 import ProfessionalIndustryDetailLayout from '@/components/ui/professional-industry-detail-layout';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: PageParams) {
   const { slug } = await params;
 
-  const industry = await fetchContentBySlug('industries', slug) as EnrichedIndustry | null;
+  const industry = await fetchPreviewContentBySlug('industries', slug) as EnrichedIndustry | null;
 
   if (!industry) {
     return {
@@ -76,7 +76,7 @@ export default async function IndustryPage({ params }: PageParams) {
   const { slug } = await params;
 
   // Fetch industry along with related algorithms, personas, and case studies
-  const industry = await fetchContentBySlug('industries', slug) as EnrichedIndustry | null;
+  const industry = await fetchPreviewContentBySlug('industries', slug) as EnrichedIndustry | null;
 
   if (!industry) {
     return <div>Industry not found</div>;
