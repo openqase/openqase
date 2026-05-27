@@ -1,4 +1,4 @@
-export type EngineFieldType = 'text' | 'textarea' | 'markdown' | 'slug' | 'boolean' | 'number' | 'date' | 'json'
+export type EngineFieldType = 'text' | 'textarea' | 'markdown' | 'slug' | 'boolean' | 'number' | 'date' | 'json' | 'url'
 
 export interface EngineField {
   name: string
@@ -65,6 +65,7 @@ const TS_COMPAT: Record<string, string[]> = {
   number: ['number'],
   date: ['string'],
   json: ['Json'],
+  url: ['string'],
 }
 
 const KEY_TS_TYPES = ['string', 'number']

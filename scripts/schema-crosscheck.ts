@@ -15,20 +15,25 @@ const ENGINE_TYPES_DIR = engineTypesArg ?? '.worktrees/cms-engine/src/cms/types'
 const SUPABASE_TYPES_PATH = 'src/types/supabase.ts'
 
 async function main() {
-  // NOTE(a0-run): supabase db diff skipped — `supabase` not in PATH (only `npx supabase` works).
-  // This is acceptable for a one-time A0 run; migration check is noted in artifact header.
-  // Check for unapplied migrations — exit 2 if any found
-  // try {
-  //   const diff = execSync('supabase db diff 2>&1', { encoding: 'utf8' })
-  //   if (diff.trim() && !diff.includes('No schema changes found')) {
-  //     process.stderr.write(`Unapplied migrations detected. Apply them before running A0.\n${diff}\n`)
-  //     process.exit(2)
-  //   }
-  // } catch (e: unknown) {
-  //   const msg = e instanceof Error ? e.message : String(e)
-  //   process.stderr.write(`supabase db diff failed: ${msg}\nResolve unapplied migrations before running A0.\n`)
-  //   process.exit(2)
-  // }
+  // Check for unapplied migrations — exit 2 if migrations detected, warn if check fails
+  // NOTE: supabase db diff requires a shadow DB; fails if migration files share a timestamp prefix
+  // (known issue: 4 files share 20260302 prefix). On shadow DB error, warn and continue.
+  try {
+    const diff = execSync('npx supabase db diff 2>&1', { encoding: 'utf8' })
+    if (diff.trim() && !diff.includes('No schema changes found')) {
+      process.stderr.write(`Unapplied migrations detected. Apply them before running A0.\n${diff}\n`)
+      process.exit(2)
+    }
+  } catch (e: unknown) {
+    const out = (e as { stdout?: string }).stdout ?? ''
+    const msg = e instanceof Error ? e.message : String(e)
+    if (out.includes('duplicate key') || out.includes('shadow')) {
+      process.stderr.write(`WARN: supabase db diff failed (shadow DB error — likely duplicate migration timestamps). Migration check skipped.\n`)
+    } else {
+      process.stderr.write(`supabase db diff failed: ${msg}\nResolve unapplied migrations before running A0.\n`)
+      process.exit(2)
+    }
+  }
 
   // Parse DB schema from regenerated types
   const dbSchema = extractDBSchema(SUPABASE_TYPES_PATH)
