@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
@@ -122,7 +102,7 @@ export type Database = {
           quantum_advantage: string | null
           slug: string
           steps: string | null
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
           use_cases: string[] | null
         }
@@ -141,7 +121,7 @@ export type Database = {
           quantum_advantage?: string | null
           slug: string
           steps?: string | null
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           use_cases?: string[] | null
         }
@@ -160,7 +140,7 @@ export type Database = {
           quantum_advantage?: string | null
           slug?: string
           steps?: string | null
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           use_cases?: string[] | null
         }
@@ -222,7 +202,7 @@ export type Database = {
           slug: string
           tags: string[] | null
           title: string
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
         }
         Insert: {
@@ -241,7 +221,7 @@ export type Database = {
           slug: string
           tags?: string[] | null
           title: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
         }
         Update: {
@@ -260,7 +240,7 @@ export type Database = {
           slug?: string
           tags?: string[] | null
           title?: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
         }
         Relationships: []
@@ -282,8 +262,12 @@ export type Database = {
           main_content: string | null
           original_qookie_id: string | null
           original_qookie_slug: string | null
+          partner_companies: string[] | null
           published: boolean | null
           published_at: string | null
+          quantum_companies: string[] | null
+          quantum_hardware: string[] | null
+          quantum_software: string[] | null
           resource_links: Json | null
           slug: string
           title: string
@@ -306,8 +290,12 @@ export type Database = {
           main_content?: string | null
           original_qookie_id?: string | null
           original_qookie_slug?: string | null
+          partner_companies?: string[] | null
           published?: boolean | null
           published_at?: string | null
+          quantum_companies?: string[] | null
+          quantum_hardware?: string[] | null
+          quantum_software?: string[] | null
           resource_links?: Json | null
           slug: string
           title: string
@@ -330,8 +318,12 @@ export type Database = {
           main_content?: string | null
           original_qookie_id?: string | null
           original_qookie_slug?: string | null
+          partner_companies?: string[] | null
           published?: boolean | null
           published_at?: string | null
+          quantum_companies?: string[] | null
+          quantum_hardware?: string[] | null
+          quantum_software?: string[] | null
           resource_links?: Json | null
           slug?: string
           title?: string
@@ -609,37 +601,37 @@ export type Database = {
       }
       deletion_audit_log: {
         Row: {
-          id: string
-          content_type: string
+          action: string
           content_id: string
           content_name: string | null
-          action: string
-          performed_by: string
-          performed_at: string
-          metadata: Json
+          content_type: string
           created_at: string
+          id: string
+          metadata: Json | null
+          performed_at: string
+          performed_by: string
         }
         Insert: {
-          id?: string
-          content_type: string
+          action: string
           content_id: string
           content_name?: string | null
-          action: string
-          performed_by: string
-          performed_at?: string
-          metadata?: Json
+          content_type: string
           created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_at?: string
+          performed_by: string
         }
         Update: {
-          id?: string
-          content_type?: string
+          action?: string
           content_id?: string
           content_name?: string | null
-          action?: string
-          performed_by?: string
-          performed_at?: string
-          metadata?: Json
+          content_type?: string
           created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_at?: string
+          performed_by?: string
         }
         Relationships: []
       }
@@ -657,7 +649,7 @@ export type Database = {
           published_at: string | null
           sector: string[] | null
           slug: string
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
         }
         Insert: {
@@ -673,7 +665,7 @@ export type Database = {
           published_at?: string | null
           sector?: string[] | null
           slug: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
         }
         Update: {
@@ -689,71 +681,8 @@ export type Database = {
           published_at?: string | null
           sector?: string[] | null
           slug?: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      legacy_tags_backup: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          partner_companies: string[] | null
-          quantum_companies: string[] | null
-          quantum_hardware: string[] | null
-          quantum_software: string[] | null
-          slug: string | null
-          title: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          partner_companies?: string[] | null
-          quantum_companies?: string[] | null
-          quantum_hardware?: string[] | null
-          quantum_software?: string[] | null
-          slug?: string | null
-          title?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          partner_companies?: string[] | null
-          quantum_companies?: string[] | null
-          quantum_hardware?: string[] | null
-          quantum_software?: string[] | null
-          slug?: string | null
-          title?: string | null
-        }
-        Relationships: []
-      }
-      newsletter_subscriptions: {
-        Row: {
-          id: string
-          email: string
-          status: string
-          subscription_date: string | null
-          updated_at: string | null
-          metadata: Json | null
-          unsubscribe_token: string | null
-        }
-        Insert: {
-          id?: string
-          email: string
-          status?: string
-          subscription_date?: string | null
-          updated_at?: string | null
-          metadata?: Json | null
-          unsubscribe_token?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          status?: string
-          subscription_date?: string | null
-          updated_at?: string | null
-          metadata?: Json | null
-          unsubscribe_token?: string | null
         }
         Relationships: []
       }
@@ -776,7 +705,7 @@ export type Database = {
           published_at: string | null
           quantum_initiatives: string | null
           slug: string
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
           website_url: string | null
         }
@@ -798,7 +727,7 @@ export type Database = {
           published_at?: string | null
           quantum_initiatives?: string | null
           slug: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           website_url?: string | null
         }
@@ -820,7 +749,7 @@ export type Database = {
           published_at?: string | null
           quantum_initiatives?: string | null
           slug?: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           website_url?: string | null
         }
@@ -910,7 +839,7 @@ export type Database = {
           published_at: string | null
           recommended_reading: string | null
           slug: string
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
         }
         Insert: {
@@ -927,7 +856,7 @@ export type Database = {
           published_at?: string | null
           recommended_reading?: string | null
           slug: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
         }
         Update: {
@@ -944,7 +873,7 @@ export type Database = {
           published_at?: string | null
           recommended_reading?: string | null
           slug?: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
         }
         Relationships: []
@@ -969,7 +898,7 @@ export type Database = {
           published: boolean | null
           published_at: string | null
           slug: string
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
           website_url: string | null
         }
@@ -992,7 +921,7 @@ export type Database = {
           published?: boolean | null
           published_at?: string | null
           slug: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           website_url?: string | null
         }
@@ -1015,7 +944,7 @@ export type Database = {
           published?: boolean | null
           published_at?: string | null
           slug?: string
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           website_url?: string | null
         }
@@ -1120,7 +1049,7 @@ export type Database = {
           qubit_count: number | null
           slug: string
           technology_type: string | null
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
           vendor: string | null
           website_url: string | null
@@ -1145,7 +1074,7 @@ export type Database = {
           qubit_count?: number | null
           slug: string
           technology_type?: string | null
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           vendor?: string | null
           website_url?: string | null
@@ -1170,7 +1099,7 @@ export type Database = {
           qubit_count?: number | null
           slug?: string
           technology_type?: string | null
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           vendor?: string | null
           website_url?: string | null
@@ -1196,7 +1125,7 @@ export type Database = {
           published_at: string | null
           slug: string
           supported_hardware: string[] | null
-          ts_content: unknown | null
+          ts_content: unknown
           updated_at: string | null
           vendor: string | null
           website_url: string | null
@@ -1219,7 +1148,7 @@ export type Database = {
           published_at?: string | null
           slug: string
           supported_hardware?: string[] | null
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           vendor?: string | null
           website_url?: string | null
@@ -1242,7 +1171,7 @@ export type Database = {
           published_at?: string | null
           slug?: string
           supported_hardware?: string[] | null
-          ts_content?: unknown | null
+          ts_content?: unknown
           updated_at?: string | null
           vendor?: string | null
           website_url?: string | null
@@ -1325,18 +1254,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_slug: {
-        Args: { name_text: string }
-        Returns: string
-      }
+      create_slug: { Args: { name_text: string }; Returns: string }
       recover_content: {
         Args: { content_id: string; table_name: string }
         Returns: boolean
       }
-      setup_admin_role: {
-        Args: { admin_email: string }
-        Returns: undefined
-      }
+      setup_admin_role: { Args: { admin_email: string }; Returns: undefined }
       soft_delete_content: {
         Args: {
           content_id: string
@@ -1345,10 +1268,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      verify_initial_setup: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      verify_initial_setup: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -1477,11 +1397,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-
+A new version of Supabase CLI is available: v2.101.0 (currently installed v2.95.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
