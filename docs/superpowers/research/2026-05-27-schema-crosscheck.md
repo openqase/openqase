@@ -1,9 +1,8 @@
-◇ injected env (13) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
 # Schema Cross-Check — 2026-05-27
 
-**Supabase types regenerated:** yes (+63 / -145 lines)
-**Unapplied migrations:** skipped — `supabase` not in PATH, used `npx supabase`; `db diff` check commented out for this one-time A0 run
-**Script version:** scripts/schema-crosscheck.ts @ c057ada
+**Supabase types regenerated:** yes (+63 / -145 lines) — committed separately
+**Unapplied migrations:** check skipped (supabase db diff shadow DB error — 4 migration files share 20260302 timestamp prefix; known pre-existing issue)
+**Script version:** scripts/schema-crosscheck.ts @ 77ad6a2
 
 ## algorithms (table: `algorithms`)
 
@@ -49,7 +48,7 @@
 | content | markdown | string | ✅ |
 | author | text | string | ✅ |
 | category | text | string | ✅ |
-| featured_image | url | string | ⚠️ |
+| featured_image | url | string | ✅ |
 | featured | boolean | boolean | ✅ |
 | published_at | text | string | ✅ |
 | deleted_at | ~ | string | ~ |
@@ -150,8 +149,8 @@
 | headquarters | text | string | ✅ |
 | partnership_type | text | string | ✅ |
 | quantum_initiatives | textarea | string | ✅ |
-| website_url | url | string | ⚠️ |
-| linkedin_url | url | string | ⚠️ |
+| website_url | url | string | ✅ |
+| linkedin_url | url | string | ✅ |
 | deleted_at | ~ | string | ~ |
 | deleted_by | ~ | string | ~ |
 | is_system_record | ~ | boolean | ~ |
@@ -207,8 +206,8 @@
 | company_type | text | string | ✅ |
 | founded_year | number | number | ✅ |
 | headquarters | text | string | ✅ |
-| website_url | url | string | ⚠️ |
-| linkedin_url | url | string | ⚠️ |
+| website_url | url | string | ✅ |
+| linkedin_url | url | string | ✅ |
 | deleted_at | ~ | string | ~ |
 | deleted_by | ~ | string | ~ |
 | funding_stage | ~ | string | ~ |
@@ -243,8 +242,8 @@
 | gate_fidelity | number | number | ✅ |
 | coherence_time | text | string | ✅ |
 | availability | text | string | ✅ |
-| documentation_url | url | string | ⚠️ |
-| website_url | url | string | ⚠️ |
+| documentation_url | url | string | ✅ |
+| website_url | url | string | ✅ |
 | access_model | ~ | string | ~ |
 | deleted_at | ~ | string | ~ |
 | deleted_by | ~ | string | ~ |
@@ -272,9 +271,9 @@
 | main_content | markdown | string | ✅ |
 | vendor | text | string | ✅ |
 | license_type | text | string | ✅ |
-| documentation_url | url | string | ⚠️ |
-| github_url | url | string | ⚠️ |
-| website_url | url | string | ⚠️ |
+| documentation_url | url | string | ✅ |
+| github_url | url | string | ✅ |
+| website_url | url | string | ✅ |
 | pricing_model | text | string | ✅ |
 | deleted_at | ~ | string | ~ |
 | deleted_by | ~ | string | ~ |
@@ -292,11 +291,10 @@
 
 ## Summary
 
-- ✅ Matches: 101
-- ❌ Missing from DB: 0 (key: 0, non-key: 12)
-- ⚠️ Type mismatches: 12
+- ✅ Matches: 111
+- ❌ Missing from DB: 0 (key: 0, non-key: 2)
+- ⚠️ Type mismatches: 2
 - ~ Extra DB columns (informational): 61
 - ❌ Junction table failures: 0
 
-**Gate result:** FAIL
-**Reason:** 12 non-key mismatches exceeds threshold of 3
+**Gate result:** PASS
