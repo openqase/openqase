@@ -41,7 +41,7 @@ async function main() {
   for (const file of typeFiles) {
     const mod = await import(path.resolve(ENGINE_TYPES_DIR, file))
     // Each file exports one content type definition as the default or first named export
-    const contentType = Object.values(mod)[0] as {
+    const contentType = (mod.default ?? Object.values(mod)[0]) as {
       tableName: string
       fields?: Array<{ name: string; type: string }>
       relationships?: Array<{ junction: string; foreignKey: string; targetKey: string }>
@@ -74,7 +74,7 @@ async function main() {
     const relationshipResults = relationships.map(r => checkRelationship(r, dbSchema))
 
     results.push({
-      contentType: file.replace('.ts', ''),
+      contentType: path.basename(file, '.ts'),
       tableName,
       fieldResults,
       relationshipResults,
