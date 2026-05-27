@@ -1,4 +1,4 @@
-export type EngineFieldType = 'text' | 'textarea' | 'markdown' | 'slug' | 'boolean' | 'number' | 'date' | 'json' | 'url'
+export type EngineFieldType = 'text' | 'textarea' | 'markdown' | 'slug' | 'boolean' | 'number' | 'date' | 'json' | 'url' | 'select'
 
 export interface EngineField {
   name: string
@@ -66,6 +66,7 @@ const TS_COMPAT: Record<string, string[]> = {
   date: ['string'],
   json: ['Json'],
   url: ['string'],
+  select: ['string'], // enum stored as text in DB
 }
 
 const KEY_TS_TYPES = ['string', 'number']

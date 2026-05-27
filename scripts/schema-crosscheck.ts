@@ -8,6 +8,7 @@ import { checkField, checkRelationship, evaluateGate } from './schema-crosscheck
 import { generateReport } from './schema-crosscheck/report'
 import type { TypeCheckResult } from './schema-crosscheck/compare'
 
+// Loads SUPABASE_* vars so `npx supabase db diff` can connect to the linked project
 dotenv.config({ path: '.env.local' })
 
 const engineTypesArg = process.argv.find((_, i) => process.argv[i - 1] === '--engine-types')
@@ -53,7 +54,10 @@ async function main() {
       fields?: Array<{ name: string; type: string }>
       relationships?: Array<{ junction: string; foreignKey: string; targetKey: string }>
     }
-    if (!contentType?.tableName || !contentType?.fields) continue
+    if (!contentType?.tableName || !contentType?.fields) {
+      process.stderr.write(`WARN: ${file} — no content type definition found (skipped)\n`)
+      continue
+    }
 
     const { tableName, fields = [], relationships = [] } = contentType
     const tableInfo = dbSchema[tableName]

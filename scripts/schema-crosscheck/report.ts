@@ -50,15 +50,17 @@ export function generateReport(
   const missing = allFields.filter(f => f.status === '❌').length
   const mismatches = allFields.filter(f => f.status === '⚠️').length
   const extra = allFields.filter(f => f.status === '~').length
-  const keyIssues = allFields.filter(f => (f.status === '❌' || f.status === '⚠️') && f.isKey).length
-  const nonKeyIssues = allFields.filter(f => (f.status === '❌' || f.status === '⚠️') && !f.isKey).length
+  const keyMissing = allFields.filter(f => f.status === '❌' && f.isKey).length
+  const nonKeyMissing = allFields.filter(f => f.status === '❌' && !f.isKey).length
+  const keyMismatch = allFields.filter(f => f.status === '⚠️' && f.isKey).length
+  const nonKeyMismatch = allFields.filter(f => f.status === '⚠️' && !f.isKey).length
   const junctionFails = allRels.filter(r => r.status === '❌').length
 
   lines.push('## Summary')
   lines.push('')
   lines.push(`- ✅ Matches: ${matches}`)
-  lines.push(`- ❌ Missing from DB: ${missing} (key: ${keyIssues}, non-key: ${nonKeyIssues})`)
-  lines.push(`- ⚠️ Type mismatches: ${mismatches}`)
+  lines.push(`- ❌ Missing from DB: ${missing} (key: ${keyMissing}, non-key: ${nonKeyMissing})`)
+  lines.push(`- ⚠️ Type mismatches: ${mismatches} (key: ${keyMismatch}, non-key: ${nonKeyMismatch})`)
   lines.push(`- ~ Extra DB columns (informational): ${extra}`)
   lines.push(`- ❌ Junction table failures: ${junctionFails}`)
   lines.push('')
