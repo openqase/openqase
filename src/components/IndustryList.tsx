@@ -71,7 +71,7 @@ export default function IndustryList({ industries }: IndustryListProps) {
     });
   }, [industries, sectorFilter, searchQuery, sortBy]);
 
-  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredIndustries });
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items: filteredIndustries });
 
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +141,10 @@ export default function IndustryList({ industries }: IndustryListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {filteredIndustries.length} industr{filteredIndustries.length !== 1 ? 'ies' : 'y'} found
+            {filteredIndustries.length === 0
+              ? '0 industries found'
+              : `Showing ${(currentPage - 1) * 12 + 1}–${Math.min(currentPage * 12, filteredIndustries.length)} of ${filteredIndustries.length} industr${filteredIndustries.length !== 1 ? 'ies' : 'y'}`
+            }
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
@@ -185,6 +188,8 @@ export default function IndustryList({ industries }: IndustryListProps) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
       />
     </div>
   );

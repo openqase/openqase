@@ -12,7 +12,7 @@ interface QuantumHardwareClientProps {
 
 export function QuantumHardwareClient({ items, totalCount }: QuantumHardwareClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
-  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items })
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items })
 
   if (!isClient) {
     return (
@@ -35,6 +35,8 @@ export function QuantumHardwareClient({ items, totalCount }: QuantumHardwareClie
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={goToPage}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
         />
       </div>
     )
@@ -75,6 +77,8 @@ export function QuantumHardwareClient({ items, totalCount }: QuantumHardwareClie
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
       />
     </div>
   )

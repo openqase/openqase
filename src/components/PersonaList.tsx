@@ -64,7 +64,7 @@ export default function PersonaList({ personas }: PersonaListProps) {
     });
   }, [personas, searchQuery, sortBy]);
 
-  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredPersonas });
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items: filteredPersonas });
 
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,7 +111,10 @@ export default function PersonaList({ personas }: PersonaListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {filteredPersonas.length} persona{filteredPersonas.length !== 1 ? 's' : ''} found
+            {filteredPersonas.length === 0
+              ? '0 personas found'
+              : `Showing ${(currentPage - 1) * 12 + 1}–${Math.min(currentPage * 12, filteredPersonas.length)} of ${filteredPersonas.length} persona${filteredPersonas.length !== 1 ? 's' : ''}`
+            }
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
@@ -155,6 +158,8 @@ export default function PersonaList({ personas }: PersonaListProps) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
       />
     </div>
   );

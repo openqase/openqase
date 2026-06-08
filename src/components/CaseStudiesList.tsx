@@ -97,7 +97,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
       });
   }, [caseStudies, searchQuery, activeFilters, sortBy, relationshipMap]);
 
-  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredCaseStudies });
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items: filteredCaseStudies });
 
   // Compute cross-filtered counts for sidebar
   const filterGroups: FilterGroup[] = useMemo(() => {
@@ -267,7 +267,10 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-                {filteredCaseStudies.length} case stud{filteredCaseStudies.length !== 1 ? 'ies' : 'y'} found
+                {filteredCaseStudies.length === 0
+                  ? '0 case studies found'
+                  : `Showing ${(currentPage - 1) * 12 + 1}–${Math.min(currentPage * 12, filteredCaseStudies.length)} of ${filteredCaseStudies.length} case stud${filteredCaseStudies.length !== 1 ? 'ies' : 'y'}`
+                }
               </div>
               {hasActiveFilters && (
                 <>
@@ -334,6 +337,8 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={goToPage}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
         />
       </div>
     </div>

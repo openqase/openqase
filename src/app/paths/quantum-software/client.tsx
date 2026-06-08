@@ -12,7 +12,7 @@ interface QuantumSoftwareClientProps {
 
 export function QuantumSoftwareClient({ items, totalCount }: QuantumSoftwareClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
-  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items })
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items })
 
   if (!isClient) {
     return (
@@ -35,6 +35,8 @@ export function QuantumSoftwareClient({ items, totalCount }: QuantumSoftwareClie
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={goToPage}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
         />
       </div>
     )
@@ -75,6 +77,8 @@ export function QuantumSoftwareClient({ items, totalCount }: QuantumSoftwareClie
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
       />
     </div>
   )
