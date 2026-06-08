@@ -1,6 +1,8 @@
 'use client'
 
 import { GridView, TableView, LayoutToggle, useLayoutPreference } from '@/components/content-list'
+import { usePagination } from '@/hooks/use-pagination'
+import { PaginationControls } from '@/components/ui/pagination-controls'
 import type { QuantumSoftware } from './page'
 
 interface QuantumSoftwareClientProps {
@@ -10,8 +12,8 @@ interface QuantumSoftwareClientProps {
 
 export function QuantumSoftwareClient({ items, totalCount }: QuantumSoftwareClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items })
 
-  // Don't render layout toggle until client-side hydration is complete
   if (!isClient) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -24,10 +26,17 @@ export function QuantumSoftwareClient({ items, totalCount }: QuantumSoftwareClie
             {totalCount} software platforms available
           </div>
         </div>
-        <GridView 
-          items={items}
+        <GridView
+          items={paginatedItems}
           contentType="quantum-software"
           basePath="/paths/quantum-software"
+        />
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
         />
       </div>
     )
@@ -51,18 +60,26 @@ export function QuantumSoftwareClient({ items, totalCount }: QuantumSoftwareClie
       </div>
 
       {layout === 'grid' ? (
-        <GridView 
-          items={items}
+        <GridView
+          items={paginatedItems}
           contentType="quantum-software"
           basePath="/paths/quantum-software"
         />
       ) : (
-        <TableView 
-          items={items}
+        <TableView
+          items={paginatedItems}
           contentType="quantum-software"
           basePath="/paths/quantum-software"
         />
       )}
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
+      />
     </div>
   )
 }

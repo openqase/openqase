@@ -9,6 +9,8 @@ import ContentCard from '@/components/ui/content-card';
 import { ViewSwitcher } from '@/components/ui/view-switcher';
 import { useViewSwitcher } from '@/hooks/useViewSwitcher';
 import { useSortPersistence } from '@/hooks/useSortPersistence';
+import { usePagination } from '@/hooks/use-pagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
 
 // Explicitly import the Row type
@@ -62,6 +64,8 @@ export default function PersonaList({ personas }: PersonaListProps) {
     });
   }, [personas, searchQuery, sortBy]);
 
+  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items: filteredPersonas });
+
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -107,7 +111,10 @@ export default function PersonaList({ personas }: PersonaListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {filteredPersonas.length} persona{filteredPersonas.length !== 1 ? 's' : ''} found
+            {filteredPersonas.length === 0
+              ? '0 personas found'
+              : `Showing ${(currentPage - 1) * 12 + 1}–${Math.min(currentPage * 12, filteredPersonas.length)} of ${filteredPersonas.length} persona${filteredPersonas.length !== 1 ? 's' : ''}`
+            }
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
@@ -118,7 +125,7 @@ export default function PersonaList({ personas }: PersonaListProps) {
         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         : "space-y-4"
       }>
-        {filteredPersonas.map((persona) => {
+        {paginatedItems.map((persona) => {
           // Get metadata using the new system
           const metadata = getContentMetadata('personas', persona, viewMode);
           
@@ -146,6 +153,14 @@ export default function PersonaList({ personas }: PersonaListProps) {
           </p>
         </div>
       )}
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
+      />
     </div>
   );
 } 
