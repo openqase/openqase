@@ -62,7 +62,7 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
       });
   }, [algorithms, searchQuery, sortBy]);
 
-  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items: filteredAlgorithms });
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredAlgorithms });
 
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,10 +109,7 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {filteredAlgorithms.length === 0
-              ? '0 algorithms found'
-              : `Showing ${(currentPage - 1) * 12 + 1}–${Math.min(currentPage * 12, filteredAlgorithms.length)} of ${filteredAlgorithms.length} algorithm${filteredAlgorithms.length !== 1 ? 's' : ''}`
-            }
+            {filteredAlgorithms.length} algorithm{filteredAlgorithms.length !== 1 ? 's' : ''} found
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
@@ -156,8 +153,6 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
       />
     </div>
   );

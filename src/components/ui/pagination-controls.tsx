@@ -7,8 +7,6 @@ interface PaginationControlsProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
 }
 
 function getPageNumbers(
@@ -45,10 +43,11 @@ export function PaginationControls({
   currentPage,
   totalPages,
   onPageChange,
-  hasNextPage,
-  hasPreviousPage,
 }: PaginationControlsProps) {
   if (totalPages <= 1) return null;
+
+  const hasPreviousPage = currentPage > 1;
+  const hasNextPage = currentPage < totalPages;
 
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 

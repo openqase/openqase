@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 
 interface UsePaginationProps<T> {
   items: T[];
@@ -12,10 +12,6 @@ interface UsePaginationReturn<T> {
   totalPages: number;
   paginatedItems: T[];
   goToPage: (page: number) => void;
-  goToNextPage: () => void;
-  goToPreviousPage: () => void;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
 }
 
 export function usePagination<T>({
@@ -23,11 +19,10 @@ export function usePagination<T>({
   pageSize = 12,
 }: UsePaginationProps<T>): UsePaginationReturn<T> {
   const [currentPage, setCurrentPage] = useState(1);
-  const prevItemsRef = useRef(items);
+  const [prevItems, setPrevItems] = useState(items);
 
-  // Reset to page 1 when items change
-  if (prevItemsRef.current !== items) {
-    prevItemsRef.current = items;
+  if (prevItems !== items) {
+    setPrevItems(items);
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
@@ -52,9 +47,5 @@ export function usePagination<T>({
     totalPages,
     paginatedItems,
     goToPage,
-    goToNextPage: () => goToPage(currentPage + 1),
-    goToPreviousPage: () => goToPage(currentPage - 1),
-    hasNextPage: currentPage < totalPages,
-    hasPreviousPage: currentPage > 1,
   };
 }

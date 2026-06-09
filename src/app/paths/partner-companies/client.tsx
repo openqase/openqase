@@ -12,7 +12,7 @@ interface PartnerCompaniesClientProps {
 
 export function PartnerCompaniesClient({ items, totalCount }: PartnerCompaniesClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
-  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items })
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items })
 
   if (!isClient) {
     return (
@@ -35,8 +35,6 @@ export function PartnerCompaniesClient({ items, totalCount }: PartnerCompaniesCl
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={goToPage}
-          hasNextPage={hasNextPage}
-          hasPreviousPage={hasPreviousPage}
         />
       </div>
     )
@@ -77,8 +75,6 @@ export function PartnerCompaniesClient({ items, totalCount }: PartnerCompaniesCl
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
       />
     </div>
   )
