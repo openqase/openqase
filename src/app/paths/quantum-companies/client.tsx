@@ -12,11 +12,7 @@ interface QuantumCompaniesClientProps {
 
 export function QuantumCompaniesClient({ items, totalCount }: QuantumCompaniesClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
-<<<<<<< HEAD
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items })
-=======
-  const { currentPage, totalPages, paginatedItems, goToPage, hasNextPage, hasPreviousPage } = usePagination({ items })
->>>>>>> 6ab0466 (feat: add pagination to listings)
 
   if (!isClient) {
     return (
@@ -39,11 +35,6 @@ export function QuantumCompaniesClient({ items, totalCount }: QuantumCompaniesCl
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={goToPage}
-<<<<<<< HEAD
-=======
-          hasNextPage={hasNextPage}
-          hasPreviousPage={hasPreviousPage}
->>>>>>> 6ab0466 (feat: add pagination to listings)
         />
       </div>
     )
@@ -84,11 +75,6 @@ export function QuantumCompaniesClient({ items, totalCount }: QuantumCompaniesCl
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={goToPage}
-<<<<<<< HEAD
-=======
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
->>>>>>> 6ab0466 (feat: add pagination to listings)
       />
     </div>
   )
