@@ -53,15 +53,16 @@ export default async function PartnerCompanyEditPage({ params }: PartnerCompanyE
       partnerCompany = data
     }
 
-    return (
-      <PartnerCompanyForm 
-        partnerCompany={partnerCompany}
-        caseStudies={caseStudies}
-        isNew={isNew}
-      />
-    )
   } catch (error) {
     console.error('Error in PartnerCompanyEditPage:', error)
     notFound()
   }
+
+  return (
+    <PartnerCompanyForm
+      partnerCompany={partnerCompany}
+      caseStudies={caseStudies}
+      isNew={isNew}
+    />
+  )
 }
