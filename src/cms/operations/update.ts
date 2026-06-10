@@ -1,7 +1,7 @@
 import { getContentType } from '../registry'
 import { generateZodSchema } from '../schema'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
+import { fromTable } from '@/lib/internal-queries'
 import { saveRelationships } from './relationships'
 import { revalidateContentType } from './revalidate'
 

@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
+import { fromTable } from '@/lib/internal-queries'
 import type { Database } from '@/types/supabase'
 import { notFound } from 'next/navigation'
 import { CaseStudyForm } from './client'

@@ -117,11 +117,19 @@ export async function middleware(req: NextRequest) {
 
   // For admin routes, check if user has admin role
   if (isAdminRoute) {
-    // Check if dev mode is enabled AND we're on localhost
-    const devMode = process.env.DEV_MODE_AUTH_BYPASS === 'true' &&
-                    (req.headers.get('host')?.includes('localhost') || 
-                     req.headers.get('host')?.includes('127.0.0.1'))
-    
+    // Dev-only bypass. Three layers of safety:
+    //   1) NODE_ENV must be development (build-time fail in prod via prebuild)
+    //   2) DEV_MODE_AUTH_BYPASS must be exactly 'true'
+    //   3) Host must exactly match localhost / 127.0.0.1 (no substring tricks)
+    const host = req.headers.get('host');
+    const devMode =
+      process.env.NODE_ENV === 'development' &&
+      process.env.DEV_MODE_AUTH_BYPASS === 'true' &&
+      (host === 'localhost' ||
+       host === 'localhost:3000' ||
+       host === '127.0.0.1' ||
+       host === '127.0.0.1:3000');
+
     if (devMode) {
       return res
     }

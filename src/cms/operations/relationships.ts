@@ -1,7 +1,7 @@
 import type { ContentTypeDefinition } from '../define'
 import { getContentType } from '../registry'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
+import { fromTable } from '@/lib/internal-queries'
 
 export function buildRelationshipSelect(contentType: ContentTypeDefinition): string {
   if (contentType.relationships.length === 0) return '*'

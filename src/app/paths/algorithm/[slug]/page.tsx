@@ -1,6 +1,6 @@
 // src/app/paths/algorithm/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalAlgorithmDetailLayout from '@/components/ui/professional-algorithm-detail-layout';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,7 @@ interface AlgorithmPageProps {
 export async function generateMetadata({ params }: AlgorithmPageProps) {
   const resolvedParams = await params;
 
-  const algorithm = await fetchContentBySlug('algorithms', resolvedParams.slug) as EnrichedAlgorithm | null;
+  const algorithm = await fetchPreviewContentBySlug('algorithms', resolvedParams.slug) as EnrichedAlgorithm | null;
 
   if (!algorithm) {
     return {
@@ -78,7 +78,7 @@ export const revalidate = 86400;
 export default async function AlgorithmPage({ params }: AlgorithmPageProps) {
   const resolvedParams = await params;
 
-  const algorithm = await fetchContentBySlug('algorithms', resolvedParams.slug) as EnrichedAlgorithm | null;
+  const algorithm = await fetchPreviewContentBySlug('algorithms', resolvedParams.slug) as EnrichedAlgorithm | null;
 
   if (!algorithm) {
     notFound();

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import Link from "next/link";
 import { Metadata } from 'next';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import { processMarkdown } from '@/lib/markdown-server';
 import { AutoSchema } from '@/components/AutoSchema';
 
@@ -21,7 +21,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const resolvedParams = await params;
 
-  const blogPost = await fetchContentBySlug('blog-posts', resolvedParams.slug);
+  const blogPost = await fetchPreviewContentBySlug('blog-posts', resolvedParams.slug);
 
   if (!blogPost) {
     return {
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const resolvedParams = await params;
 
-  const blogPost = await fetchContentBySlug('blog-posts', resolvedParams.slug);
+  const blogPost = await fetchPreviewContentBySlug('blog-posts', resolvedParams.slug);
 
   if (!blogPost) {
     notFound();

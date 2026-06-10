@@ -1,6 +1,7 @@
 'use server'
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { withAdmin } from '@/lib/auth'
 import type { TablesInsert } from '@/types/supabase'
 
 interface IndustryFormData {
@@ -12,7 +13,7 @@ interface IndustryFormData {
   published?: boolean
 }
 
-export async function saveIndustry(values: IndustryFormData): Promise<TablesInsert<'industries'>> {
+export const saveIndustry = withAdmin(async (values: IndustryFormData): Promise<TablesInsert<'industries'>> => {
   const { id, ...data } = values
 
   if (id) {
@@ -24,14 +25,14 @@ export async function saveIndustry(values: IndustryFormData): Promise<TablesInse
   const result = await createContent('industries', data)
   if (result.error) throw new Error(result.error)
   return result.data as TablesInsert<'industries'>
-}
+})
 
-export async function publishIndustry(id: string): Promise<void> {
+export const publishIndustry = withAdmin(async (id: string): Promise<void> => {
   const result = await publishContent('industries', id)
   if (!result.success) throw new Error(result.error || 'Failed to publish')
-}
+})
 
-export async function unpublishIndustry(id: string): Promise<void> {
+export const unpublishIndustry = withAdmin(async (id: string): Promise<void> => {
   const result = await unpublishContent('industries', id)
   if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-}
+})

@@ -1,6 +1,7 @@
 'use server'
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { withAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 
 interface BlogPostFormData {
@@ -19,7 +20,7 @@ interface BlogPostFormData {
   related_posts?: string[]
 }
 
-export async function saveBlogPost(values: BlogPostFormData) {
+export const saveBlogPost = withAdmin(async (values: BlogPostFormData) => {
   const { id, related_posts, ...data } = values
   const relationships = related_posts !== undefined ? { related_posts } : undefined
 
@@ -36,16 +37,16 @@ export async function saveBlogPost(values: BlogPostFormData) {
   revalidatePath('/')
 
   return result.data
-}
+})
 
-export async function publishBlogPost(id: string): Promise<void> {
+export const publishBlogPost = withAdmin(async (id: string): Promise<void> => {
   const result = await publishContent('blog-posts', id)
   if (!result.success) throw new Error(result.error || 'Failed to publish')
   revalidatePath('/')
-}
+})
 
-export async function unpublishBlogPost(id: string): Promise<void> {
+export const unpublishBlogPost = withAdmin(async (id: string): Promise<void> => {
   const result = await unpublishContent('blog-posts', id)
   if (!result.success) throw new Error(result.error || 'Failed to unpublish')
   revalidatePath('/')
-}
+})

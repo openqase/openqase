@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Public GET API no longer leaks unpublished/soft-deleted content.** `fetchContentBySlug` now applies `published=true` and `deleted_at IS NULL` filters via an RLS-respecting Supabase client. Anonymous requests for draft slugs return 404. The function was also split into a separate `fetchPreviewContentBySlug` variant used by the 5 preview-aware detail pages so the static-rendered detail pages stay SSG-friendly.
+- **`publicQuery()` invariant introduced** as the single sanctioned chokepoint for anonymous content reads. Module-boundary enforced via ESLint `no-restricted-imports` on `src/lib/internal-queries.ts`.
+- **All 9 admin server-action files wrapped in `withAdmin()`** as defense-in-depth beyond middleware. Enforced by ESLint `no-restricted-syntax`.
+- **`DEV_MODE_AUTH_BYPASS` hardened**: now requires `NODE_ENV=development`; host comparison is exact (no substring match); `prebuild` script fails the build if the env combination would expose admin endpoints in production.
+- **Database GRANTs tightened**: `INSERT/UPDATE/DELETE/TRUNCATE` revoked from `anon` and `authenticated` on all public tables. RLS continues to gate per-table writes.
+- **`deletion_audit_log` SELECT policy** restricted to admin role only (was `USING (true)` for any authenticated user).
+- **`setup_admin_role` EXECUTE** revoked from `anon`/`authenticated`/PUBLIC.
+- **Bulk-delete API endpoints** now Zod-validate inputs; invalid UUIDs return 400 instead of 500 with stack traces.
 - **Dependency patches**: Updated Next.js 16.2.4 → 16.2.6 to fix middleware/auth bypass CVEs (GHSA-26hh-7cqf-hhc6, GHSA-492v-c6pp-mqqv, GHSA-267c-6grr-h53f, GHSA-36qx-fr4f-26g5), XSS, SSRF, and cache poisoning issues; updated postcss to ^8.5.10 (direct dep + override to force Next.js's bundled copy) to fix CSS stringify XSS (GHSA-qx2v-qp2m-jg93)
 - **Dependency updates**: Updated all packages to latest semver-compatible versions (react 19.2.5, supabase 2.95, vitest 4.1.5, autoprefixer 10.5, postcss 8.5.10, and others)
 - **eslint-plugin-security enabled**: Wired up previously-installed but inactive security linting rules

@@ -1,8 +1,9 @@
 'use server'
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { withAdmin } from '@/lib/auth'
 
-export async function saveQuantumCompany(values: any) {
+export const saveQuantumCompany = withAdmin(async (values: any) => {
   const { id, ...data } = values
   if (id) {
     const result = await updateContent('quantum-companies', id, data)
@@ -12,14 +13,14 @@ export async function saveQuantumCompany(values: any) {
   const result = await createContent('quantum-companies', data)
   if (result.error) throw new Error(result.error)
   return result.data
-}
+})
 
-export async function publishQuantumCompany(id: string): Promise<void> {
+export const publishQuantumCompany = withAdmin(async (id: string): Promise<void> => {
   const result = await publishContent('quantum-companies', id)
   if (!result.success) throw new Error(result.error || 'Failed to publish')
-}
+})
 
-export async function unpublishQuantumCompany(id: string): Promise<void> {
+export const unpublishQuantumCompany = withAdmin(async (id: string): Promise<void> => {
   const result = await unpublishContent('quantum-companies', id)
   if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-}
+})

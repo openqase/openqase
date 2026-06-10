@@ -1,9 +1,36 @@
 import { cache } from 'react'
+import { draftMode } from 'next/headers'
 import { getContentType } from '../registry'
 import { buildRelationshipSelect, flattenRelationships } from './relationships'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
+import { fromTable } from '@/lib/internal-queries'
 
+// ---------------------------------------------------------------------------
+// Shared helper: run the relationship-flattening logic on a raw DB row.
+// ---------------------------------------------------------------------------
+function flattenContentRow(
+  data: Record<string, unknown>,
+  ct: ReturnType<typeof getContentType>
+): Record<string, unknown> {
+  if (!ct) return data
+  const relationships = flattenRelationships(data, ct)
+  const base: Record<string, unknown> = { ...data }
+  for (const rel of ct.relationships) {
+    delete base[rel.junction]
+  }
+  Object.assign(base, relationships)
+  return base
+}
+
+// ---------------------------------------------------------------------------
+// SSG-friendly fetch — NEVER calls draftMode() or cookies().
+// Used by all static detail pages and generateMetadata.
+// Does NOT trigger Next.js dynamic rendering — pages remain ● (static/ISR).
+//
+// Uses the service-role client (no Dynamic API, no user-session overhead)
+// but enforces published=true and deleted_at IS NULL explicitly so the
+// RLS bypass does not expose draft or soft-deleted content.
+// ---------------------------------------------------------------------------
 async function _fetchContentBySlug(
   typeSlug: string,
   slug: string
@@ -11,60 +38,70 @@ async function _fetchContentBySlug(
   const ct = getContentType(typeSlug)
   if (!ct) return null
 
-  const supabase = createServiceRoleSupabaseClient()
   const selectStr = buildRelationshipSelect(ct)
+  const supabase = createServiceRoleSupabaseClient()
 
   const { data, error } = await fromTable(supabase, ct.tableName)
     .select(selectStr)
     .eq('slug', slug)
-    .single()
+    .eq('published', true)
+    .is('deleted_at', null)
+    .maybeSingle()
 
   if (error || !data) return null
 
-  // Flatten nested relationship data and merge with base fields
-  const relationships = flattenRelationships(data as Record<string, unknown>, ct)
-  const base: Record<string, unknown> = { ...(data as Record<string, unknown>) }
-
-  // Remove raw junction data, add flattened relationships
-  for (const rel of ct.relationships) {
-    delete base[rel.junction]
-  }
-  Object.assign(base, relationships)
-
-  return base
+  return flattenContentRow(data as Record<string, unknown>, ct)
 }
 
-// Wrap in React.cache() for request-scoped deduplication
-// This is the SINGLE caching layer — page-helpers does NOT add another
+// Wrap in React.cache() for request-scoped deduplication.
+// This is the SINGLE caching layer — page-helpers does NOT add another.
 export const fetchContentBySlug = cache(_fetchContentBySlug)
 
-async function _fetchContent(
+// ---------------------------------------------------------------------------
+// Preview-aware fetch — calls draftMode() so Next.js marks the page as
+// dynamic (ƒ). Use ONLY in pages that are redirect targets from /api/preview.
+// The /api/preview route redirects to: case-study, algorithm, industry,
+// persona, and blog pages.
+//
+// NOTE: This fix addresses the top-level public-content leak. Nested-
+// relationship draft data continues to be governed by RLS at the related
+// entity tables (which enforce published = true for leaf tables) — no
+// regression, but worth noting since it's the long-standing JS-filtering
+// pattern (see GitHub issue #143).
+// ---------------------------------------------------------------------------
+async function _fetchPreviewContentBySlug(
   typeSlug: string,
-  id: string
+  slug: string
 ): Promise<Record<string, unknown> | null> {
+  const { isEnabled: isPreview } = await draftMode()
+
+  if (!isPreview) {
+    // No active preview session — fall through to the SSG-safe path.
+    // This avoids a duplicate Supabase call on the normal render path
+    // because React.cache deduplicates _fetchContentBySlug per request.
+    return _fetchContentBySlug(typeSlug, slug)
+  }
+
+  // Preview active: service-role client + skip published filter so drafts
+  // are visible. Still filters out soft-deleted rows.
   const ct = getContentType(typeSlug)
   if (!ct) return null
 
-  const supabase = createServiceRoleSupabaseClient()
   const selectStr = buildRelationshipSelect(ct)
+  const supabase = createServiceRoleSupabaseClient()
 
   const { data, error } = await fromTable(supabase, ct.tableName)
     .select(selectStr)
-    .eq('id', id)
-    .single()
+    .eq('slug', slug)
+    .is('deleted_at', null)
+    .maybeSingle()
 
   if (error || !data) return null
 
-  const relationships = flattenRelationships(data as Record<string, unknown>, ct)
-  const base: Record<string, unknown> = { ...(data as Record<string, unknown>) }
-  for (const rel of ct.relationships) {
-    delete base[rel.junction]
-  }
-  Object.assign(base, relationships)
-  return base
+  return flattenContentRow(data as Record<string, unknown>, ct)
 }
 
-export const fetchContent = cache(_fetchContent)
+export const fetchPreviewContentBySlug = cache(_fetchPreviewContentBySlug)
 
 interface ListOptions {
   page?: number
