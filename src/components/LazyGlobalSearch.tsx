@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, lazy, forwardRef, useImperativeHandle } from 'react';
+import { useState, Suspense, lazy, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Search } from 'lucide-react';
 import { SearchableItem } from '@/lib/content-fetchers';
 
@@ -57,7 +57,7 @@ const LazyGlobalSearch = forwardRef<LazyGlobalSearchRef, LazyGlobalSearchProps>(
     const [isSearchActive, setIsSearchActive] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const activateSearch = async () => {
+    const activateSearch = useCallback(async () => {
       if (isSearchActive) return;
 
       setIsLoading(true);
@@ -70,7 +70,7 @@ const LazyGlobalSearch = forwardRef<LazyGlobalSearchRef, LazyGlobalSearchProps>(
       } finally {
         setIsLoading(false);
       }
-    };
+    }, [isSearchActive]);
 
     // Expose focus method through ref
     useImperativeHandle(ref, () => ({
