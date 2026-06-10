@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`deletion_audit_log` SELECT policy** restricted to admin role only (was `USING (true)` for any authenticated user).
 - **`setup_admin_role` EXECUTE** revoked from `anon`/`authenticated`/PUBLIC.
 - **Bulk-delete API endpoints** now Zod-validate inputs; invalid UUIDs return 400 instead of 500 with stack traces.
+- **Dependency patches**: Updated Next.js 16.2.4 → 16.2.6 to fix middleware/auth bypass CVEs (GHSA-26hh-7cqf-hhc6, GHSA-492v-c6pp-mqqv, GHSA-267c-6grr-h53f, GHSA-36qx-fr4f-26g5), XSS, SSRF, and cache poisoning issues; updated postcss to ^8.5.10 (direct dep + override to force Next.js's bundled copy) to fix CSS stringify XSS (GHSA-qx2v-qp2m-jg93)
 - **Dependency updates**: Updated all packages to latest semver-compatible versions (react 19.2.5, supabase 2.95, vitest 4.1.5, autoprefixer 10.5, postcss 8.5.10, and others)
 - **eslint-plugin-security enabled**: Wired up previously-installed but inactive security linting rules
 - **uuid transitive dep**: Added override to pin `uuid` to >=14.0.0, resolving remaining moderate vulnerability in `resend` → `svix` dependency chain
