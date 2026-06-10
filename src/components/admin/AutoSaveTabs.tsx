@@ -46,22 +46,22 @@ export function AutoSaveTabs({
 }: AutoSaveTabsProps) {
   const [isChangingTab, setIsChangingTab] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  
-  // Update save status based on isSaving prop
-  useEffect(() => {
+  const [prevIsSaving, setPrevIsSaving] = useState(isSaving);
+
+  if (prevIsSaving !== isSaving) {
+    setPrevIsSaving(isSaving);
     if (isSaving) {
       setSaveStatus('saving');
     } else if (saveStatus === 'saving') {
       setSaveStatus('saved');
-      
-      // Reset to idle after a delay
-      const timer = setTimeout(() => {
-        setSaveStatus('idle');
-      }, 3000);
-      
-      return () => clearTimeout(timer);
     }
-  }, [isSaving, saveStatus]);
+  }
+
+  useEffect(() => {
+    if (saveStatus !== 'saved') return;
+    const timer = setTimeout(() => setSaveStatus('idle'), 3000);
+    return () => clearTimeout(timer);
+  }, [saveStatus]);
   
   const handleTabChange = async (value: string) => {
     if (value === activeTab) return;
