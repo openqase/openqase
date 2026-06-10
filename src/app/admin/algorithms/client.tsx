@@ -6,7 +6,7 @@ import { Plus, Trash2, AlertCircle } from 'lucide-react'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import type { Algorithm } from './page'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,17 +25,17 @@ interface AlgorithmsClientProps {
 
 export function AlgorithmsClient({ data }: AlgorithmsClientProps) {
   const [algorithms, setAlgorithms] = useState<Algorithm[]>(data)
+  const [prevData, setPrevData] = useState(data)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [algorithmToDelete, setAlgorithmToDelete] = useState<Algorithm | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Refresh data when component mounts or when returning to this page
-  useEffect(() => {
-    // Update state with the latest data from props
-    setAlgorithms(data);
-  }, [data]);
+  if (prevData !== data) {
+    setPrevData(data)
+    setAlgorithms(data)
+  }
 
   // Filtering logic in parent
   const filteredAlgorithms = useMemo(() => {
