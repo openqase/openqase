@@ -42,6 +42,8 @@ export function DataTable<TData, TValue>({
     pageSize: 50,
   })
 
+  // TanStack Table returns non-memoizable functions by design; library limitation
+  // eslint-disable-next-line react-hooks/incompatible-library 
   const table = useReactTable({
     data,
     columns,
