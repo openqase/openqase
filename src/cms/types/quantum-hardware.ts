@@ -18,6 +18,7 @@ export const quantumHardware = defineContentType({
     { name: 'gate_fidelity', type: 'number' },
     { name: 'coherence_time', type: 'text' },
     { name: 'availability', type: 'text' },
+    { name: 'access_model', type: 'text' },
     { name: 'documentation_url', type: 'url' },
     { name: 'website_url', type: 'url' },
   ],

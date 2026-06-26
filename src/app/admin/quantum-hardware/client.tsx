@@ -92,8 +92,8 @@ export function QuantumHardwareClient({ data }: QuantumHardwareClientProps) {
       header: 'Name',
     },
     {
-      accessorKey: 'manufacturer',
-      header: 'Manufacturer',
+      accessorKey: 'vendor',
+      header: 'Vendor',
     },
     {
       accessorKey: 'published',

@@ -32,8 +32,8 @@ interface QuantumSoftware extends BaseContentItem {
 }
 
 interface QuantumHardware extends BaseContentItem {
-  manufacturer?: string | null
-  hardware_type?: string | null
+  vendor?: string | null
+  technology_type?: string | null
 }
 
 interface QuantumCompany extends BaseContentItem {
@@ -62,7 +62,7 @@ function getSecondaryInfo(item: ContentItem, contentType: string) {
     case 'quantum-software':
       return (item as QuantumSoftware).vendor || 'Unknown'
     case 'quantum-hardware':
-      return (item as QuantumHardware).manufacturer || 'Unknown'
+      return (item as QuantumHardware).vendor || 'Unknown'
     case 'quantum-companies':
     case 'partner-companies':
       return (item as QuantumCompany | PartnerCompany).industry || 'Various'
@@ -76,7 +76,7 @@ function getSecondaryLabel(contentType: string) {
     case 'quantum-software':
       return 'Vendor'
     case 'quantum-hardware':
-      return 'Manufacturer'
+      return 'Vendor'
     case 'quantum-companies':
     case 'partner-companies':
       return 'Industry'
@@ -100,7 +100,7 @@ export function TableView({ items, contentType, basePath }: TableViewProps) {
   }
 
   const filteredAndSortedItems = useMemo(() => {
-    let filtered = items.filter(item =>
+    const filtered = items.filter(item =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       getSecondaryInfo(item, contentType).toLowerCase().includes(searchTerm.toLowerCase())
