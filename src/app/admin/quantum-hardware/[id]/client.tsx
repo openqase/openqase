@@ -30,12 +30,14 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
     slug: quantumHardware?.slug || '',
     description: quantumHardware?.description || '',
     main_content: quantumHardware?.main_content || '',
-    manufacturer: quantumHardware?.manufacturer || '',
-    qubit_count: quantumHardware?.qubit_count || '',
-    qubit_type: quantumHardware?.qubit_type || '',
+    vendor: quantumHardware?.vendor || '',
+    technology_type: quantumHardware?.technology_type || '',
+    qubit_count: quantumHardware?.qubit_count ?? '',
     coherence_time: quantumHardware?.coherence_time || '',
-    gate_fidelity: quantumHardware?.gate_fidelity || '',
-    operating_temperature: quantumHardware?.operating_temperature || '',
+    gate_fidelity: quantumHardware?.gate_fidelity ?? '',
+    connectivity: quantumHardware?.connectivity || '',
+    availability: quantumHardware?.availability || '',
+    access_model: quantumHardware?.access_model || '',
     website_url: quantumHardware?.website_url || '',
     documentation_url: quantumHardware?.documentation_url || '',
     published: quantumHardware?.published || false,
@@ -236,15 +238,27 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
               />
             </div>
 
-            <div>
-              <Label htmlFor="manufacturer">Manufacturer</Label>
-              <Input
-                id="manufacturer"
-                value={values.manufacturer}
-                onChange={(e) => handleChange('manufacturer', e.target.value)}
-                placeholder="Company or organization"
-                className="mt-1"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="vendor">Vendor</Label>
+                <Input
+                  id="vendor"
+                  value={values.vendor}
+                  onChange={(e) => handleChange('vendor', e.target.value)}
+                  placeholder="Company or organization"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="technology_type">Technology Type</Label>
+                <Input
+                  id="technology_type"
+                  value={values.technology_type}
+                  onChange={(e) => handleChange('technology_type', e.target.value)}
+                  placeholder="e.g., Superconducting"
+                  className="mt-1"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -259,16 +273,6 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
                 />
               </div>
               <div>
-                <Label htmlFor="qubit_type">Qubit Type</Label>
-                <Input
-                  id="qubit_type"
-                  value={values.qubit_type}
-                  onChange={(e) => handleChange('qubit_type', e.target.value)}
-                  placeholder="e.g., Superconducting"
-                  className="mt-1"
-                />
-              </div>
-              <div>
                 <Label htmlFor="coherence_time">Coherence Time</Label>
                 <Input
                   id="coherence_time"
@@ -278,26 +282,46 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
                   className="mt-1"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="gate_fidelity">Gate Fidelity</Label>
+                <Label htmlFor="gate_fidelity">Gate Fidelity (%)</Label>
                 <Input
                   id="gate_fidelity"
                   value={values.gate_fidelity}
                   onChange={(e) => handleChange('gate_fidelity', e.target.value)}
-                  placeholder="e.g., 99.5%"
+                  placeholder="e.g., 99.5"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <Label htmlFor="connectivity">Connectivity</Label>
+                <Input
+                  id="connectivity"
+                  value={values.connectivity}
+                  onChange={(e) => handleChange('connectivity', e.target.value)}
+                  placeholder="e.g., All-to-all"
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="operating_temperature">Operating Temperature</Label>
+                <Label htmlFor="availability">Reported Availability</Label>
                 <Input
-                  id="operating_temperature"
-                  value={values.operating_temperature}
-                  onChange={(e) => handleChange('operating_temperature', e.target.value)}
-                  placeholder="e.g., 15 mK"
+                  id="availability"
+                  value={values.availability}
+                  onChange={(e) => handleChange('availability', e.target.value)}
+                  placeholder="e.g., IonQ Cloud"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="access_model">Access Model</Label>
+                <Input
+                  id="access_model"
+                  value={values.access_model}
+                  onChange={(e) => handleChange('access_model', e.target.value)}
+                  placeholder="e.g., Cloud API"
                   className="mt-1"
                 />
               </div>

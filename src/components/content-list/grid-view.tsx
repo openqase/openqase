@@ -23,8 +23,8 @@ interface QuantumSoftware extends BaseContentItem {
 }
 
 interface QuantumHardware extends BaseContentItem {
-  manufacturer?: string | null
-  hardware_type?: string | null
+  vendor?: string | null
+  technology_type?: string | null
 }
 
 interface QuantumCompany extends BaseContentItem {
@@ -50,7 +50,7 @@ function getSecondaryInfo(item: ContentItem, contentType: string) {
     case 'quantum-software':
       return (item as QuantumSoftware).vendor
     case 'quantum-hardware':
-      return (item as QuantumHardware).manufacturer
+      return (item as QuantumHardware).vendor
     case 'quantum-companies':
     case 'partner-companies':
       return (item as QuantumCompany | PartnerCompany).industry
@@ -70,7 +70,7 @@ function getBadges(item: ContentItem, contentType: string) {
       break
     case 'quantum-hardware':
       const hardware = item as QuantumHardware
-      if (hardware.hardware_type) badges.push(hardware.hardware_type)
+      if (hardware.technology_type) badges.push(hardware.technology_type)
       break
     case 'quantum-companies':
       const qCompany = item as QuantumCompany
