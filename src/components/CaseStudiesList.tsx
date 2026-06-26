@@ -9,6 +9,8 @@ import ContentCard from '@/components/ui/content-card';
 import { ViewSwitcher } from '@/components/ui/view-switcher';
 import { useViewSwitcher } from '@/hooks/useViewSwitcher';
 import { useSortPersistence } from '@/hooks/useSortPersistence';
+import { usePagination } from '@/hooks/use-pagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
 import { FacetedFilters } from '@/components/FacetedFilters';
 import type { FilterGroup } from '@/components/FacetedFilters';
@@ -94,6 +96,8 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
         }
       });
   }, [caseStudies, searchQuery, activeFilters, sortBy, relationshipMap]);
+
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredCaseStudies });
 
   // Compute cross-filtered counts for sidebar
   const filterGroups: FilterGroup[] = useMemo(() => {
@@ -295,7 +299,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
           : "space-y-4"
         }>
-          {filteredCaseStudies.map((caseStudy) => {
+          {paginatedItems.map((caseStudy) => {
             const metadata = getContentMetadata('case-studies', caseStudy, viewMode);
             const rels = relationshipMap[caseStudy.id];
             const badges = rels
@@ -325,6 +329,12 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
             </p>
           </div>
         )}
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+        />
       </div>
     </div>
   );

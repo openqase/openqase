@@ -9,6 +9,8 @@ import ContentCard from '@/components/ui/content-card';
 import { ViewSwitcher } from '@/components/ui/view-switcher';
 import { useViewSwitcher } from '@/hooks/useViewSwitcher';
 import { useSortPersistence } from '@/hooks/useSortPersistence';
+import { usePagination } from '@/hooks/use-pagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
 
 type Algorithm = Database['public']['Tables']['algorithms']['Row'];
@@ -59,6 +61,8 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
         }
       });
   }, [algorithms, searchQuery, sortBy]);
+
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredAlgorithms });
 
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +120,7 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         : "space-y-4"
       }>
-        {filteredAlgorithms.map((algorithm) => {
+        {paginatedItems.map((algorithm) => {
           // Get metadata using the new system
           const metadata = getContentMetadata('algorithms', algorithm, viewMode);
           
@@ -144,6 +148,12 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
           </p>
         </div>
       )}
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+      />
     </div>
   );
 } 

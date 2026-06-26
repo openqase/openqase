@@ -1,6 +1,8 @@
 'use client'
 
 import { GridView, TableView, LayoutToggle, useLayoutPreference } from '@/components/content-list'
+import { usePagination } from '@/hooks/use-pagination'
+import { PaginationControls } from '@/components/ui/pagination-controls'
 import type { QuantumCompany } from './page'
 
 interface QuantumCompaniesClientProps {
@@ -10,8 +12,8 @@ interface QuantumCompaniesClientProps {
 
 export function QuantumCompaniesClient({ items, totalCount }: QuantumCompaniesClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items })
 
-  // Don't render layout toggle until client-side hydration is complete
   if (!isClient) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -24,10 +26,15 @@ export function QuantumCompaniesClient({ items, totalCount }: QuantumCompaniesCl
             {totalCount} companies available
           </div>
         </div>
-        <GridView 
-          items={items}
+        <GridView
+          items={paginatedItems}
           contentType="quantum-companies"
           basePath="/paths/quantum-companies"
+        />
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
         />
       </div>
     )
@@ -51,18 +58,24 @@ export function QuantumCompaniesClient({ items, totalCount }: QuantumCompaniesCl
       </div>
 
       {layout === 'grid' ? (
-        <GridView 
-          items={items}
+        <GridView
+          items={paginatedItems}
           contentType="quantum-companies"
           basePath="/paths/quantum-companies"
         />
       ) : (
-        <TableView 
-          items={items}
+        <TableView
+          items={paginatedItems}
           contentType="quantum-companies"
           basePath="/paths/quantum-companies"
         />
       )}
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+      />
     </div>
   )
 }

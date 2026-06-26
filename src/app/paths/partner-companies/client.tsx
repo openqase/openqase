@@ -1,6 +1,8 @@
 'use client'
 
 import { GridView, TableView, LayoutToggle, useLayoutPreference } from '@/components/content-list'
+import { usePagination } from '@/hooks/use-pagination'
+import { PaginationControls } from '@/components/ui/pagination-controls'
 import type { PartnerCompany } from './page'
 
 interface PartnerCompaniesClientProps {
@@ -10,8 +12,8 @@ interface PartnerCompaniesClientProps {
 
 export function PartnerCompaniesClient({ items, totalCount }: PartnerCompaniesClientProps) {
   const { layout, toggleLayout, isClient } = useLayoutPreference('grid')
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items })
 
-  // Don't render layout toggle until client-side hydration is complete
   if (!isClient) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -24,10 +26,15 @@ export function PartnerCompaniesClient({ items, totalCount }: PartnerCompaniesCl
             {totalCount} partner companies available
           </div>
         </div>
-        <GridView 
-          items={items}
+        <GridView
+          items={paginatedItems}
           contentType="partner-companies"
           basePath="/paths/partner-companies"
+        />
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
         />
       </div>
     )
@@ -51,18 +58,24 @@ export function PartnerCompaniesClient({ items, totalCount }: PartnerCompaniesCl
       </div>
 
       {layout === 'grid' ? (
-        <GridView 
-          items={items}
+        <GridView
+          items={paginatedItems}
           contentType="partner-companies"
           basePath="/paths/partner-companies"
         />
       ) : (
-        <TableView 
-          items={items}
+        <TableView
+          items={paginatedItems}
           contentType="partner-companies"
           basePath="/paths/partner-companies"
         />
       )}
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+      />
     </div>
   )
 }

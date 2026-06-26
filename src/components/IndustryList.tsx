@@ -9,6 +9,8 @@ import ContentCard from '@/components/ui/content-card';
 import { ViewSwitcher } from '@/components/ui/view-switcher';
 import { useViewSwitcher } from '@/hooks/useViewSwitcher';
 import { useSortPersistence } from '@/hooks/useSortPersistence';
+import { usePagination } from '@/hooks/use-pagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
 
 // Use the exact Industry type from Database
@@ -68,6 +70,8 @@ export default function IndustryList({ industries }: IndustryListProps) {
       }
     });
   }, [industries, sectorFilter, searchQuery, sortBy]);
+
+  const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredIndustries });
 
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +152,7 @@ export default function IndustryList({ industries }: IndustryListProps) {
         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         : "space-y-4"
       }>
-        {filteredIndustries.map((industry) => {
+        {paginatedItems.map((industry) => {
           // Get metadata using the new system
           const metadata = getContentMetadata('industries', industry, viewMode);
           
@@ -176,6 +180,12 @@ export default function IndustryList({ industries }: IndustryListProps) {
           </p>
         </div>
       )}
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+      />
     </div>
   );
 } 
