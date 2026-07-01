@@ -223,9 +223,9 @@ export async function saveItem(formData: FormData) {
 
 ### Current Status
 
-- **No automated testing framework** is currently configured
-- **Manual testing** is required for all changes
-- **Future**: Jest/Vitest + React Testing Library planned
+- **Vitest** unit tests (`npm test`) run locally and in CI
+- **CI on pull requests** runs: lint, test, typecheck, and production build
+- **Manual testing** is still recommended for UI and admin flows
 
 ### Manual Testing Checklist
 
@@ -240,15 +240,12 @@ Before submitting a PR, verify:
 
 ### Testing Commands
 
+Run these before opening a PR (CI runs the same checks, plus `npm run build`):
+
 ```bash
-# Run type checking
-npm run build
-
-# Run linting
 npm run lint
-
-# Test database connection
-npx ts-node src/lib/supabase.test.ts
+npm test
+npm run typecheck
 ```
 
 ## 📝 Commit Message Format

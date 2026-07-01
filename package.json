@@ -17,6 +17,7 @@
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "setup-admin": "tsx scripts/setup-admin.ts",
     "test-performance": "node scripts/page-load-performance.js",
     "enable-dev-mode": "node scripts/enable-dev-mode.js",
