@@ -1078,6 +1078,7 @@ export type Database = {
           published_at: string | null
           qubit_count: number | null
           slug: string
+          static_specs: Json
           technology_type: string | null
           ts_content: unknown
           updated_at: string | null
@@ -1103,6 +1104,7 @@ export type Database = {
           published_at?: string | null
           qubit_count?: number | null
           slug: string
+          static_specs?: Json
           technology_type?: string | null
           ts_content?: unknown
           updated_at?: string | null
@@ -1128,6 +1130,7 @@ export type Database = {
           published_at?: string | null
           qubit_count?: number | null
           slug?: string
+          static_specs?: Json
           technology_type?: string | null
           ts_content?: unknown
           updated_at?: string | null
