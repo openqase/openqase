@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { glob } from 'glob'
 
 // Mock React cache as pass-through so the cache wrapper is transparent.
@@ -238,14 +238,24 @@ describe('Finding 1.4 — DEV_MODE_AUTH_BYPASS gating', () => {
 })
 
 // ---------------------------------------------------------------------------
+// Helpers for migration assertions
+// ---------------------------------------------------------------------------
+function readMigrationBySuffix(suffix: string): string {
+  const files = glob.sync(`supabase/migrations/*_${suffix}`)
+  expect(files, `expected one migration matching *_${suffix}, found: ${files.join(', ')}`).toHaveLength(1)
+  return readFileSync(files[0], 'utf8')
+}
+
+// ---------------------------------------------------------------------------
 // Finding 2.1 — REVOKE writes from anon/authenticated migration present
 // ---------------------------------------------------------------------------
 describe('Finding 2.1 — REVOKE writes from anon/authenticated migration present', () => {
   it('migration file exists', () => {
-    expect(existsSync('supabase/migrations/20260428_a1_revoke_anon_writes.sql')).toBe(true)
+    const files = glob.sync('supabase/migrations/*_a1_revoke_anon_writes.sql')
+    expect(files).toHaveLength(1)
   })
   it('migration content includes REVOKE INSERT, UPDATE, DELETE, TRUNCATE', () => {
-    const sql = readFileSync('supabase/migrations/20260428_a1_revoke_anon_writes.sql', 'utf8')
+    const sql = readMigrationBySuffix('a1_revoke_anon_writes.sql')
     expect(sql).toMatch(/REVOKE\s+INSERT,\s*UPDATE,\s*DELETE,\s*TRUNCATE/i)
     expect(sql).toMatch(/FROM\s+anon,\s*authenticated/i)
   })
@@ -256,10 +266,11 @@ describe('Finding 2.1 — REVOKE writes from anon/authenticated migration presen
 // ---------------------------------------------------------------------------
 describe('Finding 2.3 — deletion_audit_log admin-only migration present', () => {
   it('migration file exists', () => {
-    expect(existsSync('supabase/migrations/20260428_a1_audit_log_admin_only.sql')).toBe(true)
+    const files = glob.sync('supabase/migrations/*_a1_audit_log_admin_only.sql')
+    expect(files).toHaveLength(1)
   })
   it('migration drops the old permissive policy and creates the admin-only one', () => {
-    const sql = readFileSync('supabase/migrations/20260428_a1_audit_log_admin_only.sql', 'utf8')
+    const sql = readMigrationBySuffix('a1_audit_log_admin_only.sql')
     expect(sql).toMatch(/DROP\s+POLICY\s+IF\s+EXISTS\s+"Authenticated users can view audit logs"/)
     expect(sql).toMatch(/CREATE\s+POLICY\s+"Admins read audit log"/)
     expect(sql).toMatch(/role\s*=\s*'admin'/)
