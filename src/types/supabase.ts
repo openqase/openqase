@@ -1136,6 +1136,47 @@ export type Database = {
         }
         Relationships: []
       }
+      quantum_hardware_specs: {
+        Row: {
+          hardware_id: string
+          id: string
+          is_preset: boolean
+          source: string | null
+          spec_key: string
+          unit: string | null
+          value: string
+          verified_at: string | null
+        }
+        Insert: {
+          hardware_id: string
+          id?: string
+          is_preset?: boolean
+          source?: string | null
+          spec_key: string
+          unit?: string | null
+          value: string
+          verified_at?: string | null
+        }
+        Update: {
+          hardware_id?: string
+          id?: string
+          is_preset?: boolean
+          source?: string | null
+          spec_key?: string
+          unit?: string | null
+          value?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quantum_hardware_specs_hardware_id_fkey"
+            columns: ["hardware_id"]
+            isOneToOne: false
+            referencedRelation: "quantum_hardware"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quantum_software: {
         Row: {
           created_at: string | null
@@ -1205,6 +1246,27 @@ export type Database = {
           updated_at?: string | null
           vendor?: string | null
           website_url?: string | null
+        }
+        Relationships: []
+      }
+      hardware_spec_definitions: {
+        Row: {
+          default_unit: string | null
+          label: string
+          modalities: Database["public"]["Enums"]["hardware_modality"][]
+          spec_key: string
+        }
+        Insert: {
+          default_unit?: string | null
+          label: string
+          modalities: Database["public"]["Enums"]["hardware_modality"][]
+          spec_key: string
+        }
+        Update: {
+          default_unit?: string | null
+          label?: string
+          modalities?: Database["public"]["Enums"]["hardware_modality"][]
+          spec_key?: string
         }
         Relationships: []
       }
@@ -1301,7 +1363,12 @@ export type Database = {
       verify_initial_setup: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      hardware_modality:
+        | "superconducting"
+        | "trapped_ion"
+        | "neutral_atom"
+        | "photonic"
+        | "annealer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1428,6 +1495,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      hardware_modality: [
+        "superconducting",
+        "trapped_ion",
+        "neutral_atom",
+        "photonic",
+        "annealer",
+      ],
+    },
   },
 } as const
