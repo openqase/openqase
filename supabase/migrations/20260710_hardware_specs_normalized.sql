@@ -32,7 +32,6 @@ CREATE TABLE public.quantum_hardware_specs (
   unit        text,
   source      text,
   verified_at timestamptz,
-  is_preset   boolean NOT NULL DEFAULT false,
   UNIQUE (hardware_id, spec_key)
 );
 
@@ -40,7 +39,7 @@ CREATE INDEX quantum_hardware_specs_hardware_id_idx
   ON public.quantum_hardware_specs (hardware_id);
 
 COMMENT ON TABLE public.quantum_hardware_specs IS
-  'Hardware spec values. Custom keys allowed (is_preset=false).';
+  'Hardware spec values. Custom keys allowed; preset vs custom is inferred by whether spec_key exists in hardware_spec_definitions.';
 
 -- RLS
 ALTER TABLE public.hardware_spec_definitions ENABLE ROW LEVEL SECURITY;

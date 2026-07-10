@@ -1140,7 +1140,6 @@ export type Database = {
         Row: {
           hardware_id: string
           id: string
-          is_preset: boolean
           source: string | null
           spec_key: string
           unit: string | null
@@ -1150,7 +1149,6 @@ export type Database = {
         Insert: {
           hardware_id: string
           id?: string
-          is_preset?: boolean
           source?: string | null
           spec_key: string
           unit?: string | null
@@ -1160,7 +1158,6 @@ export type Database = {
         Update: {
           hardware_id?: string
           id?: string
-          is_preset?: boolean
           source?: string | null
           spec_key?: string
           unit?: string | null
