@@ -6,7 +6,7 @@ import { Plus, Trash2, AlertCircle } from 'lucide-react'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import type { QuantumSoftware } from './page'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,15 +25,17 @@ interface QuantumSoftwareClientProps {
 
 export function QuantumSoftwareClient({ data }: QuantumSoftwareClientProps) {
   const [quantumSoftware, setQuantumSoftware] = useState<QuantumSoftware[]>(data)
+  const [prevData, setPrevData] = useState(data)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [softwareToDelete, setSoftwareToDelete] = useState<QuantumSoftware | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    setQuantumSoftware(data);
-  }, [data]);
+  if (prevData !== data) {
+    setPrevData(data)
+    setQuantumSoftware(data)
+  }
 
   // Filtering logic in parent
   const filteredSoftware = useMemo(() => {

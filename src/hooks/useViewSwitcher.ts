@@ -27,6 +27,7 @@ export function useViewSwitcher(
     try {
       const savedViewMode = localStorage.getItem(storageKey) as ViewMode;
       if (savedViewMode && (savedViewMode === 'grid' || savedViewMode === 'list')) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setViewMode(savedViewMode);
       }
     } catch (error) {

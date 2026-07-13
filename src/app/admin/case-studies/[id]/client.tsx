@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,17 +68,11 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     year: isNew ? new Date().getFullYear() : caseStudy?.year || new Date().getFullYear(),
   });
   const [isDirty, setIsDirty] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<ContentIssue[]>([]);
-
-  // Run validation whenever values change
-  useEffect(() => {
-    const issues = validateContentSpelling({
-      title: values.title,
-      description: values.description,
-      main_content: values.main_content,
-    });
-    setValidationIssues(issues);
-  }, [values.title, values.description, values.main_content]);
+  const validationIssues = useMemo(() => validateContentSpelling({
+    title: values.title,
+    description: values.description,
+    main_content: values.main_content,
+  }), [values.title, values.description, values.main_content]);
 
   // Validation rules for case studies
   const validationRules = createContentValidationRules('case_study');

@@ -6,7 +6,7 @@ import { Plus, Trash2, AlertCircle } from 'lucide-react'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import type { QuantumHardware } from './page'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,15 +25,17 @@ interface QuantumHardwareClientProps {
 
 export function QuantumHardwareClient({ data }: QuantumHardwareClientProps) {
   const [quantumHardware, setQuantumHardware] = useState<QuantumHardware[]>(data)
+  const [prevData, setPrevData] = useState(data)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [hardwareToDelete, setHardwareToDelete] = useState<QuantumHardware | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    setQuantumHardware(data);
-  }, [data]);
+  if (prevData !== data) {
+    setPrevData(data)
+    setQuantumHardware(data)
+  }
 
   // Filtering logic in parent
   const filteredHardware = useMemo(() => {

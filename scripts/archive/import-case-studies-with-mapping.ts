@@ -411,9 +411,9 @@ function generateMappingReport(results: BatchImportResult[]) {
   let totalAlgorithmMappings = 0;
   let totalIndustryMappings = 0;
   let totalPersonaMappings = 0;
-  let totalUnmappedAlgorithms = new Set<string>();
-  let totalUnmappedIndustries = new Set<string>();
-  let totalUnmappedPersonas = new Set<string>();
+  const totalUnmappedAlgorithms = new Set<string>();
+  const totalUnmappedIndustries = new Set<string>();
+  const totalUnmappedPersonas = new Set<string>();
 
   successful.forEach(result => {
     if (result.entityMatches) {

@@ -27,6 +27,7 @@ export function useSortPersistence<T extends string>(
     try {
       const savedSortBy = localStorage.getItem(storageKey) as T;
       if (savedSortBy && validSortOptions.includes(savedSortBy)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSortBy(savedSortBy);
       }
     } catch (error) {
