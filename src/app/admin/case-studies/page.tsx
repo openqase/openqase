@@ -13,11 +13,14 @@ export const metadata: Metadata = {
 export type CaseStudy = Database['public']['Tables']['case_studies']['Row']
 
 export default async function CaseStudiesPage() {
+  let caseStudies: CaseStudy[] = []
+  let errorMessage: string | null = null
+
   try {
     const supabase = await createServiceRoleSupabaseClient();
-    
+
     // Fetch non-deleted case studies only (deleted items go to trash view)
-    let { data: caseStudies, error } = await supabase
+    const { data, error } = await supabase
       .from('case_studies')
       .select('*')
       .is('deleted_at', null)
@@ -25,12 +28,15 @@ export default async function CaseStudiesPage() {
 
     if (error) {
       console.error('Error fetching case studies:', error)
-      return <div>Error loading case studies: {error.message}</div>
+      errorMessage = `Error loading case studies: ${error.message}`
+    } else {
+      caseStudies = data || []
     }
-
-    return <CaseStudiesClient data={caseStudies || []} />
   } catch (err) {
     console.error('Unexpected error in CaseStudiesPage:', err)
-    return <div>Unexpected error loading case studies</div>
+    errorMessage = 'Unexpected error loading case studies'
   }
+
+  if (errorMessage) return <div>{errorMessage}</div>
+  return <CaseStudiesClient data={caseStudies} />
 }

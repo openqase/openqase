@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -63,18 +63,12 @@ export function BaseContentForm<T extends Record<string, any>>({
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [completionPercentage, setCompletionPercentage] = useState(0);
   const [validationIssues, setValidationIssues] = useState<ValidationIssues>({});
   const [isDirty, setIsDirty] = useState(false);
-  
-  // Calculate completion percentage when values change
-  useEffect(() => {
-    const percentage = calculateCompletionPercentage({
-      values,
-      validationRules
-    });
-    setCompletionPercentage(percentage);
-  }, [values, validationRules]);
+  const completionPercentage = useMemo(
+    () => calculateCompletionPercentage({ values, validationRules }),
+    [values, validationRules]
+  );
   
   // Handle field change
   const handleChange = useCallback((field: keyof T, value: any) => {

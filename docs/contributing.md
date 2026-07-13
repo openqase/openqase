@@ -11,7 +11,7 @@ We welcome contributions to the OpenQase project! Please follow these guidelines
 ## Development Process
 
 1.  **Code:** Make your changes, following the coding standards below.
-2.  **Test:** Manually test your changes thoroughly. Run `npm run lint` to check code quality.
+2.  **Test:** Run `npm run lint`, `npm test`, and `npm run typecheck` before opening a PR. Manually test UI and admin changes as needed.
 3.  **Update Documentation:** If your changes affect user-facing features, APIs, or the development setup, please update the relevant documentation pages within `/docs`.
 4.  **Update Migrations:** If you make database schema changes, create a new migration file in `supabase/migrations/`.
 5.  **Commit:** Use clear and descriptive commit messages. Reference the relevant issue number (e.g., `feat: Add user profile page (#123)`).

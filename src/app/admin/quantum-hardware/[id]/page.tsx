@@ -53,15 +53,16 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
       quantumHardware = data
     }
 
-    return (
-      <QuantumHardwareForm 
-        quantumHardware={quantumHardware}
-        caseStudies={caseStudies}
-        isNew={isNew}
-      />
-    )
   } catch (error) {
     console.error('Error in QuantumHardwareEditPage:', error)
     notFound()
   }
+
+  return (
+    <QuantumHardwareForm
+      quantumHardware={quantumHardware}
+      caseStudies={caseStudies}
+      isNew={isNew}
+    />
+  )
 }

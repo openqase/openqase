@@ -53,15 +53,16 @@ export default async function QuantumCompanyEditPage({ params }: QuantumCompanyE
       quantumCompany = data
     }
 
-    return (
-      <QuantumCompanyForm 
-        quantumCompany={quantumCompany}
-        caseStudies={caseStudies}
-        isNew={isNew}
-      />
-    )
   } catch (error) {
     console.error('Error in QuantumCompanyEditPage:', error)
     notFound()
   }
+
+  return (
+    <QuantumCompanyForm
+      quantumCompany={quantumCompany}
+      caseStudies={caseStudies}
+      isNew={isNew}
+    />
+  )
 }

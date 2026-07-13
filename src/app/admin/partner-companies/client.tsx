@@ -6,7 +6,7 @@ import { Plus, Trash2, AlertCircle } from 'lucide-react'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import type { PartnerCompany } from './page'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,15 +25,17 @@ interface PartnerCompaniesClientProps {
 
 export function PartnerCompaniesClient({ data }: PartnerCompaniesClientProps) {
   const [partnerCompanies, setPartnerCompanies] = useState<PartnerCompany[]>(data)
+  const [prevData, setPrevData] = useState(data)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [companyToDelete, setCompanyToDelete] = useState<PartnerCompany | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    setPartnerCompanies(data);
-  }, [data]);
+  if (prevData !== data) {
+    setPrevData(data)
+    setPartnerCompanies(data)
+  }
 
   // Filtering logic in parent
   const filteredCompanies = useMemo(() => {

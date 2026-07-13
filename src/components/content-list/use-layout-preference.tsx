@@ -9,6 +9,7 @@ export function useLayoutPreference(defaultLayout: LayoutType = 'grid') {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true)
     // Only access localStorage on client side
     const saved = localStorage.getItem('content-layout-preference')

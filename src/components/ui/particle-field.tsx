@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 
 interface Particle {
@@ -141,24 +141,37 @@ export function ParticleField({
 }
 
 // Simpler dot cloud variant
-export function DotCloud({ 
+export function DotCloud({
   className,
-  dotCount = 50 
-}: { 
+  dotCount = 50
+}: {
   className?: string
-  dotCount?: number 
+  dotCount?: number
 }) {
+
+  /* eslint-disable react-hooks/purity */
+  const dots = useMemo(
+    () => Array.from({ length: dotCount }).map(() => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      animationDelay: Math.random() * 5,
+      animationDuration: 3 + Math.random() * 4,
+    })),
+    [dotCount]
+  )
+  /* eslint-enable react-hooks/purity */
+
   return (
     <div className={cn("absolute inset-0 overflow-hidden", className)}>
-      {Array.from({ length: dotCount }).map((_, i) => (
+      {dots.map((dot, i) => (
         <div
           key={i}
           className="absolute w-1 h-1 bg-primary/20 rounded-full animate-pulse"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${3 + Math.random() * 4}s`
+            left: `${dot.left}%`,
+            top: `${dot.top}%`,
+            animationDelay: `${dot.animationDelay}s`,
+            animationDuration: `${dot.animationDuration}s`
           }}
         />
       ))}
