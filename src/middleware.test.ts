@@ -12,7 +12,7 @@ vi.mock('@/lib/supabase-middleware', () => ({
 let mockUser: { id: string } | null = null
 let mockRole: string | null = null
 
-vi.mock('@/lib/supabase', () => ({
+vi.mock('@/lib/supabase-server', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({

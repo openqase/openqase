@@ -1,4 +1,4 @@
-import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { AuditLogClient } from './client'
 
 export const dynamic = 'force-dynamic'

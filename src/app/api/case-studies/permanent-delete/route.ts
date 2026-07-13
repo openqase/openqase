@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { requireAdmin } from '@/lib/auth'
 import { BulkActionSchema } from '@/lib/schemas/bulk-action'
 
