@@ -23,3 +23,12 @@ jobs:
       - run: npm run lint
 
       - run: npm test
+
+      - run: npm run typecheck
+
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-stub-anon-key
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          SUPABASE_SERVICE_ROLE_KEY: ci-stub-service-role-key
