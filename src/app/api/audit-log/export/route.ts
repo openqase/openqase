@@ -1,4 +1,4 @@
-import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
 

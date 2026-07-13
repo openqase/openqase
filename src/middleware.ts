@@ -50,7 +50,7 @@ export async function middleware(req: NextRequest) {
     }
     
     // For non-public API routes, check authentication
-    const { createServerSupabaseClient } = await import('@/lib/supabase')
+    const { createServerSupabaseClient } = await import('@/lib/supabase-server')
     const supabase = await createServerSupabaseClient()
     
     // Get the user (more secure than getSession)
@@ -111,7 +111,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Get user session for auth checks
-  const { createServerSupabaseClient } = await import('@/lib/supabase')
+  const { createServerSupabaseClient } = await import('@/lib/supabase-server')
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 

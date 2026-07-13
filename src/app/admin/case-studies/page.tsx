@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import type { Database } from '@/types/supabase'
 import { CaseStudiesClient } from './client'
 

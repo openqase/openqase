@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getSafeRedirectPath } from '@/lib/redirect-utils'
 
 export async function GET(request: Request) {
