@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Edit Quantum Hardware',
-  description: 'Edit quantum hardware details'
+  description: 'Edit quantum hardware details',
 }
 
 interface QuantumHardwareEditPageProps {
@@ -23,19 +23,28 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
 
   let quantumHardware = null
   let caseStudies: any[] = []
+  let initialSpecs: { spec_key: string; value: string; unit: string | null }[] = []
+  let definitions: any[] = []
 
   try {
-    // Get case studies for relationship selector
-    const { data: caseStudiesData, error: caseStudiesError } = await supabase
-      .from('case_studies')
-      .select('id, title, slug')
-      .eq('published', true)
-      .order('title')
+    const [
+      { data: caseStudiesData, error: caseStudiesError },
+      { data: definitionsData, error: definitionsError },
+    ] = await Promise.all([
+      supabase.from('case_studies').select('id, title, slug').eq('published', true).order('title'),
+      supabase.from('hardware_spec_definitions').select('*').order('label'),
+    ])
 
     if (caseStudiesError) {
       console.error('Error fetching case studies:', caseStudiesError)
     } else {
       caseStudies = caseStudiesData || []
+    }
+
+    if (definitionsError) {
+      console.error('Error fetching hardware spec definitions:', definitionsError)
+    } else {
+      definitions = definitionsData || []
     }
 
     if (!isNew) {
@@ -51,8 +60,19 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
       }
 
       quantumHardware = data
-    }
 
+      const { data: specsData, error: specsError } = await supabase
+        .from('quantum_hardware_specs')
+        .select('spec_key, value, unit')
+        .eq('hardware_id', resolvedParams.id)
+        .order('spec_key')
+
+      if (specsError) {
+        console.error('Error fetching hardware specs:', specsError)
+      } else {
+        initialSpecs = specsData || []
+      }
+    }
   } catch (error) {
     console.error('Error in QuantumHardwareEditPage:', error)
     notFound()
@@ -63,6 +83,8 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
       quantumHardware={quantumHardware}
       caseStudies={caseStudies}
       isNew={isNew}
+      initialSpecs={initialSpecs}
+      definitions={definitions}
     />
   )
 }
