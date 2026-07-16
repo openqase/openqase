@@ -2,6 +2,9 @@ import { Metadata } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import { QuantumHardwareForm } from './client'
+import type { Database } from '@/types/supabase'
+
+type SpecDefinition = Database['public']['Tables']['hardware_spec_definitions']['Row']
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +27,7 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
   let quantumHardware = null
   let caseStudies: any[] = []
   let initialSpecs: { spec_key: string; value: string; unit: string | null }[] = []
-  let definitions: any[] = []
+  let definitions: SpecDefinition[] = []
 
   try {
     const [

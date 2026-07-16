@@ -111,14 +111,15 @@ export const saveHardwareSpecs = withAdmin(
       if (deleteError) throw new Error(deleteError.message)
     }
 
-    const now = new Date().toISOString()
+    // verified_at is intentionally omitted from the payload: Supabase upserts
+    // only the columns provided, so existing verified_at values are preserved on
+    // update and left null on insert — rather than stamped to "now" on every save.
     const { error: upsertError } = await supabase.from('quantum_hardware_specs').upsert(
       cleaned.map((row) => ({
         hardware_id: hardwareId,
         spec_key: row.spec_key,
         value: row.value,
         unit: row.unit,
-        verified_at: now,
       })),
       { onConflict: 'hardware_id,spec_key' }
     )

@@ -107,10 +107,7 @@ export function QuantumHardwareForm({
   }
 
   const persistAll = async () => {
-    const result = await saveQuantumHardware({
-      ...values,
-      technology_type: values.technology_type || null,
-    })
+    const result = await saveQuantumHardware(values)
 
     const hardwareId = result?.id ?? values.id
     if (!hardwareId) {
@@ -157,6 +154,9 @@ export function QuantumHardwareForm({
       try {
         const hardwareId = await persistAll()
         setValues(prev => ({ ...prev, id: hardwareId }))
+        if (isNew) {
+          router.replace(`/admin/quantum-hardware/${hardwareId}`)
+        }
         await publishQuantumHardware(hardwareId)
         setValues(prev => ({ ...prev, published: true }))
         

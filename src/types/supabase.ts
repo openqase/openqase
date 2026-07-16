@@ -1078,7 +1078,7 @@ export type Database = {
           published_at: string | null
           qubit_count: number | null
           slug: string
-          technology_type: Database["public"]["Enums"]["hardware_modality"] | null
+          technology_type: string | null
           ts_content: unknown
           updated_at: string | null
           vendor: string | null
@@ -1103,7 +1103,7 @@ export type Database = {
           published_at?: string | null
           qubit_count?: number | null
           slug: string
-          technology_type?: Database["public"]["Enums"]["hardware_modality"] | null
+          technology_type?: string | null
           ts_content?: unknown
           updated_at?: string | null
           vendor?: string | null
@@ -1128,7 +1128,7 @@ export type Database = {
           published_at?: string | null
           qubit_count?: number | null
           slug?: string
-          technology_type?: Database["public"]["Enums"]["hardware_modality"] | null
+          technology_type?: string | null
           ts_content?: unknown
           updated_at?: string | null
           vendor?: string | null
