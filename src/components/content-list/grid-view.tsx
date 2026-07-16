@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ExternalLink, Github, FileText } from 'lucide-react'
+import { formatHardwareModality } from '@/lib/hardware-modality'
 
 interface BaseContentItem {
   id: string
@@ -70,7 +71,9 @@ function getBadges(item: ContentItem, contentType: string) {
       break
     case 'quantum-hardware':
       const hardware = item as QuantumHardware
-      if (hardware.technology_type) badges.push(hardware.technology_type)
+      if (hardware.technology_type) {
+        badges.push(formatHardwareModality(hardware.technology_type) ?? hardware.technology_type)
+      }
       break
     case 'quantum-companies':
       const qCompany = item as QuantumCompany

@@ -8,6 +8,7 @@ import { ExternalLink, FileText, Building2, Cpu, Briefcase } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumSoftware, getRelatedQuantumCompanies, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
+import { formatHardwareModality } from '@/lib/hardware-modality';
 type EnrichedQuantumHardware = Database['public']['Tables']['quantum_hardware']['Row'] & {
   case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
@@ -132,7 +133,9 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
           {quantumHardware.technology_type && (
             <div className="text-center p-3 bg-secondary rounded-lg">
               <div className="text-sm text-muted-foreground">Technology</div>
-              <div className="font-semibold">{quantumHardware.technology_type}</div>
+              <div className="font-semibold">
+                {formatHardwareModality(quantumHardware.technology_type)}
+              </div>
             </div>
           )}
           {quantumHardware.qubit_count && (

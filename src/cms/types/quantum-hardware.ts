@@ -1,4 +1,5 @@
 import { defineContentType } from '../define'
+import { HARDWARE_MODALITIES } from '@/lib/hardware-modality'
 
 export const quantumHardware = defineContentType({
   slug: 'quantum-hardware',
@@ -12,7 +13,11 @@ export const quantumHardware = defineContentType({
     { name: 'description', type: 'textarea', maxLength: 1000 },
     { name: 'main_content', type: 'markdown' },
     { name: 'vendor', type: 'text' },
-    { name: 'technology_type', type: 'text' },
+    {
+      name: 'technology_type',
+      type: 'select',
+      options: [...HARDWARE_MODALITIES],
+    },
     { name: 'qubit_count', type: 'number' },
     { name: 'connectivity', type: 'text' },
     { name: 'gate_fidelity', type: 'number' },

@@ -8,20 +8,60 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { PublishButton } from '@/components/admin/PublishButton'
 import { ContentCompleteness } from '@/components/admin/ContentCompleteness'
+import {
+  HardwareSpecsEditor,
+  toHardwareSpecDrafts,
+  type HardwareSpecDraft,
+} from '@/components/admin/HardwareSpecsEditor'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation'
-import { saveQuantumHardware, publishQuantumHardware, unpublishQuantumHardware } from './actions'
+import {
+  saveQuantumHardware,
+  publishQuantumHardware,
+  unpublishQuantumHardware,
+  saveHardwareSpecs,
+} from './actions'
+import {
+  HARDWARE_MODALITIES,
+  HARDWARE_MODALITY_LABELS,
+  isHardwareModality,
+  type HardwareModality,
+} from '@/lib/hardware-modality'
+import type { Database } from '@/types/supabase'
+
+type SpecDefinition = Database['public']['Tables']['hardware_spec_definitions']['Row']
+
+type InitialSpecRow = {
+  spec_key: string
+  value: string
+  unit: string | null
+}
 
 interface QuantumHardwareFormProps {
   quantumHardware: any
   caseStudies: any[]
   isNew: boolean
+  initialSpecs: InitialSpecRow[]
+  definitions: SpecDefinition[]
 }
 
-export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: QuantumHardwareFormProps) {
+export function QuantumHardwareForm({
+  quantumHardware,
+  caseStudies: _caseStudies,
+  isNew,
+  initialSpecs,
+  definitions,
+}: QuantumHardwareFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [values, setValues] = useState({
@@ -42,10 +82,16 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
     documentation_url: quantumHardware?.documentation_url || '',
     published: quantumHardware?.published || false,
   })
+  const [specRows, setSpecRows] = useState<HardwareSpecDraft[]>(() =>
+    toHardwareSpecDrafts(initialSpecs)
+  )
 
   const validationRules = createContentValidationRules('quantum_hardware')
   const completionPercentage = calculateCompletionPercentage({ values, validationRules })
 
+  const modality: HardwareModality | null = isHardwareModality(values.technology_type)
+    ? values.technology_type
+    : null
 
   const handleChange = (field: string, value: any) => {
     setValues(prev => ({ ...prev, [field]: value }))
@@ -60,13 +106,29 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
     }
   }
 
-    const handleSave = async () => {
+  const persistAll = async () => {
+    const result = await saveQuantumHardware(values)
+
+    const hardwareId = result?.id ?? values.id
+    if (!hardwareId) {
+      throw new Error('Missing hardware id after save')
+    }
+
+    await saveHardwareSpecs(hardwareId, specRows)
+
+    return hardwareId as string
+  }
+
+  const handleSave = async () => {
     startTransition(async () => {
       try {
-        const result = await saveQuantumHardware(values)
-        
-        if (isNew && result?.id) {
-          setValues(prev => ({ ...prev, id: result.id }))
+        const hardwareId = await persistAll()
+
+        if (isNew || values.id !== hardwareId) {
+          setValues(prev => ({ ...prev, id: hardwareId }))
+          if (isNew) {
+            router.replace(`/admin/quantum-hardware/${hardwareId}`)
+          }
         }
         
         toast({
@@ -88,21 +150,14 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
   }
   
   const handlePublish = async () => {
-    if (!values.id) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Cannot publish quantum hardware without saving first',
-        duration: 3000,
-      })
-      return
-    }
-    
     startTransition(async () => {
       try {
-        await saveQuantumHardware(values)
-        await publishQuantumHardware(values.id!)
-        
+        const hardwareId = await persistAll()
+        setValues(prev => ({ ...prev, id: hardwareId }))
+        if (isNew) {
+          router.replace(`/admin/quantum-hardware/${hardwareId}`)
+        }
+        await publishQuantumHardware(hardwareId)
         setValues(prev => ({ ...prev, published: true }))
         
         toast({
@@ -251,13 +306,21 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
               </div>
               <div>
                 <Label htmlFor="technology_type">Technology Type</Label>
-                <Input
-                  id="technology_type"
-                  value={values.technology_type}
-                  onChange={(e) => handleChange('technology_type', e.target.value)}
-                  placeholder="e.g., Superconducting"
-                  className="mt-1"
-                />
+                <Select
+                  value={values.technology_type || undefined}
+                  onValueChange={(value) => handleChange('technology_type', value)}
+                >
+                  <SelectTrigger id="technology_type" className="mt-1">
+                    <SelectValue placeholder="Select modality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HARDWARE_MODALITIES.map((mod) => (
+                      <SelectItem key={mod} value={mod}>
+                        {HARDWARE_MODALITY_LABELS[mod]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -372,6 +435,21 @@ export function QuantumHardwareForm({ quantumHardware, caseStudies, isNew }: Qua
             </div>
           </CardContent>
         </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader className="p-6">
+          <CardTitle>Hardware Specs</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 pt-0">
+          <HardwareSpecsEditor
+            modality={modality}
+            definitions={definitions}
+            rows={specRows}
+            onChange={setSpecRows}
+            disabled={isPending}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
