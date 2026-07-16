@@ -6,6 +6,25 @@ import type { NextConfig } from "next";
 // Use NEXT_STATIC_EXPORT=true for full static export (public sites only)
 const isFullStaticExport = process.env.NEXT_STATIC_EXPORT === 'true';
 
+// Production CSP only allows cloud Supabase. Local API (e.g. 127.0.0.1:54321)
+// must be permitted in development or browser fetches fail with CSP violations.
+const connectSrc = [
+  "'self'",
+  ...(process.env.NODE_ENV === 'development'
+    ? [
+        'http://127.0.0.1:*',
+        'http://localhost:*',
+        'ws://127.0.0.1:*',
+        'ws://localhost:*',
+      ]
+    : []),
+  'https://*.supabase.co',
+  'https://*.supabase.com',
+  'https://o4507902208450560.ingest.us.sentry.io',
+  'wss://*.supabase.co',
+  'https://vitals.vercel-insights.com',
+].join(' ');
+
 const nextConfig: NextConfig = {
   // Only use full static export when explicitly requested
   ...(isFullStaticExport && {
@@ -114,7 +133,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.supabase.co https://*.supabase.com https://o4507902208450560.ingest.us.sentry.io wss://*.supabase.co https://vitals.vercel-insights.com",
+              `connect-src ${connectSrc}`,
               "worker-src 'self' blob:",
               "frame-src 'self' https://vercel.live",
               "frame-ancestors 'none'",
