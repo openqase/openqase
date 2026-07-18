@@ -1,0 +1,12 @@
+# CODEOWNERS — auto-requests a review from the listed owner(s) on matching paths.
+#
+# Starting default: every change requests a review from the maintainers team.
+# Refine per-area as the review strategy settles, e.g. route database or CMS
+# changes to specific reviewers:
+#   supabase/migrations/  @openqase/maintainers
+#   src/cms/              @openqase/maintainers
+#
+# Note: this only AUTO-REQUESTS review. It does not by itself REQUIRE code-owner
+# approval — branch protection controls whether a review is mandatory.
+
+* @openqase/maintainers
