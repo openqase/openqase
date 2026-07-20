@@ -5,10 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
 import Link from 'next/link';
 import { ExternalLink, FileText, Building2, Cpu, Briefcase } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumSoftware, getRelatedQuantumCompanies, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
 import { formatHardwareModality } from '@/lib/hardware-modality';
+import { loadHardwareSpecsForDisplay } from '@/lib/hardware-specs-display';
 type EnrichedQuantumHardware = Database['public']['Tables']['quantum_hardware']['Row'] & {
   case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
@@ -82,10 +82,11 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
   const caseStudyIds = relatedCaseStudies.map(cs => cs.id);
   
   // Fetch related ecosystem components through case studies
-  const [relatedSoftware, quantumCompanies, partnerCompanies] = await Promise.all([
+  const [relatedSoftware, quantumCompanies, partnerCompanies, hardwareSpecs] = await Promise.all([
     getRelatedQuantumSoftware(caseStudyIds),
     getRelatedQuantumCompanies(caseStudyIds),
-    getRelatedPartnerCompanies(caseStudyIds)
+    getRelatedPartnerCompanies(caseStudyIds),
+    loadHardwareSpecsForDisplay(quantumHardware.id),
   ]);
 
   return (
@@ -203,6 +204,26 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
           )}
         </div>
       </div>
+
+      {hardwareSpecs.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Specifications</h2>
+          <dl className="divide-y divide-border rounded-lg border border-border">
+            {hardwareSpecs.map((spec) => (
+              <div
+                key={spec.spec_key}
+                className="flex flex-col gap-1 px-3 py-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
+              >
+                <dt className="text-sm font-medium">{spec.label}</dt>
+                <dd className="text-sm text-muted-foreground sm:text-right">
+                  {spec.value}
+                  {spec.unit ? ` ${spec.unit}` : ''}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
       {/* Main Content */}
       {processedContent && (
