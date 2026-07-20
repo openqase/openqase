@@ -129,52 +129,52 @@ export function HardwareSpecsEditor({
     onChange(rows.filter((row) => row.clientId !== clientId))
   }
 
-  if (!modality) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Select a technology type above to see modality-specific preset specs.
-      </p>
-    )
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">{HARDWARE_MODALITY_LABELS[modality]}</Badge>
-        <span className="text-sm text-muted-foreground">
-          Presets follow the technology type from Basic Information.
-        </span>
-      </div>
+      {modality ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{HARDWARE_MODALITY_LABELS[modality]}</Badge>
+            <span className="text-sm text-muted-foreground">
+              Suggested specs for this modality.
+            </span>
+          </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <Label>Add preset spec</Label>
-          <span className="text-xs text-muted-foreground">
-            {availablePresets.length} available for {HARDWARE_MODALITY_LABELS[modality]}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {availablePresets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              All presets for this modality are already in the table.
-            </p>
-          ) : (
-            availablePresets.map((def) => (
-              <Button
-                key={def.spec_key}
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={disabled}
-                onClick={() => addPreset(def)}
-              >
-                <Plus className="mr-1 h-3 w-3" />
-                {def.label}
-              </Button>
-            ))
-          )}
-        </div>
-      </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <Label>Add preset spec</Label>
+              <span className="text-xs text-muted-foreground">
+                {availablePresets.length} available for {HARDWARE_MODALITY_LABELS[modality]}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {availablePresets.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  All presets for this modality are already in the table.
+                </p>
+              ) : (
+                availablePresets.map((def) => (
+                  <Button
+                    key={def.spec_key}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={disabled}
+                    onClick={() => addPreset(def)}
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    {def.label}
+                  </Button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Add custom specs below. Preset specs will be available when a modality is set.
+        </p>
+      )}
 
       <div className="rounded-lg border border-border overflow-hidden">
         <Table>
@@ -190,7 +190,9 @@ export function HardwareSpecsEditor({
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                  No specs added yet. Choose a preset above or add a custom row.
+                  {modality
+                    ? 'No specs added yet. Choose a preset above or add a custom row.'
+                    : 'No specs added yet. Add a custom row below.'}
                 </TableCell>
               </TableRow>
             ) : (

@@ -8,13 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { PublishButton } from '@/components/admin/PublishButton'
 import { ContentCompleteness } from '@/components/admin/ContentCompleteness'
 import {
@@ -31,12 +24,6 @@ import {
   unpublishQuantumHardware,
   saveHardwareSpecs,
 } from './actions'
-import {
-  HARDWARE_MODALITIES,
-  HARDWARE_MODALITY_LABELS,
-  isHardwareModality,
-  type HardwareModality,
-} from '@/lib/hardware-modality'
 import type { Database } from '@/types/supabase'
 
 type SpecDefinition = Database['public']['Tables']['hardware_spec_definitions']['Row']
@@ -88,10 +75,6 @@ export function QuantumHardwareForm({
 
   const validationRules = createContentValidationRules('quantum_hardware')
   const completionPercentage = calculateCompletionPercentage({ values, validationRules })
-
-  const modality: HardwareModality | null = isHardwareModality(values.technology_type)
-    ? values.technology_type
-    : null
 
   const handleChange = (field: string, value: any) => {
     setValues(prev => ({ ...prev, [field]: value }))
@@ -306,21 +289,13 @@ export function QuantumHardwareForm({
               </div>
               <div>
                 <Label htmlFor="technology_type">Technology Type</Label>
-                <Select
-                  value={values.technology_type || undefined}
-                  onValueChange={(value) => handleChange('technology_type', value)}
-                >
-                  <SelectTrigger id="technology_type" className="mt-1">
-                    <SelectValue placeholder="Select modality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HARDWARE_MODALITIES.map((mod) => (
-                      <SelectItem key={mod} value={mod}>
-                        {HARDWARE_MODALITY_LABELS[mod]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="technology_type"
+                  value={values.technology_type}
+                  onChange={(e) => handleChange('technology_type', e.target.value)}
+                  placeholder="e.g., Superconducting"
+                  className="mt-1"
+                />
               </div>
             </div>
 
@@ -442,7 +417,7 @@ export function QuantumHardwareForm({
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <HardwareSpecsEditor
-            modality={modality}
+            modality={null}
             definitions={definitions}
             rows={specRows}
             onChange={setSpecRows}
