@@ -17,6 +17,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { Database } from '@/types/supabase'
 import type { HardwareModality } from '@/lib/hardware-modality'
 import { HARDWARE_MODALITY_LABELS } from '@/lib/hardware-modality'
+import { cn } from '@/lib/utils'
 
 type SpecDefinition = Database['public']['Tables']['hardware_spec_definitions']['Row']
 
@@ -36,13 +37,38 @@ interface HardwareSpecsEditorProps {
   disabled?: boolean
 }
 
-function slugifyCustomKey(label: string): string {
+/** While typing: allow a trailing `_` so keys like `test_2` can be entered after `test`. */
+function slugifyCustomKeyInput(label: string): string {
   return label
     .toLowerCase()
-    .trim()
     .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
+    .replace(/^_+/, '')
     .slice(0, 64)
+}
+
+/** On blur / finalize: strip edge underscores. */
+function finalizeCustomKey(label: string): string {
+  return slugifyCustomKeyInput(label).replace(/_+$/g, '')
+}
+
+function customKeyConflict(
+  clientId: string,
+  specKey: string,
+  rows: HardwareSpecDraft[],
+  definitionByKey: Map<string, SpecDefinition>
+): string | null {
+  if (!specKey) return null
+  if (definitionByKey.has(specKey)) {
+    return 'This key matches a preset spec. Choose a different key or add it from presets.'
+  }
+  const lower = specKey.toLowerCase()
+  const duplicate = rows.some(
+    (r) => r.clientId !== clientId && r.spec_key.toLowerCase() === lower
+  )
+  if (duplicate) {
+    return 'Another row already uses this key.'
+  }
+  return null
 }
 
 function newClientId(): string {
@@ -199,6 +225,9 @@ export function HardwareSpecsEditor({
               rows.map((row) => {
                 const def = definitionByKey.get(row.spec_key)
                 const isPreset = Boolean(def)
+                const conflict = isPreset
+                  ? null
+                  : customKeyConflict(row.clientId, row.spec_key, rows, definitionByKey)
 
                 return (
                   <TableRow key={row.clientId}>
@@ -209,26 +238,32 @@ export function HardwareSpecsEditor({
                           <p className="text-xs text-muted-foreground font-mono">{row.spec_key}</p>
                         </div>
                       ) : (
-                        <Input
-                          value={row.spec_key}
-                          disabled={disabled}
-                          onChange={(e) => {
-                            const nextKey = slugifyCustomKey(e.target.value)
-                            if (definitionByKey.has(nextKey)) return
-                            if (
-                              rows.some(
-                                (r) =>
-                                  r.clientId !== row.clientId &&
-                                  r.spec_key.toLowerCase() === nextKey.toLowerCase()
-                              )
-                            ) {
-                              return
-                            }
-                            updateRow(row.clientId, { spec_key: nextKey })
-                          }}
-                          placeholder="custom_spec_key"
-                          className="font-mono text-sm"
-                        />
+                        <div className="space-y-1">
+                          <Input
+                            value={row.spec_key}
+                            disabled={disabled}
+                            onChange={(e) => {
+                              updateRow(row.clientId, {
+                                spec_key: slugifyCustomKeyInput(e.target.value),
+                              })
+                            }}
+                            onBlur={() => {
+                              const finalized = finalizeCustomKey(row.spec_key)
+                              if (finalized !== row.spec_key) {
+                                updateRow(row.clientId, { spec_key: finalized })
+                              }
+                            }}
+                            placeholder="custom_spec_key"
+                            aria-invalid={Boolean(conflict)}
+                            className={cn(
+                              'font-mono text-sm',
+                              conflict && 'border-destructive focus-visible:ring-destructive'
+                            )}
+                          />
+                          {conflict && (
+                            <p className="text-xs text-destructive">{conflict}</p>
+                          )}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>

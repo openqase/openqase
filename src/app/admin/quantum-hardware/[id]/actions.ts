@@ -68,18 +68,34 @@ export const loadHardwareSpecs = withAdmin(
   }
 )
 
+function normalizeSpecKey(key: string): string {
+  return key
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 64)
+}
+
 export const saveHardwareSpecs = withAdmin(
   async (hardwareId: string, rows: HardwareSpecInput[]): Promise<void> => {
     const supabase = createServiceRoleSupabaseClient()
     const cleaned = rows
       .map((row) => ({
-        spec_key: row.spec_key.trim(),
+        spec_key: normalizeSpecKey(row.spec_key),
         value: row.value.trim(),
         unit: row.unit?.trim() ? row.unit.trim() : null,
       }))
       .filter((row) => row.spec_key.length > 0 && row.value.length > 0)
 
     const keys = cleaned.map((row) => row.spec_key)
+    const seen = new Set<string>()
+    for (const key of keys) {
+      if (seen.has(key)) {
+        throw new Error(`Duplicate spec key "${key}". Each spec key must be unique.`)
+      }
+      seen.add(key)
+    }
 
     if (keys.length === 0) {
       const { error: deleteAllError } = await supabase
