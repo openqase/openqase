@@ -208,3 +208,40 @@ INSERT INTO case_study_persona_relations (case_study_id, persona_id) VALUES
 INSERT INTO case_study_quantum_hardware_relations (case_study_id, quantum_hardware_id) VALUES
   ('55555555-0000-0000-0000-000000000001', '44444444-0000-0000-0000-000000000001'), -- portfolio → IBM Eagle
   ('55555555-0000-0000-0000-000000000002', '44444444-0000-0000-0000-000000000002'); -- drug → IonQ Aria
+
+-- ============================================================
+-- Hardware spec definitions (preset vocabulary)
+-- Reference data, not sample content. Originally seeded by the archived
+-- migration 20260710_hardware_specs_normalized.sql; moved here when the
+-- migration history was squashed to a single baseline (2026-09-05).
+-- ============================================================
+INSERT INTO public.hardware_spec_definitions (spec_key, label, modalities, default_unit) VALUES
+  ('two_q_gate_fidelity',  '2Q gate fidelity',         ARRAY['superconducting','trapped_ion','neutral_atom','photonic']::public.hardware_modality[], '%'),
+  ('readout_fidelity',     'Readout / SPAM fidelity',  ARRAY['superconducting','trapped_ion','neutral_atom','photonic']::public.hardware_modality[], '%'),
+  ('t1_coherence',         'T1 coherence time',        ARRAY['superconducting']::public.hardware_modality[],                                         'µs'),
+  ('connectivity_topology','Connectivity topology',    ARRAY['superconducting']::public.hardware_modality[],                                         null),
+  ('t2_coherence',         'T2 coherence time',        ARRAY['trapped_ion','neutral_atom','superconducting']::public.hardware_modality[],            'µs'),
+  ('connectivity_model',   'Connectivity model',       ARRAY['neutral_atom']::public.hardware_modality[],                                            null),
+  ('mode_count',           'Mode count',               ARRAY['photonic']::public.hardware_modality[],                                                null),
+  ('computation_model',    'Computation model',        ARRAY['photonic']::public.hardware_modality[],                                                null),
+  ('squeezing_level',      'Squeezing level',          ARRAY['photonic']::public.hardware_modality[],                                                'dB'),
+  ('detection_efficiency', 'Detection efficiency',     ARRAY['photonic']::public.hardware_modality[],                                                '%'),
+  ('coupler_count',        'Coupler count',            ARRAY['annealer']::public.hardware_modality[],                                                null),
+  ('connectivity_graph',   'Connectivity graph',       ARRAY['annealer']::public.hardware_modality[],                                                null),
+  ('problem_type',         'Problem type',             ARRAY['annealer']::public.hardware_modality[],                                                null),
+  ('annealing_time_range', 'Annealing time range',     ARRAY['annealer']::public.hardware_modality[],                                                'µs'),
+  ('classical_hybrid',     'Classical-quantum hybrid', ARRAY['annealer']::public.hardware_modality[],                                                null),
+  ('one_q_gate_fidelity',  '1Q gate fidelity',         ARRAY['superconducting','trapped_ion','neutral_atom']::public.hardware_modality[],            '%'),
+  ('gate_time_1q',         'Gate time (1Q)',           ARRAY['superconducting','trapped_ion']::public.hardware_modality[],                          'ns'),
+  ('gate_time_2q',         'Gate time (2Q)',           ARRAY['superconducting','trapped_ion','neutral_atom']::public.hardware_modality[],            'ns'),
+  ('operating_temp',       'Operating temperature',    ARRAY['superconducting','annealer']::public.hardware_modality[],                              'mK'),
+  ('shuttling_arch',       'Shuttling architecture',   ARRAY['trapped_ion']::public.hardware_modality[],                                             null),
+  ('ion_species',          'Ion species',              ARRAY['trapped_ion']::public.hardware_modality[],                                             null),
+  ('gate_zone_count',      'Gate zone count',          ARRAY['neutral_atom']::public.hardware_modality[],                                            null),
+  ('atom_species',         'Atom species',             ARRAY['neutral_atom']::public.hardware_modality[],                                            null),
+  ('data_qubits',          'Data qubits',              ARRAY['neutral_atom']::public.hardware_modality[],                                            null),
+  ('photon_loss_rate',     'Photon loss rate',         ARRAY['photonic']::public.hardware_modality[],                                                '%'),
+  ('photon_source_type',   'Photon source type',       ARRAY['photonic']::public.hardware_modality[],                                                null),
+  ('encoding_type',        'Encoding type',            ARRAY['photonic']::public.hardware_modality[],                                                null),
+  ('sdk_access',           'Cloud access / SDK',       ARRAY['superconducting','trapped_ion','neutral_atom','photonic','annealer']::public.hardware_modality[], null)
+ON CONFLICT (spec_key) DO NOTHING;

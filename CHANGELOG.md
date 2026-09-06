@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Migration history squashed to a single baseline.** The 15 legacy migration files were moved to `supabase/migrations_archive/` (reference only, never applied) and replaced by one baseline, `20260905023326_remote_schema.sql`, captured with `supabase db pull` from the new OpenQase-owned Supabase projects. The migration ledger on `openqase-prod` and `openqase-dev` now contains exactly that one entry. Every schema change from here on is a new numbered migration applied to dev first, then promoted to prod.
+- **Hardware spec preset vocabulary moved to `supabase/seed.sql`.** The 28 `hardware_spec_definitions` rows were previously inserted by a migration; fresh local databases now get them from the seed.
+- **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
+
 ### Security
 - **Public GET API no longer leaks unpublished/soft-deleted content.** `fetchContentBySlug` now applies `published=true` and `deleted_at IS NULL` filters via an RLS-respecting Supabase client. Anonymous requests for draft slugs return 404. The function was also split into a separate `fetchPreviewContentBySlug` variant used by the 5 preview-aware detail pages so the static-rendered detail pages stay SSG-friendly.
 - **`publicQuery()` invariant introduced** as the single sanctioned chokepoint for anonymous content reads. Module-boundary enforced via ESLint `no-restricted-imports` on `src/lib/internal-queries.ts`.
