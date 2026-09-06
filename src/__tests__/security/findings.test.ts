@@ -240,39 +240,46 @@ describe('Finding 1.4 — DEV_MODE_AUTH_BYPASS gating', () => {
 // ---------------------------------------------------------------------------
 // Helpers for migration assertions
 // ---------------------------------------------------------------------------
-function readMigrationBySuffix(suffix: string): string {
-  const files = glob.sync(`supabase/migrations/*_${suffix}`)
-  expect(files, `expected one migration matching *_${suffix}, found: ${files.join(', ')}`).toHaveLength(1)
+// The migration history was squashed to a single baseline on 2026-09-05
+// (legacy files live in supabase/migrations_archive/ for reference only).
+// The A1 findings are therefore asserted against the baseline's *effect*:
+// the privileges and policies it creates, not the original migration text.
+function readBaselineMigration(): string {
+  const files = glob.sync('supabase/migrations/*_remote_schema.sql').sort()
+  expect(files.length, `expected at least one *_remote_schema.sql baseline, found: ${files.join(', ')}`).toBeGreaterThan(0)
   return readFileSync(files[0], 'utf8')
 }
 
+/** GRANT statements on public tables to a given role, as [privilegeList, table] tuples. */
+function publicTableGrantsTo(sql: string, role: 'anon' | 'authenticated'): Array<[string, string]> {
+  const re = new RegExp(`^GRANT ([A-Z, ]+) ON TABLE "public"\\."([^"]+)" TO "${role}";$`, 'gm')
+  return [...sql.matchAll(re)].map((m) => [m[1], m[2]])
+}
+
 // ---------------------------------------------------------------------------
-// Finding 2.1 — REVOKE writes from anon/authenticated migration present
+// Finding 2.1 — anon/authenticated hold no write privileges on public tables
 // ---------------------------------------------------------------------------
-describe('Finding 2.1 — REVOKE writes from anon/authenticated migration present', () => {
-  it('migration file exists', () => {
-    const files = glob.sync('supabase/migrations/*_a1_revoke_anon_writes.sql')
-    expect(files).toHaveLength(1)
+describe('Finding 2.1 — anon/authenticated hold no write privileges on public tables', () => {
+  it('baseline migration exists', () => {
+    expect(glob.sync('supabase/migrations/*_remote_schema.sql')).not.toHaveLength(0)
   })
-  it('migration content includes REVOKE INSERT, UPDATE, DELETE, TRUNCATE', () => {
-    const sql = readMigrationBySuffix('a1_revoke_anon_writes.sql')
-    expect(sql).toMatch(/REVOKE\s+INSERT,\s*UPDATE,\s*DELETE,\s*TRUNCATE/i)
-    expect(sql).toMatch(/FROM\s+anon,\s*authenticated/i)
+  it.each(['anon', 'authenticated'] as const)('%s is never granted INSERT/UPDATE/DELETE/TRUNCATE on a public table', (role) => {
+    const grants = publicTableGrantsTo(readBaselineMigration(), role)
+    expect(grants.length, `expected table grants to ${role}`).toBeGreaterThan(0)
+    const offending = grants.filter(([privs]) => /\b(INSERT|UPDATE|DELETE|TRUNCATE|MAINTAIN|ALL)\b/.test(privs))
+    expect(offending, `write privileges granted to ${role}`).toEqual([])
   })
 })
 
 // ---------------------------------------------------------------------------
-// Finding 2.3 — deletion_audit_log admin-only migration present
+// Finding 2.3 — deletion_audit_log is readable by admins only
 // ---------------------------------------------------------------------------
-describe('Finding 2.3 — deletion_audit_log admin-only migration present', () => {
-  it('migration file exists', () => {
-    const files = glob.sync('supabase/migrations/*_a1_audit_log_admin_only.sql')
-    expect(files).toHaveLength(1)
-  })
-  it('migration drops the old permissive policy and creates the admin-only one', () => {
-    const sql = readMigrationBySuffix('a1_audit_log_admin_only.sql')
-    expect(sql).toMatch(/DROP\s+POLICY\s+IF\s+EXISTS\s+"Authenticated users can view audit logs"/)
-    expect(sql).toMatch(/CREATE\s+POLICY\s+"Admins read audit log"/)
-    expect(sql).toMatch(/role\s*=\s*'admin'/)
+describe('Finding 2.3 — deletion_audit_log is readable by admins only', () => {
+  it('baseline defines the admin-only SELECT policy and not the old permissive one', () => {
+    const sql = readBaselineMigration()
+    expect(sql).not.toMatch(/CREATE\s+POLICY\s+"Authenticated users can view audit logs"/)
+    const policy = sql.match(/CREATE POLICY "Admins read audit log" ON "public"\."deletion_audit_log" FOR SELECT TO "authenticated" USING \(([\s\S]*?)\);/)
+    expect(policy, 'Admins read audit log policy present').not.toBeNull()
+    expect(policy![1]).toMatch(/"?role"?\s*=\s*'admin'/)
   })
 })
