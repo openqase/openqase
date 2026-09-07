@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.4"
-  }
   public: {
     Tables: {
       algorithm_case_study_relations: {
@@ -635,6 +630,27 @@ export type Database = {
         }
         Relationships: []
       }
+      hardware_spec_definitions: {
+        Row: {
+          default_unit: string | null
+          label: string
+          modalities: Database["public"]["Enums"]["hardware_modality"][]
+          spec_key: string
+        }
+        Insert: {
+          default_unit?: string | null
+          label: string
+          modalities: Database["public"]["Enums"]["hardware_modality"][]
+          spec_key: string
+        }
+        Update: {
+          default_unit?: string | null
+          label?: string
+          modalities?: Database["public"]["Enums"]["hardware_modality"][]
+          spec_key?: string
+        }
+        Relationships: []
+      }
       industries: {
         Row: {
           created_at: string | null
@@ -683,36 +699,6 @@ export type Database = {
           slug?: string
           ts_content?: unknown
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      newsletter_subscriptions: {
-        Row: {
-          id: string
-          email: string
-          status: string
-          subscription_date: string | null
-          updated_at: string | null
-          metadata: Json | null
-          unsubscribe_token: string | null
-        }
-        Insert: {
-          id?: string
-          email: string
-          status?: string
-          subscription_date?: string | null
-          updated_at?: string | null
-          metadata?: Json | null
-          unsubscribe_token?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          status?: string
-          subscription_date?: string | null
-          updated_at?: string | null
-          metadata?: Json | null
-          unsubscribe_token?: string | null
         }
         Relationships: []
       }
@@ -1246,27 +1232,6 @@ export type Database = {
         }
         Relationships: []
       }
-      hardware_spec_definitions: {
-        Row: {
-          default_unit: string | null
-          label: string
-          modalities: Database["public"]["Enums"]["hardware_modality"][]
-          spec_key: string
-        }
-        Insert: {
-          default_unit?: string | null
-          label: string
-          modalities: Database["public"]["Enums"]["hardware_modality"][]
-          spec_key: string
-        }
-        Update: {
-          default_unit?: string | null
-          label?: string
-          modalities?: Database["public"]["Enums"]["hardware_modality"][]
-          spec_key?: string
-        }
-        Relationships: []
-      }
       stack_layers: {
         Row: {
           created_at: string | null
@@ -1503,3 +1468,4 @@ export const Constants = {
     },
   },
 } as const
+

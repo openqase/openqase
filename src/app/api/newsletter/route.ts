@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, newsletterSubscriptionsTable } from '@/lib/supabase-server'
 import { rateLimiter, RATE_LIMITS } from '@/lib/rate-limiter'
 import { createDualNewsletterService } from '@/lib/dual-newsletter-service'
 // import { trackNewsletterSignup } from '@/lib/analytics' // TODO: Add after database types are updated
@@ -107,8 +107,7 @@ export async function DELETE(request: Request) {
     const supabase = await createServerSupabaseClient()
 
     // Find subscription by token and update status
-    const { data: subscription, error: selectError } = await supabase
-      .from('newsletter_subscriptions')
+    const { data: subscription, error: selectError } = await newsletterSubscriptionsTable(supabase)
       .select('id, email, status')
       .eq('unsubscribe_token', token)
       .single()
@@ -164,8 +163,7 @@ export async function GET(request: Request) {
     const supabase = await createServerSupabaseClient()
 
     // Find subscription by token
-    const { data: subscription, error: selectError } = await supabase
-      .from('newsletter_subscriptions')
+    const { data: subscription, error: selectError } = await newsletterSubscriptionsTable(supabase)
       .select('email, status')
       .eq('unsubscribe_token', token)
       .single()

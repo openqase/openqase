@@ -56,6 +56,18 @@ export async function createServerSupabaseClient() {
  * WARNING: This client bypasses RLS. Use only in secure server-side environments
  * after appropriate authorization checks.
  */
+/**
+ * `newsletter_subscriptions` has no migration yet — tracked in
+ * https://github.com/openqase/openqase/issues/173. Any Supabase client
+ * (anon or service-role) can be passed through; the query result is
+ * untyped since the table doesn't exist in the generated schema.
+ */
+export function newsletterSubscriptionsTable(
+  client: { from: (relation: string) => unknown }
+) {
+  return client.from('newsletter_subscriptions') as any // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
 export function createServiceRoleSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, newsletterSubscriptionsTable } from '@/lib/supabase-server'
 
 /**
  * Get current user's newsletter subscription status
@@ -19,8 +19,7 @@ export async function GET(request: Request) {
     }
 
     // Check if user has active newsletter subscription
-    const { data: subscription } = await supabase
-      .from('newsletter_subscriptions')
+    const { data: subscription } = await newsletterSubscriptionsTable(supabase)
       .select('status')
       .eq('email', user.email!)
       .single()
@@ -70,8 +69,7 @@ export async function POST(request: Request) {
     const email = user.email!
 
     // Check if subscription already exists
-    const { data: existing } = await supabase
-      .from('newsletter_subscriptions')
+    const { data: existing } = await newsletterSubscriptionsTable(supabase)
       .select('id, status, metadata')
       .eq('email', email)
       .single()
@@ -86,8 +84,7 @@ export async function POST(request: Request) {
           })
         } else {
           // Reactivate subscription
-          const { error: updateError } = await supabase
-            .from('newsletter_subscriptions')
+          const { error: updateError } = await newsletterSubscriptionsTable(supabase)
             .update({ 
               status: 'active',
               subscription_date: new Date().toISOString(),
@@ -105,8 +102,7 @@ export async function POST(request: Request) {
         }
       } else {
         // Create new subscription
-        const { error: insertError } = await supabase
-          .from('newsletter_subscriptions')
+        const { error: insertError } = await newsletterSubscriptionsTable(supabase)
           .insert({
             email,
             status: 'active',
@@ -136,8 +132,7 @@ export async function POST(request: Request) {
       }
 
       // Update subscription status to unsubscribed
-      const { error: updateError } = await supabase
-        .from('newsletter_subscriptions')
+      const { error: updateError } = await newsletterSubscriptionsTable(supabase)
         .update({ 
           status: 'unsubscribed',
           updated_at: new Date().toISOString()
