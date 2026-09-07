@@ -32,3 +32,30 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-stub-anon-key
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           SUPABASE_SERVICE_ROLE_KEY: ci-stub-service-role-key
+
+  # Proves the migration folder builds a database from scratch and that the
+  # committed generated types match it. See docs/database-workflow.md.
+  db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Postgres
+        run: supabase db start
+
+      - name: Apply baseline + migrations + seed from scratch
+        run: supabase db reset --local
+
+      - name: Check generated types are current
+        run: |
+          supabase gen types typescript --local --schema public > /tmp/supabase.ts
+          if ! diff -q src/types/supabase.ts /tmp/supabase.ts; then
+            echo "::error::src/types/supabase.ts is out of date. Run: npx supabase gen types typescript --local --schema public > src/types/supabase.ts"
+            diff src/types/supabase.ts /tmp/supabase.ts | head -50
+            exit 1
+          fi

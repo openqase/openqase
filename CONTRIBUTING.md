@@ -109,9 +109,8 @@ openqase/
 │   ├── hooks/              # Custom React hooks
 │   └── types/              # TypeScript type definitions
 ├── docs/                   # Docusaurus documentation
-├── migrations/             # Database migration files
 ├── scripts/                # Development and deployment scripts
-└── supabase/              # Supabase configuration
+└── supabase/              # Supabase config, migrations/ (baseline + new), migrations_archive/, seed.sql
 ```
 
 ## 📝 Coding Standards
@@ -150,10 +149,13 @@ openqase/
 
 ### Database Guidelines
 
-1. **Use migrations** for schema changes
-2. **Junction tables** for many-to-many relationships
-3. **RLS policies** for data security
-4. **Indexes** for performance optimization
+Schema changes follow the workflow in [docs/database-workflow.md](docs/database-workflow.md). In short:
+
+1. **Author with the CLI**: `npx supabase migration new <name>`. Never hand-name or edit an applied migration.
+2. **Schema and data in separate migrations.** Data migrations need a pre-flight query and a snapshot, both shown in the PR.
+3. **Test from scratch**: `npx supabase db reset` locally, then push to `openqase-dev`. Never to prod; maintainers promote after merge.
+4. **Regenerate types** and commit them with the migration. CI checks for drift.
+5. **RLS on every table**, no write privileges for `anon` / `authenticated`, junction tables for many-to-many, indexes for foreign keys and sort columns.
 
 ## 🔧 Development Patterns
 
