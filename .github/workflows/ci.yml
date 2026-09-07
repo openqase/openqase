@@ -48,8 +48,18 @@ jobs:
       - name: Start local Postgres
         run: supabase db start
 
-      - name: Apply baseline + migrations + seed from scratch
+      - name: Apply baseline + migrations from scratch
         run: supabase db reset --local
+
+      # supabase db reset's own seed step is unreliable (CLI bug: the seed
+      # runs over a connection that intermittently doesn't see the schema
+      # just applied — "relation ... does not exist"). Seed auto-run is
+      # disabled in config.toml; apply it explicitly with psql instead.
+      - name: Seed
+        run: |
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            --single-transaction --variable ON_ERROR_STOP=1 --quiet \
+            --file supabase/seed.sql
 
       - name: Check generated types are current
         run: |

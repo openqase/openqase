@@ -61,11 +61,18 @@ Rules for the SQL itself:
 
 ```bash
 npx supabase start          # first time, or if not running
-npx supabase db reset       # rebuilds from baseline + your migration + seed.sql
+npx supabase db reset       # rebuilds schema from baseline + your migration
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+  --single-transaction --variable ON_ERROR_STOP=1 --file supabase/seed.sql
 ```
 
-A clean `db reset` proves your migration applies from scratch. Run the app
-against local and exercise the affected feature.
+A clean `db reset` proves your migration applies from scratch. The seed is
+applied as a second, explicit step — `db reset`'s own seed step has a CLI bug
+where it intermittently fails with `relation "..." does not exist` right
+after the schema it just created (tracked as a Supabase CLI issue, not
+something in this repo's SQL). Seed auto-run is disabled in
+`supabase/config.toml` (`[db.seed] enabled = false`) for this reason. Run the
+app against local and exercise the affected feature.
 
 ### 3. Apply to dev
 

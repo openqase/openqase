@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { createBeehiivService, BeehiivService, BeehiivSubscriptionData } from './beehiiv-service'
-import { createServerSupabaseClient } from './supabase-server'
+import { createServerSupabaseClient, newsletterSubscriptionsTable } from './supabase-server'
 
 // Configuration for the dual service
 interface DualNewsletterConfig {
@@ -275,7 +275,7 @@ export class DualNewsletterService {
     if (this.config.syncToDatabase) {
       try {
         const supabase = await createServerSupabaseClient()
-        const { error } = await supabase.from('newsletter_subscriptions').select('id').limit(1)
+        const { error } = await newsletterSubscriptionsTable(supabase).select('id').limit(1)
         results.database = !error
       } catch (error) {
         results.database = false
@@ -290,8 +290,7 @@ export class DualNewsletterService {
    */
   private async checkDatabaseSubscription(email: string) {
     const supabase = await createServerSupabaseClient()
-    const { data } = await supabase
-      .from('newsletter_subscriptions')
+    const { data } = await newsletterSubscriptionsTable(supabase)
       .select('id, status, metadata, subscription_date')
       .eq('email', email)
       .single()
@@ -312,8 +311,7 @@ export class DualNewsletterService {
 
     if (exists) {
       // Update existing subscription
-      const { error } = await supabase
-        .from('newsletter_subscriptions')
+      const { error } = await newsletterSubscriptionsTable(supabase)
         .update({ 
           status,
           subscription_date: status === 'active' ? new Date().toISOString() : undefined,
@@ -324,8 +322,7 @@ export class DualNewsletterService {
       if (error) throw error
     } else {
       // Create new subscription
-      const { error } = await supabase
-        .from('newsletter_subscriptions')
+      const { error } = await newsletterSubscriptionsTable(supabase)
         .insert({
           email,
           status,
@@ -345,8 +342,7 @@ export class DualNewsletterService {
     }
 
     const supabase = await createServerSupabaseClient()
-    const { data: unsubscribeData } = await supabase
-      .from('newsletter_subscriptions')
+    const { data: unsubscribeData } = await newsletterSubscriptionsTable(supabase)
       .select('unsubscribe_token')
       .eq('email', email)
       .single()
