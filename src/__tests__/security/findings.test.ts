@@ -215,7 +215,10 @@ describe('fetchPreviewContentBySlug: preview mode branch', () => {
 // ---------------------------------------------------------------------------
 describe('Finding 1.3 — Server actions wrapped in withAdmin', () => {
   it('all admin server actions are wrapped in withAdmin', async () => {
-    const files = await glob('src/app/admin/*/[[]id[]]/actions.ts')
+    const files = [
+      ...(await glob('src/app/admin/*/[[]id[]]/actions.ts')),
+      'src/cms/actions.ts'
+    ]
     expect(files.length).toBeGreaterThan(0)  // sanity check the glob is picking up files
     for (const file of files) {
       const src = readFileSync(file, 'utf8')

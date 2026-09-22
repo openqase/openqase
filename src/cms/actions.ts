@@ -3,8 +3,9 @@
 import { getContentType } from './registry'
 import { parseFormData } from './parse-form-data'
 import { createContent, updateContent, publishContent, unpublishContent, deleteContent } from './operations'
+import { withAdmin } from '@/lib/auth'
 
-export async function saveContentAction(type: string, formData: FormData) {
+export const saveContentAction = withAdmin(async (type: string, formData: FormData) => {
   const contentType = getContentType(type)
   if (!contentType) return { error: `Unknown content type: ${type}` }
 
@@ -15,16 +16,17 @@ export async function saveContentAction(type: string, formData: FormData) {
     return updateContent(type, id, data, relationships)
   }
   return createContent(type, data, relationships)
-}
+})
 
-export async function publishAction(type: string, id: string) {
+export const publishAction = withAdmin(async (type: string, id: string) => {
   return publishContent(type, id)
-}
+})
 
-export async function unpublishAction(type: string, id: string) {
+export const unpublishAction = withAdmin(async (type: string, id: string) => {
   return unpublishContent(type, id)
-}
+})
 
-export async function deleteAction(type: string, id: string) {
+export const deleteAction = withAdmin(async (type: string, id: string) => {
   return deleteContent(type, id)
-}
+})
+

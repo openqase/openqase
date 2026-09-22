@@ -72,7 +72,7 @@ const eslintConfig = [
   // Neither pattern exists in the current codebase. If either becomes an issue,
   // migrate to a custom ESLint rule that resolves the import binding.
   {
-    files: ['src/app/admin/**/actions.ts'],
+    files: ['src/app/admin/**/actions.ts', 'src/cms/actions.ts'],
     rules: {
       'no-restricted-syntax': ['error',
         {
