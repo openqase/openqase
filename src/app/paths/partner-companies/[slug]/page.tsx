@@ -4,8 +4,7 @@ import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
 import Link from 'next/link';
-import { ExternalLink, HandHeart, Users, MapPin, Building, FileText, Building2, Cpu } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ExternalLink, HandHeart, Users, MapPin, FileText, Building2, Cpu } from 'lucide-react';
 import { getRelatedQuantumSoftware, getRelatedQuantumHardware, getRelatedQuantumCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
 type EnrichedPartnerCompany = Database['public']['Tables']['partner_companies']['Row'] & {

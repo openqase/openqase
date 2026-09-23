@@ -42,7 +42,7 @@ export default function AboutPage() {
               </div>
               
               <p className="text-muted-foreground">
-                OpenQase approaches this by curating a collection of real-world quantum computing business case studies. We show you what companies like Ford, Goldman Sachs, and Airbus are actually doing with quantum computing. This isn't a replacement for the yearly consulting reports and commercial business intelligence services. Those are an essential part of our ecosystem, but those are a little further down the engagement funnel, for people and organisations with considerable intent. At the other end is a whole lot mass media coverage that we will just call "noisy" and leave it at that. But there is a missing middle in terms of a self-learning resource, something of a "wikipedia for quantum computing business cases". Something like OpenQase. 
+                OpenQase approaches this by curating a collection of real-world quantum computing business case studies. We show you what companies like Ford, Goldman Sachs, and Airbus are actually doing with quantum computing. This isn&apos;t a replacement for the yearly consulting reports and commercial business intelligence services. Those are an essential part of our ecosystem, but those are a little further down the engagement funnel, for people and organisations with considerable intent. At the other end is a whole lot mass media coverage that we will just call &ldquo;noisy&rdquo; and leave it at that. But there is a missing middle in terms of a self-learning resource, something of a &ldquo;wikipedia for quantum computing business cases&rdquo;. Something like OpenQase. 
               </p>
             </div>
           </section>
@@ -56,7 +56,7 @@ export default function AboutPage() {
           <section className="mb-16">
             <h2 className="mb-6">A Guided Approach</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Unlike academic resources or vendor marketing, OpenQase focuses on practical implementation insights organized around how you actually work. These learning paths are a result of real-world experience working in the quantum computing industry, and began as real-life projects and case studies developed with our various teams. We are making this information public so you don't have to go through collecting it all like we did. And we're making it open source so you can contribute to the project too, increasing our collective understanding of (and interaction with) the published case studies and supporting resources.
+              Unlike academic resources or vendor marketing, OpenQase focuses on practical implementation insights organized around how you actually work. These learning paths are a result of real-world experience working in the quantum computing industry, and began as real-life projects and case studies developed with our various teams. We are making this information public so you don&apos;t have to go through collecting it all like we did. And we&apos;re making it open source so you can contribute to the project too, increasing our collective understanding of (and interaction with) the published case studies and supporting resources.
             </p>
                           <div className="bg-muted/30 rounded-lg p-6 border-l-4 border-primary">
                 <p className="text-muted-foreground">
@@ -75,7 +75,7 @@ export default function AboutPage() {
           <section className="mb-16">
             <h2 className="mb-6">Our Vision</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              OpenQase has been referred to as "the Wikipedia for quantum computing business applications". Big shoes to fill. But as a community and open source project it sets a worthy goal, and one we pursue with the following points in mind.
+              OpenQase has been referred to as &ldquo;the Wikipedia for quantum computing business applications&rdquo;. Big shoes to fill. But as a community and open source project it sets a worthy goal, and one we pursue with the following points in mind.
             </p>
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-6">
@@ -94,7 +94,7 @@ export default function AboutPage() {
                   </div>
                   <div>
                     <span className="font-semibold">Supporting Informed Decision-Making</span>
-                    <p className="text-muted-foreground mt-1">Providing organizations with the knowledge needed to evaluate quantum computing's potential value.</p>
+                    <p className="text-muted-foreground mt-1">Providing organizations with the knowledge needed to evaluate quantum computing&apos;s potential value.</p>
                   </div>
                 </div>
               </div>
@@ -125,13 +125,13 @@ export default function AboutPage() {
           <section className="mb-16">
             <h2 className="mb-8">Our Team</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              OpenQase was created after a conversation between quantum industry colleagues <a href="https://www.linkedin.com/in/hellodavidryan/" className="text-primary underline hover:text-primary/80 transition-colors">David Ryan</a> and <a href="https://www.linkedin.com/in/amarchenkova/" className="text-primary underline hover:text-primary/80 transition-colors">Anastasia Marchenkova</a> at the Q2B Silicon Valley conference. While the pair come from different product and scientific leadership roles, they shared a common frustration as to the challenge of keeping up with the steady release of business case studies and associated pilot programs and use cases. It was clear that as the ecosystem evolves from Science to Technology to Engineering to Product, so must the resources and repositories of knowledge. Not as business intelligence service restrated to commercial vendors, but as a resource for the community, a "wikipedia for quantum computing". Want to join the team? Get in touch.
+              OpenQase was created after a conversation between quantum industry colleagues <a href="https://www.linkedin.com/in/hellodavidryan/" className="text-primary underline hover:text-primary/80 transition-colors">David Ryan</a> and <a href="https://www.linkedin.com/in/amarchenkova/" className="text-primary underline hover:text-primary/80 transition-colors">Anastasia Marchenkova</a> at the Q2B Silicon Valley conference. While the pair come from different product and scientific leadership roles, they shared a common frustration as to the challenge of keeping up with the steady release of business case studies and associated pilot programs and use cases. It was clear that as the ecosystem evolves from Science to Technology to Engineering to Product, so must the resources and repositories of knowledge. Not as business intelligence service restrated to commercial vendors, but as a resource for the community, a &ldquo;wikipedia for quantum computing&rdquo;. Want to join the team? Get in touch.
             </p>
             <div className="grid gap-8 md:grid-cols-2">
               <div className="bg-card rounded-lg p-6 border">
                 <h3 className="text-xl font-semibold mb-2">David Ryan</h3>
                 <p className="text-muted-foreground">
-                  Experienced Deep Tech product leader and former SaaS founder. First Head of Product at Quantum Brilliance, former open source advocate at Red Hat, and the author of "Pocket Guide to Quantum Algorithms".
+                  Experienced Deep Tech product leader and former SaaS founder. First Head of Product at Quantum Brilliance, former open source advocate at Red Hat, and the author of &ldquo;Pocket Guide to Quantum Algorithms&rdquo;.
                 </p>
               </div>
               <div className="bg-card rounded-lg p-6 border">

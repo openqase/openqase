@@ -1,4 +1,3 @@
-import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { fromTable } from '@/lib/supabase-untyped';
 import { PostgrestError } from '@supabase/supabase-js';

@@ -110,6 +110,7 @@ export function getCaseStudySchema(caseStudy: CaseStudy) {
     caseStudy.year ? `${caseStudy.year} Case Study` : null,
     ...industries,
     ...algorithms,
+    ...personas,
     ...quantumSoftware,
     ...quantumHardware,
     ...quantumCompanies,

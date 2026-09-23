@@ -7,7 +7,7 @@ const eslintConfig = [
   ...typescript,
   security.configs.recommended,
   {
-    ignores: ["docs/**", ".next/**", "out/**", ".vercel/**", ".worktrees/**"]
+    ignores: ["docs/**", ".next/**", "out/**", ".vercel/**", ".worktrees/**", "scripts/archive/**"]
   },
   {
     rules: {

@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 
 // Mock updateSession to return a basic NextResponse
 vi.mock('@/lib/supabase-middleware', () => ({
-  updateSession: vi.fn(async (req: NextRequest) => {
+  updateSession: vi.fn(async (_req: NextRequest) => {
     return new Response(null, { status: 200 })
   }),
 }))

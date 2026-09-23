@@ -13,7 +13,7 @@ function makeMockClient() {
 
 describe('fromTable', () => {
   it('accepts content tables', () => {
-    const { mockClient, mockBuilder } = makeMockClient();
+    const { mockClient } = makeMockClient();
     const builder = fromTable(mockClient, 'case_studies');
     expect(builder).toBeDefined();
     expect(typeof builder.select).toBe('function');
