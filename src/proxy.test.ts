@@ -46,8 +46,8 @@ function makeRequest(
   })
 }
 
-// Import middleware after mocks are set up
-const { middleware } = await import('./middleware')
+// Import proxy after mocks are set up
+const { middleware } = await import('./proxy')
 
 beforeEach(() => {
   mockUser = null

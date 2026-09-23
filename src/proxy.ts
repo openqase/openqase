@@ -1,4 +1,4 @@
-// src/middleware.ts
+// src/proxy.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase-middleware'
@@ -14,7 +14,7 @@ const adminRoutes = [
   '/admin'
 ]
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   // First, update the session using the new SSR package
   const res = await updateSession(req)
   
@@ -154,7 +154,10 @@ export async function middleware(req: NextRequest) {
   return res
 }
 
-// Run middleware on auth routes and protected routes
+// Backward compatibility alias
+export const middleware = proxy
+
+// Run proxy on auth routes and protected routes
 export const config = {
   matcher: [
     '/auth/:path*',
