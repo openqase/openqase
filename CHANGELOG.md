@@ -13,7 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Security
+- **ReDoS Elimination in Slug Validator**: Replaced backtracking regex in `src/utils/form-validation.ts` with a linear-time, non-backtracking validation check, eliminating the `security/detect-unsafe-regex` advisory.
+- **Internal Query Hardening**: Removed `'use server'` from `src/lib/relationship-queries.ts`, ensuring internal database helper functions are not exposed as public network-callable Server Action RPC endpoints.
+- **Next.js Critical RCE & SSRF Patch**: Upgraded Next.js and `eslint-config-next` to `16.3.5`, resolving critical vulnerability (GHSA-2xp9-vwfh-vxw4 AVIF image optimization RCE, GHSA-p9j2-gv94-2wf4 SSRF in rewrites, GHSA-89xv-2m56-2m9x SSRF in Server Actions, and GHSA-6gpp-xcg3-4w24 middleware bypass).
+- **PostCSS Path Traversal Patch**: Updated `postcss` to `^8.5.28` in dependencies and overrides to patch arbitrary `.map` file disclosure (GHSA-fxqj-rqcc-2cmp, GHSA-r28c-9q8g-f849).
+- **Dependency Audit Zero-Vulnerability Clean-up**: Applied `npm audit fix` and updated `vitest` / `@vitest/coverage-v8` to `^4.1.11` to patch `@vitest/mocker` path traversal (GHSA-82fw-gwwq-j7x9), bringing npm audit vulnerabilities from 22 down to 0.
+- **CMS Server Action Authentication**: Wrapped all exported actions in `src/cms/actions.ts` (`saveContentAction`, `publishAction`, `unpublishAction`, `deleteAction`) with `withAdmin()`, preventing unauthorized bypass of Supabase RLS. Extended ESLint rule and regression tests to enforce `withAdmin()` across all CMS actions.
 - **Public GET API no longer leaks unpublished/soft-deleted content.** `fetchContentBySlug` now applies `published=true` and `deleted_at IS NULL` filters via an RLS-respecting Supabase client. Anonymous requests for draft slugs return 404. The function was also split into a separate `fetchPreviewContentBySlug` variant used by the 5 preview-aware detail pages so the static-rendered detail pages stay SSG-friendly.
+
+### Removed
+- **Orphaned Supabase Utilities**: Removed unused `/utils/supabase/` legacy boilerplate directory (`client.ts`, `middleware.ts`, `server.ts`).
 - **`publicQuery()` invariant introduced** as the single sanctioned chokepoint for anonymous content reads. Module-boundary enforced via ESLint `no-restricted-imports` on `src/lib/internal-queries.ts`.
 - **All 9 admin server-action files wrapped in `withAdmin()`** as defense-in-depth beyond middleware. Enforced by ESLint `no-restricted-syntax`.
 - **`DEV_MODE_AUTH_BYPASS` hardened**: now requires `NODE_ENV=development`; host comparison is exact (no substring match); `prebuild` script fails the build if the env combination would expose admin endpoints in production.

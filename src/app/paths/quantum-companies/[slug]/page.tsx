@@ -209,7 +209,7 @@ export default async function QuantumCompanyDetailPage({ params }: QuantumCompan
                 <h3 className="text-lg font-semibold">Quantum Software</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                Software frameworks and tools used in {quantumCompany.name}'s quantum computing projects.
+                Software frameworks and tools used in {quantumCompany.name}&apos;s quantum computing projects.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {relatedSoftware.map(software => (
@@ -233,7 +233,7 @@ export default async function QuantumCompanyDetailPage({ params }: QuantumCompan
                 <h3 className="text-lg font-semibold">Quantum Hardware</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                Hardware platforms and systems utilized in {quantumCompany.name}'s implementations.
+                Hardware platforms and systems utilized in {quantumCompany.name}&apos;s implementations.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {relatedHardware.map(hardware => (

@@ -1,5 +1,3 @@
-'use server'
-
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { fromTable } from '@/lib/supabase-untyped';
 

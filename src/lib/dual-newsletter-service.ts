@@ -267,7 +267,7 @@ export class DualNewsletterService {
       try {
         // Test Resend connection (this is a simple test)
         results.resend = true
-      } catch (error) {
+      } catch {
         results.resend = false
       }
     }
@@ -277,7 +277,7 @@ export class DualNewsletterService {
         const supabase = await createServerSupabaseClient()
         const { error } = await newsletterSubscriptionsTable(supabase).select('id').limit(1)
         results.database = !error
-      } catch (error) {
+      } catch {
         results.database = false
       }
     }

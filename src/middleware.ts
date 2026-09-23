@@ -18,10 +18,6 @@ export async function middleware(req: NextRequest) {
   // First, update the session using the new SSR package
   const res = await updateSession(req)
   
-  // Get the URL from the response or create a new one
-  const url = res.url ? new URL(res.url) : new URL(req.url)
-  
-  const isAuthPage = req.nextUrl.pathname.startsWith('/auth')
   const isAuthCallback = req.nextUrl.pathname === '/auth/callback'
   const isAdminRoute = adminRoutes.some(route => req.nextUrl.pathname.startsWith(route))
   const isProtectedRoute = protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))

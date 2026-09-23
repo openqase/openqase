@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 
 // Mock updateSession to return a basic NextResponse
 vi.mock('@/lib/supabase-middleware', () => ({
-  updateSession: vi.fn(async (req: NextRequest) => {
+  updateSession: vi.fn(async (_req: NextRequest) => {
     return new Response(null, { status: 200 })
   }),
 }))
@@ -118,7 +118,7 @@ describe('middleware - CSRF Origin checking', () => {
   it('rejects PUT with mismatched Origin', async () => {
     const res = await middleware(
       makeRequest('/api/case-studies', 'PUT', {
-        origin: 'https://attacker.com',
+        origin: 'https://attacker.example.com',
       })
     )
     expect(res.status).toBe(403)

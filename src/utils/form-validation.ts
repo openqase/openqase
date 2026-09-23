@@ -137,8 +137,9 @@ export const validators = {
    * Checks if a string is a valid slug (lowercase, alphanumeric, hyphens)
    */
   isSlug: (value: string): boolean => {
-    if (typeof value !== 'string') return false;
-    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+    if (typeof value !== 'string' || value.length === 0) return false;
+    if (value.startsWith('-') || value.endsWith('-') || value.includes('--')) return false;
+    return /^[a-z0-9-]+$/.test(value);
   },
   
   /**
