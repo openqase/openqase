@@ -45,8 +45,10 @@ async function getRelatedEntities<T = Record<string, unknown>>(
   }
 
   const ids = [...new Set(
-    relations.map((r: any) => r[config.foreignKey]).filter((id: unknown) => id !== null)
-  )] as string[];
+    ((relations || []) as Record<string, unknown>[])
+      .map((r) => r[config.foreignKey])
+      .filter((id): id is string => typeof id === 'string')
+  )];
 
   if (ids.length === 0) return [];
 
@@ -164,16 +166,18 @@ export async function getCaseStudyRelationshipMap(
   if (algorithmJunctions.error) console.error('Error fetching algorithm junctions:', algorithmJunctions.error);
   if (personaJunctions.error) console.error('Error fetching persona junctions:', personaJunctions.error);
 
+  type JunctionRow = { case_study_id: string; [key: string]: string };
+
   // Collect unique entity IDs
   const industryIds = [...new Set(
-    (industryJunctions.data || []).map((r: any) => r.industry_id).filter(Boolean)
-  )] as string[];
+    ((industryJunctions.data || []) as unknown as JunctionRow[]).map((r) => r.industry_id).filter(Boolean)
+  )];
   const algorithmIds = [...new Set(
-    (algorithmJunctions.data || []).map((r: any) => r.algorithm_id).filter(Boolean)
-  )] as string[];
+    ((algorithmJunctions.data || []) as unknown as JunctionRow[]).map((r) => r.algorithm_id).filter(Boolean)
+  )];
   const personaIds = [...new Set(
-    (personaJunctions.data || []).map((r: any) => r.persona_id).filter(Boolean)
-  )] as string[];
+    ((personaJunctions.data || []) as unknown as JunctionRow[]).map((r) => r.persona_id).filter(Boolean)
+  )];
 
   // Fetch entity details in parallel
   const [industries, algorithms, personas] = await Promise.all([
@@ -193,38 +197,41 @@ export async function getCaseStudyRelationshipMap(
   if (personas.error) console.error('Error fetching personas:', personas.error);
 
   // Build lookup maps
-  const industryMap = new Map<string, RelatedEntity>((industries.data || []).map((e: any) => [e.id, e as RelatedEntity]));
-  const algorithmMap = new Map<string, RelatedEntity>((algorithms.data || []).map((e: any) => [e.id, e as RelatedEntity]));
-  const personaMap = new Map<string, RelatedEntity>((personas.data || []).map((e: any) => [e.id, e as RelatedEntity]));
+  const industryMap = new Map<string, RelatedEntity>(((industries.data || []) as unknown as RelatedEntity[]).map((e) => [e.id, e]));
+  const algorithmMap = new Map<string, RelatedEntity>(((algorithms.data || []) as unknown as RelatedEntity[]).map((e) => [e.id, e]));
+  const personaMap = new Map<string, RelatedEntity>(((personas.data || []) as unknown as RelatedEntity[]).map((e) => [e.id, e]));
 
   // Group by case study ID (deduplicate to guard against duplicate junction rows)
   const result: Record<string, CaseStudyRelationships> = {};
-  const seen: Record<string, { industries: Set<string>; algorithms: Set<string>; personas: Set<string> }> = {};
+  const seen = new Map<string, { industries: Set<string>; algorithms: Set<string>; personas: Set<string> }>();
   for (const id of caseStudyIds) {
     result[id] = { industries: [], algorithms: [], personas: [] };
-    seen[id] = { industries: new Set(), algorithms: new Set(), personas: new Set() };
+    seen.set(id, { industries: new Set(), algorithms: new Set(), personas: new Set() });
   }
 
-  for (const row of (industryJunctions.data || []) as any[]) {
+  for (const row of ((industryJunctions.data || []) as unknown as JunctionRow[])) {
     const entity = industryMap.get(row.industry_id);
-    if (entity && result[row.case_study_id] && !seen[row.case_study_id].industries.has(row.industry_id)) {
-      seen[row.case_study_id].industries.add(row.industry_id);
+    const studySeen = seen.get(row.case_study_id);
+    if (entity && result[row.case_study_id] && studySeen && !studySeen.industries.has(row.industry_id)) {
+      studySeen.industries.add(row.industry_id);
       result[row.case_study_id].industries.push(entity);
     }
   }
 
-  for (const row of (algorithmJunctions.data || []) as any[]) {
+  for (const row of ((algorithmJunctions.data || []) as unknown as JunctionRow[])) {
     const entity = algorithmMap.get(row.algorithm_id);
-    if (entity && result[row.case_study_id] && !seen[row.case_study_id].algorithms.has(row.algorithm_id)) {
-      seen[row.case_study_id].algorithms.add(row.algorithm_id);
+    const studySeen = seen.get(row.case_study_id);
+    if (entity && result[row.case_study_id] && studySeen && !studySeen.algorithms.has(row.algorithm_id)) {
+      studySeen.algorithms.add(row.algorithm_id);
       result[row.case_study_id].algorithms.push(entity);
     }
   }
 
-  for (const row of (personaJunctions.data || []) as any[]) {
+  for (const row of ((personaJunctions.data || []) as unknown as JunctionRow[])) {
     const entity = personaMap.get(row.persona_id);
-    if (entity && result[row.case_study_id] && !seen[row.case_study_id].personas.has(row.persona_id)) {
-      seen[row.case_study_id].personas.add(row.persona_id);
+    const studySeen = seen.get(row.case_study_id);
+    if (entity && result[row.case_study_id] && studySeen && !studySeen.personas.has(row.persona_id)) {
+      studySeen.personas.add(row.persona_id);
       result[row.case_study_id].personas.push(entity);
     }
   }

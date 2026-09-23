@@ -15,7 +15,7 @@ export async function getStaticContentList<T>(
     limit?: number;
     orderBy?: string;
     orderDirection?: 'asc' | 'desc';
-    filters?: Record<string, any>;
+    filters?: Record<string, string | number | boolean | (string | number)[] | undefined>;
   } = {}
 ): Promise<T[]> {
   const supabase = createServiceRoleSupabaseClient();
@@ -32,6 +32,7 @@ export async function getStaticContentList<T>(
   // Apply additional filters
   if (options.filters) {
     Object.entries(options.filters).forEach(([key, value]) => {
+      if (value === undefined) return;
       if (Array.isArray(value)) {
         query = query.in(key, value);
       } else {
@@ -119,7 +120,9 @@ export async function getRelatedContent<T>(
     return [];
   }
 
-  const relatedIds = relations.map((rel: any) => rel[junctionConfig.targetField]);
+  const relatedIds = (relations as Record<string, unknown>[])
+    .map((rel) => rel[junctionConfig.targetField])
+    .filter((id): id is string => typeof id === 'string');
 
   // Then fetch the actual content items
   let query = supabase
@@ -163,7 +166,7 @@ export async function getBuildTimeContentList<T>(
     limit?: number;
     orderBy?: string;
     orderDirection?: 'asc' | 'desc';
-    filters?: Record<string, any>;
+    filters?: Record<string, string | number | boolean | (string | number)[] | undefined>;
   } = {}
 ): Promise<T[]> {
   const supabase = createServiceRoleSupabaseClient();
@@ -176,6 +179,7 @@ export async function getBuildTimeContentList<T>(
   // Apply additional filters
   if (options.filters) {
     Object.entries(options.filters).forEach(([key, value]) => {
+      if (value === undefined) return;
       if (Array.isArray(value)) {
         query = query.in(key, value);
       } else {
@@ -262,7 +266,7 @@ export async function fetchSearchData(
   };
   
   // Helper function to limit array size
-  const limitArray = (arr: any[] | null, maxItems: number = 2): any[] => {
+  const limitArray = <T>(arr: T[] | null | undefined, maxItems: number = 2): T[] => {
     if (!arr || !Array.isArray(arr)) return [];
     return arr.slice(0, maxItems);
   };
@@ -302,10 +306,22 @@ export async function fetchSearchData(
       }
 
       if (data) {
-        const transformedItems = data.map((item: any) => ({
+        type SearchRow = {
+          id: string;
+          title?: string;
+          name?: string;
+          description?: string | null;
+          slug: string;
+          quantum_companies?: string[];
+          partner_companies?: string[];
+          year?: number | null;
+          quantum_advantage?: string | null;
+          use_cases?: string[];
+        };
+        const transformedItems: SearchableItem[] = (data as unknown as SearchRow[]).map((item) => ({
           id: item.id,
-          title: item.title || item.name,
-          description: truncateText(item.description, 150), // Truncate descriptions
+          title: item.title || item.name || '',
+          description: truncateText(item.description ?? null, 150), // Truncate descriptions
           slug: item.slug,
           type: contentType,
           metadata: {

@@ -14,7 +14,7 @@ export default function ContactPage() {
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Have questions about quantum computing or suggestions for our platform? 
-              We'd love to hear from you.
+              We&apos;d love to hear from you.
             </p>
           </div>
         </div>
@@ -27,7 +27,7 @@ export default function ContactPage() {
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-foreground mb-3">Get in Touch</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Fill out our contact form and we'll get back to you as soon as possible.
+                  Fill out our contact form and we&apos;ll get back to you as soon as possible.
                 </p>
               </div>
               <Link
@@ -92,7 +92,7 @@ export default function ContactPage() {
                 <div className="border-l-4 border-primary/20 pl-4 md:pl-6">
                   <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 md:mb-3">I found a bug. Where should I report it?</h3>
                   <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
-                    Please report any bugs or issues on our GitHub repository's issue tracker. Include as much detail as possible:
+                    Please report any bugs or issues on our GitHub repository&apos;s issue tracker. Include as much detail as possible:
                     browser version, steps to reproduce, and screenshots if applicable. This helps us understand and fix problems quickly.
                   </p>
                 </div>
@@ -100,17 +100,17 @@ export default function ContactPage() {
                 <div className="border-l-4 border-primary/20 pl-4 md:pl-6">
                   <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 md:mb-3">Can I suggest new features or case studies?</h3>
                   <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
-                    Absolutely! We value community input and new ideas. You can suggest features through our GitHub repository's 
-                    discussions section, or reach out to us directly through the contact form above. We're especially interested 
+                    Absolutely! We value community input and new ideas. You can suggest features through our GitHub repository&apos;s 
+                    discussions section, or reach out to us directly through the contact form above. We&apos;re especially interested 
                     in new quantum computing case studies from industry leaders.
                   </p>
                 </div>
                 
                 <div className="border-l-4 border-primary/20 pl-4 md:pl-6">
-                  <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 md:mb-3">How do I get my company's case study featured?</h3>
+                  <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 md:mb-3">How do I get my company&apos;s case study featured?</h3>
                   <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
                     We offer featured placement opportunities for quantum computing case studies on our homepage. 
-                    This provides premium visibility to showcase your company's quantum innovations. Contact us through 
+                    This provides premium visibility to showcase your company&apos;s quantum innovations. Contact us through 
                     the form above to discuss featured placement options and pricing.
                   </p>
                 </div>

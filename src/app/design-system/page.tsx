@@ -9,14 +9,9 @@ import {
   CircuitBoard, 
   Building2, 
   User,
-  Github,
-  Users,
-  Database,
-  ArrowRight,
   Sun,
   Moon
 } from 'lucide-react';
-import { designSystem, componentStyles } from '@/lib/design-system';
 
 export default function DesignSystemPage() {
   const [isDark, setIsDark] = useState(false);
@@ -79,7 +74,7 @@ export default function DesignSystemPage() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Inspired by Stark's accessibility platform. Provides excellent contrast (7:1) on light backgrounds.
+                    Inspired by Stark&apos;s accessibility platform. Provides excellent contrast (7:1) on light backgrounds.
                   </p>
                 </div>
               </CardContent>
@@ -497,15 +492,15 @@ export default function DesignSystemPage() {
             
             <Card className="shadow-md border-red-500/20">
               <CardHeader>
-                <CardTitle className="text-red-600">✗ Don't</CardTitle>
+                <CardTitle className="text-red-600">✗ Don&apos;t</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• Don't use accent color for icons or numbers</li>
-                  <li>• Don't skip borders on cards</li>
-                  <li>• Don't use color alone for emphasis</li>
-                  <li>• Don't mix shadow levels randomly</li>
-                  <li>• Don't hard-code color values</li>
+                  <li>• Don&apos;t use accent color for icons or numbers</li>
+                  <li>• Don&apos;t skip borders on cards</li>
+                  <li>• Don&apos;t use color alone for emphasis</li>
+                  <li>• Don&apos;t mix shadow levels randomly</li>
+                  <li>• Don&apos;t hard-code color values</li>
                 </ul>
               </CardContent>
             </Card>

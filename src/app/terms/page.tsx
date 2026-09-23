@@ -5,7 +5,7 @@ export default function TermsOfUsePage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-4">Terms of Use</h1>
       <p className="mb-4">
-        Welcome to OpenQase! These Terms of Use ("Terms") govern your access to and use of our website and services (collectively, the "Service"). Please read these Terms carefully before using the Service.
+        Welcome to OpenQase! These Terms of Use (&ldquo;Terms&rdquo;) govern your access to and use of our website and services (collectively, the &ldquo;Service&rdquo;). Please read these Terms carefully before using the Service.
       </p>
 
       <h2 className="text-2xl font-semibold mb-2">1. Acceptance of Terms</h2>
@@ -24,7 +24,7 @@ export default function TermsOfUsePage() {
       </p>
       <ul className="list-disc list-inside mb-4">
         <li>In any way that violates any applicable federal, state, local, or international law or regulation.</li>
-        <li>To engage in any conduct that restricts or inhibits anyone's use or enjoyment of the Service, or which, as determined by us, may harm OpenQase or users of the Service or expose them to liability.</li>
+        <li>To engage in any conduct that restricts or inhibits anyone&apos;s use or enjoyment of the Service, or which, as determined by us, may harm OpenQase or users of the Service or expose them to liability.</li>
         <li>To impersonate or attempt to impersonate OpenQase, an OpenQase employee, another user, or any other person or entity.</li>
       </ul>
 
@@ -40,7 +40,7 @@ export default function TermsOfUsePage() {
 
       <h2 className="text-2xl font-semibold mb-2">6. Disclaimer of Warranties</h2>
       <p className="mb-4">
-        The Service is provided on an "AS IS" and "AS AVAILABLE" basis. OpenQase makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
+        The Service is provided on an &ldquo;AS IS&rdquo; and &ldquo;AS AVAILABLE&rdquo; basis. OpenQase makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
       </p>
 
       <h2 className="text-2xl font-semibold mb-2">7. Limitation of Liability</h2>

@@ -5,7 +5,7 @@ export default function CookiePolicyPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-4">Cookie Policy</h1>
       <p className="mb-4">
-        This Cookie Policy explains how OpenQase ("we", "us", or "our") uses cookies and similar technologies to recognize you when you visit our website. It explains what these technologies are and why we use them, as well as your rights to control our use of them.
+        This Cookie Policy explains how OpenQase (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) uses cookies and similar technologies to recognize you when you visit our website. It explains what these technologies are and why we use them, as well as your rights to control our use of them.
       </p>
 
       <h2 className="text-2xl font-semibold mb-2">1. What are cookies?</h2>
@@ -13,12 +13,12 @@ export default function CookiePolicyPage() {
         Cookies are small data files that are placed on your computer or mobile device when you visit a website. Cookies are widely used by website owners in order to make their websites work, or to work more efficiently, as well as to provide reporting information.
       </p>
       <p className="mb-4">
-        Cookies set by the website owner (in this case, OpenQase) are called "first-party cookies". Cookies set by parties other than the website owner are called "third-party cookies". Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics). The parties that set these third-party cookies can recognize your computer both when it visits the website in question and also when it visits certain other websites.
+        Cookies set by the website owner (in this case, OpenQase) are called &ldquo;first-party cookies&rdquo;. Cookies set by parties other than the website owner are called &ldquo;third-party cookies&rdquo;. Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics). The parties that set these third-party cookies can recognize your computer both when it visits the website in question and also when it visits certain other websites.
       </p>
 
       <h2 className="text-2xl font-semibold mb-2">2. Why do we use cookies?</h2>
       <p className="mb-4">
-        We use first-party and third-party cookies for several reasons. Some cookies are required for technical reasons in order for our website to operate, and we refer to these as "essential" or "strictly necessary" cookies. Other cookies also enable us to track and target the interests of our users to enhance the experience on our Online Properties. Third parties serve cookies through our website for advertising, analytics, and other purposes. This is described in more detail below.
+        We use first-party and third-party cookies for several reasons. Some cookies are required for technical reasons in order for our website to operate, and we refer to these as &ldquo;essential&rdquo; or &ldquo;strictly necessary&rdquo; cookies. Other cookies also enable us to track and target the interests of our users to enhance the experience on our Online Properties. Third parties serve cookies through our website for advertising, analytics, and other purposes. This is described in more detail below.
       </p>
 
       <h2 className="text-2xl font-semibold mb-2">3. Types of cookies we use</h2>

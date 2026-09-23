@@ -121,7 +121,7 @@ async function handleBulkPublish(ids: string[], published: boolean) {
       updated: data?.length || 0,
       message: `Successfully ${published ? 'published' : 'unpublished'} ${data?.length || 0} case studies`,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to process bulk operation' }, { status: 500 })
   }
 }
@@ -160,7 +160,7 @@ async function handleBulkDelete(ids: string[]) {
       deleted: data?.length || 0,
       message: `Successfully deleted ${data?.length || 0} case studies`,
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to process bulk delete' }, { status: 500 })
   }
 }

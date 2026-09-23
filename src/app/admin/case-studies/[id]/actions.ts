@@ -52,13 +52,13 @@ export const saveCaseStudy = withAdmin(async (values: CaseStudyFormData): Promis
   }
 })
 
-export const publishCaseStudy = withAdmin(async (id: string, slug: string): Promise<{ success: boolean; error?: string }> => {
+export const publishCaseStudy = withAdmin(async (id: string, _slug: string): Promise<{ success: boolean; error?: string }> => {
   const result = await publishContent('case-studies', id)
   if (!result.success) return { success: false, error: result.error || 'Failed to publish' }
   return { success: true }
 })
 
-export const unpublishCaseStudy = withAdmin(async (id: string, slug: string): Promise<{ success: boolean; error?: string }> => {
+export const unpublishCaseStudy = withAdmin(async (id: string, _slug: string): Promise<{ success: boolean; error?: string }> => {
   const result = await unpublishContent('case-studies', id)
   if (!result.success) return { success: false, error: result.error || 'Failed to unpublish' }
   return { success: true }

@@ -1,5 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { getStaticContentList } from '@/lib/content-fetchers';
 import { DbBlogPost } from '@/lib/types';
