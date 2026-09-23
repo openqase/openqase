@@ -118,7 +118,7 @@ describe('middleware - CSRF Origin checking', () => {
   it('rejects PUT with mismatched Origin', async () => {
     const res = await middleware(
       makeRequest('/api/case-studies', 'PUT', {
-        origin: 'https://attacker.com',
+        origin: 'https://attacker.example.com',
       })
     )
     expect(res.status).toBe(403)
