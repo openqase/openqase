@@ -3,7 +3,7 @@
 import { memo, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import Link from 'next/link';
 import { Search, ArrowRight } from 'lucide-react';
-import { useGlobalSearch, GroupedSearchResults, SearchResult } from '@/hooks/useGlobalSearch';
+import { useGlobalSearch, SearchResult } from '@/hooks/useGlobalSearch';
 import { SearchableItem } from '@/lib/content-fetchers';
 import { cn } from '@/lib/utils';
 
@@ -136,8 +136,7 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
     totalResults,
     isOpen,
     handleSearchChange,
-    closeSearch,
-    clearSearch
+    closeSearch
   } = useGlobalSearch(searchData);
 
   const searchRef = useRef<HTMLDivElement>(null);
@@ -234,7 +233,7 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
             <div className="py-8 px-4 text-center">
               <p className="text-muted-foreground mb-2">No results found</p>
               <p className="text-sm text-muted-foreground">
-                Try searching for "HSBC", "optimization", or "finance"
+                Try searching for &ldquo;HSBC&rdquo;, &ldquo;optimization&rdquo;, or &ldquo;finance&rdquo;
               </p>
               <div className="mt-3">
                 <Link

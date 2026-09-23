@@ -3,12 +3,7 @@
 import * as React from "react"
 import { X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { Command } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 
 export type TagInputProps = {

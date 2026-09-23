@@ -1,6 +1,7 @@
 import { draftMode } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NextRequest } from 'next/server';
+import crypto from 'node:crypto';
 
 export async function GET(request: NextRequest) {
   // Parse query string parameters
@@ -16,7 +17,11 @@ export async function GET(request: NextRequest) {
     return new Response('Preview secret not configured', { status: 500 });
   }
 
-  if (secret !== validSecret) {
+  if (
+    !secret ||
+    secret.length !== validSecret.length ||
+    !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(validSecret))
+  ) {
     return new Response('Invalid token', { status: 401 });
   }
 

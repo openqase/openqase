@@ -4,7 +4,7 @@ import { createServerSupabaseClient, newsletterSubscriptionsTable } from '@/lib/
 /**
  * Get current user's newsletter subscription status
  */
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     

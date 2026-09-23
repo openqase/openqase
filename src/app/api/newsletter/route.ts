@@ -95,14 +95,18 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const token = searchParams.get('token')
+    const validation = unsubscribeSchema.safeParse({
+      token: searchParams.get('token'),
+    })
     
-    if (!token) {
+    if (!validation.success) {
       return NextResponse.json(
         { error: 'Unsubscribe token is required' },
         { status: 400 }
       )
     }
+
+    const { token } = validation.data
 
     const supabase = await createServerSupabaseClient()
 
