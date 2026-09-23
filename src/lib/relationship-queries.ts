@@ -17,6 +17,39 @@ interface RelatedQuantumCompany extends RelatedEntity {
 }
 
 /**
+ * Visibility columns selected alongside every related entity so that drafts
+ * and soft-deleted rows can be excluded before they reach public pages.
+ * These functions use the service-role client (bypasses RLS), so this JS
+ * filter is the only thing keeping unpublished content off public pages.
+ */
+const VISIBILITY_FIELDS = 'published, deleted_at';
+
+function withVisibilityFields(selectFields: string): string {
+  return `${selectFields}, ${VISIBILITY_FIELDS}`;
+}
+
+/**
+ * Drop related rows that are explicitly unpublished (`published === false`)
+ * or soft-deleted (`deleted_at` non-null), then strip the visibility columns
+ * so the returned shape is unchanged.
+ *
+ * `published: null` is kept on purpose: legacy rows have inconsistent
+ * `published` data, matching flattenRelationships() in
+ * src/cms/operations/relationships.ts.
+ */
+export function filterVisibleEntities<T>(rows: unknown[] | null | undefined): T[] {
+  if (!rows) return [];
+  const visible: T[] = [];
+  for (const row of rows as Record<string, unknown>[]) {
+    if (!row || row.published === false || row.deleted_at != null) continue;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { published, deleted_at, ...rest } = row;
+    visible.push(rest as T);
+  }
+  return visible;
+}
+
+/**
  * Generic function to get related entities through a junction table.
  * Replaces 4 near-identical functions with a single parameterized implementation.
  */
@@ -54,7 +87,7 @@ async function getRelatedEntities<T = Record<string, unknown>>(
 
   // Fetch the entity details
   const { data, error } = await fromTable(supabase, config.targetTable)
-    .select(config.selectFields)
+    .select(withVisibilityFields(config.selectFields))
     .in('id', ids);
 
   if (error) {
@@ -62,7 +95,7 @@ async function getRelatedEntities<T = Record<string, unknown>>(
     return [];
   }
 
-  return (data as T[]) || [];
+  return filterVisibleEntities<T>(data as unknown[] | null);
 }
 
 export async function getRelatedQuantumSoftware(caseStudyIds: string[]): Promise<RelatedEntity[]> {
@@ -182,13 +215,13 @@ export async function getCaseStudyRelationshipMap(
   // Fetch entity details in parallel
   const [industries, algorithms, personas] = await Promise.all([
     industryIds.length > 0
-      ? fromTable(supabase, 'industries').select('id, name, slug, description').in('id', industryIds)
+      ? fromTable(supabase, 'industries').select(withVisibilityFields('id, name, slug, description')).in('id', industryIds)
       : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
     algorithmIds.length > 0
-      ? fromTable(supabase, 'algorithms').select('id, name, slug, description').in('id', algorithmIds)
+      ? fromTable(supabase, 'algorithms').select(withVisibilityFields('id, name, slug, description')).in('id', algorithmIds)
       : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
     personaIds.length > 0
-      ? fromTable(supabase, 'personas').select('id, name, slug, description').in('id', personaIds)
+      ? fromTable(supabase, 'personas').select(withVisibilityFields('id, name, slug, description')).in('id', personaIds)
       : Promise.resolve({ data: [] as RelatedEntity[], error: null }),
   ]);
 
@@ -196,10 +229,11 @@ export async function getCaseStudyRelationshipMap(
   if (algorithms.error) console.error('Error fetching algorithms:', algorithms.error);
   if (personas.error) console.error('Error fetching personas:', personas.error);
 
-  // Build lookup maps
-  const industryMap = new Map<string, RelatedEntity>(((industries.data || []) as unknown as RelatedEntity[]).map((e) => [e.id, e]));
-  const algorithmMap = new Map<string, RelatedEntity>(((algorithms.data || []) as unknown as RelatedEntity[]).map((e) => [e.id, e]));
-  const personaMap = new Map<string, RelatedEntity>(((personas.data || []) as unknown as RelatedEntity[]).map((e) => [e.id, e]));
+  // Build lookup maps from visible (non-draft, non-deleted) entities only.
+  // Junction rows pointing at filtered-out entities are then skipped below.
+  const industryMap = new Map<string, RelatedEntity>(filterVisibleEntities<RelatedEntity>(industries.data as unknown[] | null).map((e) => [e.id, e]));
+  const algorithmMap = new Map<string, RelatedEntity>(filterVisibleEntities<RelatedEntity>(algorithms.data as unknown[] | null).map((e) => [e.id, e]));
+  const personaMap = new Map<string, RelatedEntity>(filterVisibleEntities<RelatedEntity>(personas.data as unknown[] | null).map((e) => [e.id, e]));
 
   // Group by case study ID (deduplicate to guard against duplicate junction rows)
   const result: Record<string, CaseStudyRelationships> = {};

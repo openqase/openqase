@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -28,7 +28,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: QuantumHardwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumHardware = await fetchContentBySlug('quantum-hardware', resolvedParams.slug) as EnrichedQuantumHardware | null;
+  const quantumHardware = await fetchPreviewContentBySlug('quantum-hardware', resolvedParams.slug) as EnrichedQuantumHardware | null;
 
   if (!quantumHardware) {
     return {
@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: QuantumHardwarePageProps) {
 export default async function QuantumHardwareDetailPage({ params }: QuantumHardwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumHardware = await fetchContentBySlug('quantum-hardware', resolvedParams.slug) as EnrichedQuantumHardware | null;
+  const quantumHardware = await fetchPreviewContentBySlug('quantum-hardware', resolvedParams.slug) as EnrichedQuantumHardware | null;
 
   if (!quantumHardware) {
     notFound();

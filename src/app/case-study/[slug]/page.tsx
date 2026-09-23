@@ -73,7 +73,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
   const caseStudy = await fetchPreviewContentBySlug('case-studies', slug) as EnrichedCaseStudy | null;
 
   if (!caseStudy) {
-    return notFound();
+    notFound();
   }
 
   // Process content with references if available

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -26,7 +26,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: PartnerCompanyPageProps) {
   const resolvedParams = await params;
   
-  const partnerCompany = await fetchContentBySlug('partner-companies', resolvedParams.slug) as EnrichedPartnerCompany | null;
+  const partnerCompany = await fetchPreviewContentBySlug('partner-companies', resolvedParams.slug) as EnrichedPartnerCompany | null;
 
   if (!partnerCompany) {
     return {
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: PartnerCompanyPageProps) {
 export default async function PartnerCompanyDetailPage({ params }: PartnerCompanyPageProps) {
   const resolvedParams = await params;
   
-  const partnerCompany = await fetchContentBySlug('partner-companies', resolvedParams.slug) as EnrichedPartnerCompany | null;
+  const partnerCompany = await fetchPreviewContentBySlug('partner-companies', resolvedParams.slug) as EnrichedPartnerCompany | null;
 
   if (!partnerCompany) {
     notFound();

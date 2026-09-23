@@ -286,3 +286,70 @@ describe('Finding 2.3 — deletion_audit_log is readable by admins only', () => 
     expect(policy![1]).toMatch(/"?role"?\s*=\s*'admin'/)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Default privileges + soft-delete RPC lockdown
+// ---------------------------------------------------------------------------
+// The baseline grants ALL on future tables/sequences/functions in public to
+// anon/authenticated via ALTER DEFAULT PRIVILEGES. A later migration must
+// revoke those, and must revoke EXECUTE on the SECURITY DEFINER soft-delete
+// RPCs. Asserted against the concatenated post-baseline migrations.
+function postBaselineMigrations(): string {
+  const files = glob.sync('supabase/migrations/*.sql').sort()
+  const baseline = readBaselineMigration()
+  return files.map((f) => readFileSync(f, 'utf8')).filter((sql) => sql !== baseline).join('\n')
+}
+
+/** Strip `--` comments so commented-out ROLLBACK statements never count. */
+function stripSqlComments(sql: string): string {
+  return sql.replace(/--.*$/gm, '')
+}
+
+describe('Default privileges — future objects are not writable/executable by API roles', () => {
+  it('baseline still contains the insecure defaults this guards against', () => {
+    expect(readBaselineMigration()).toMatch(
+      /ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";/,
+    )
+  })
+
+  it.each([
+    ['TABLES', 'anon'], ['TABLES', 'authenticated'],
+    ['SEQUENCES', 'anon'], ['SEQUENCES', 'authenticated'],
+    ['FUNCTIONS', 'anon'], ['FUNCTIONS', 'authenticated'],
+  ] as const)('revokes ALL ON %s from %s in public', (objects, role) => {
+    const sql = stripSqlComments(postBaselineMigrations())
+    const re = new RegExp(
+      `ALTER DEFAULT PRIVILEGES FOR ROLE "?postgres"? IN SCHEMA "?public"? REVOKE ALL ON ${objects} FROM "?${role}"?;`,
+      'i',
+    )
+    expect(sql).toMatch(re)
+  })
+
+  it('revokes EXECUTE on future functions from PUBLIC globally (per-schema form is a no-op)', () => {
+    const sql = stripSqlComments(postBaselineMigrations())
+    expect(sql).toMatch(/ALTER DEFAULT PRIVILEGES FOR ROLE "?postgres"? REVOKE (EXECUTE|ALL) ON FUNCTIONS FROM PUBLIC;/i)
+  })
+
+  it('never re-grants write, sequence or function defaults to anon/authenticated', () => {
+    const sql = stripSqlComments(postBaselineMigrations())
+    const grants = [...sql.matchAll(/ALTER DEFAULT PRIVILEGES[^;]*\bGRANT\b([^;]*)\bTO\b([^;]*);/gi)]
+      .filter(([, , to]) => /\b(anon|authenticated|PUBLIC)\b/i.test(to))
+      .map(([stmt]) => stmt)
+    for (const stmt of grants) {
+      expect(stmt, `unexpected default grant: ${stmt}`).toMatch(/GRANT SELECT ON TABLES TO/i)
+    }
+  })
+})
+
+describe('soft_delete_content / recover_content are not callable by anon/authenticated', () => {
+  it.each([
+    ['soft_delete_content', 'anon'], ['soft_delete_content', 'authenticated'],
+    ['recover_content', 'anon'], ['recover_content', 'authenticated'],
+  ])('revokes EXECUTE on %s from %s', (fn, role) => {
+    const sql = stripSqlComments(postBaselineMigrations())
+    const re = new RegExp(`REVOKE (ALL|EXECUTE) ON FUNCTION "?public"?\\."?${fn}"?\\([^)]*\\) FROM "?${role}"?;`, 'i')
+    expect(sql).toMatch(re)
+    const regrant = new RegExp(`GRANT [^;]* ON FUNCTION "?public"?\\."?${fn}"?\\([^)]*\\) TO [^;]*"?${role}"?[^;]*;`, 'i')
+    expect(sql).not.toMatch(regrant)
+  })
+})

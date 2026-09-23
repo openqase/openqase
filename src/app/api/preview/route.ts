@@ -2,6 +2,7 @@ import { draftMode } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { NextRequest } from 'next/server';
 import crypto from 'node:crypto';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   // Parse query string parameters
@@ -10,19 +11,21 @@ export async function GET(request: NextRequest) {
   const slug = searchParams.get('slug');
   const type = searchParams.get('type') || 'case-study';
 
-  // Check the secret to prevent unauthorized access
+  // Access is granted either by the shared secret (external links) or by a
+  // signed-in admin session (the admin "Preview" button, which must not embed
+  // the secret in client code).
   const validSecret = process.env.PREVIEW_SECRET;
+  const hasValidSecret =
+    !!validSecret &&
+    !!secret &&
+    secret.length === validSecret.length &&
+    crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(validSecret));
 
-  if (!validSecret) {
-    return new Response('Preview secret not configured', { status: 500 });
-  }
-
-  if (
-    !secret ||
-    secret.length !== validSecret.length ||
-    !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(validSecret))
-  ) {
-    return new Response('Invalid token', { status: 401 });
+  if (!hasValidSecret) {
+    const auth = await requireAdmin();
+    if (auth.error) {
+      return new Response('Invalid token', { status: 401 });
+    }
   }
 
   // Enable Draft Mode by setting the cookie
@@ -35,22 +38,36 @@ export async function GET(request: NextRequest) {
     redirect('/');
   }
 
-  // Redirect to the appropriate content page
+  // Redirect to the appropriate content page. The slug is user-supplied, so
+  // encode it to keep it confined to a single path segment.
+  const encodedSlug = encodeURIComponent(slug);
   switch (type) {
     case 'case-study':
-      redirect(`/case-study/${slug}`);
+      redirect(`/case-study/${encodedSlug}`);
       break;
     case 'algorithm':
-      redirect(`/paths/algorithm/${slug}`);
+      redirect(`/paths/algorithm/${encodedSlug}`);
       break;
     case 'industry':
-      redirect(`/paths/industry/${slug}`);
+      redirect(`/paths/industry/${encodedSlug}`);
       break;
     case 'persona':
-      redirect(`/paths/persona/${slug}`);
+      redirect(`/paths/persona/${encodedSlug}`);
       break;
     case 'blog':
-      redirect(`/blog/${slug}`);
+      redirect(`/blog/${encodedSlug}`);
+      break;
+    case 'quantum-hardware':
+      redirect(`/paths/quantum-hardware/${encodedSlug}`);
+      break;
+    case 'quantum-software':
+      redirect(`/paths/quantum-software/${encodedSlug}`);
+      break;
+    case 'quantum-companies':
+      redirect(`/paths/quantum-companies/${encodedSlug}`);
+      break;
+    case 'partner-companies':
+      redirect(`/paths/partner-companies/${encodedSlug}`);
       break;
     default:
       redirect('/');

@@ -1,5 +1,7 @@
 export { createContent } from './create'
 export { updateContent } from './update'
 export { publishContent, unpublishContent } from './publish'
-export { deleteContent } from './delete'
+export { deleteContent, deleteContentMany, restoreContent, permanentlyDeleteContent } from './delete'
+export type { DeleteResult, JunctionRef } from './delete'
+export { revalidateContentType } from './revalidate'
 export { fetchContentBySlug, fetchPreviewContentBySlug, listContent } from './fetch'

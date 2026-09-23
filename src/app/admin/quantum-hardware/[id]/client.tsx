@@ -15,7 +15,7 @@ import {
   toHardwareSpecDrafts,
   type HardwareSpecDraft,
 } from '@/components/admin/HardwareSpecsEditor'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation'
 import {
@@ -217,6 +217,22 @@ export function QuantumHardwareForm({
           </div>
           <div className="flex items-center gap-3">
             <ContentCompleteness percentage={completionPercentage} />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Open preview in new tab (draft mode via /api/preview)
+                const previewUrl = `/api/preview?type=quantum-hardware&slug=${encodeURIComponent(values.slug)}`
+                window.open(previewUrl, '_blank')
+              }}
+              disabled={!values.id || !values.slug}
+              className="min-w-[100px]"
+              title={!values.id || !values.slug ? "Save the quantum hardware first to preview" : "Preview quantum hardware"}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Button>
             <PublishButton
               isPublished={values.published}
               onPublish={handlePublish}

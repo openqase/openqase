@@ -13,7 +13,7 @@ export const caseStudies = defineContentType({
     { name: 'main_content', type: 'markdown' },
     { name: 'featured', type: 'boolean' },
     { name: 'academic_references', type: 'markdown' },
-    { name: 'resource_links', type: 'textarea' },
+    { name: 'resource_links', type: 'json' },
     { name: 'year', type: 'number', required: true, min: 1900, max: 2100 },
   ],
   relationships: [

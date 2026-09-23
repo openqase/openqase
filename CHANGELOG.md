@@ -7,12 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Trash for every content type**: Algorithms, industries, personas, blog posts, quantum hardware, software, companies and partner companies now have an admin trash page (`/admin/<type>/trash`, linked from each admin list) to restore or permanently delete soft-deleted items, like case studies already had. Each type gets `POST /api/<type>/restore` and `POST /api/<type>/permanent-delete` (admin-only).
+- **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
+
 ### Changed
 - **Migration history squashed to a single baseline.** The 15 legacy migration files were moved to `supabase/migrations_archive/` (reference only, never applied) and replaced by one baseline, `20260905023326_remote_schema.sql`, captured with `supabase db pull` from the new OpenQase-owned Supabase projects. The migration ledger on `openqase-prod` and `openqase-dev` now contains exactly that one entry. Every schema change from here on is a new numbered migration applied to dev first, then promoted to prod.
 - **Hardware spec preset vocabulary moved to `supabase/seed.sql`.** The 28 `hardware_spec_definitions` rows were previously inserted by a migration; fresh local databases now get them from the seed.
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
+### Fixed
+- **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
+- **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
+- **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
+- **Relationship save errors are reported**: A failed link write now shows an error in the editor instead of reporting success, and saves only add/remove the links that changed.
+- **Draft or deleted related items on public pages**: Unpublished or soft-deleted algorithms, industries, personas, hardware, software and companies no longer appear as links on published detail pages, case study listing chips or the homepage.
+- **Deleted content lingering on the site**: Every content type now deletes through one soft-delete path that unpublishes the item and immediately refreshes the admin list, public list and detail page. Hardware, software and company deletes previously left items listed for up to 24 hours; public API `DELETE` and bulk delete no longer hard-delete.
+- **Trash and publish safety**: Restoring from the trash refreshes the site and keeps the item as a draft; soft-deleted items can no longer be published.
+- **Admin preview button**: The case study "Preview" button works for signed-in admins (it previously always returned 401 because it had no preview secret).
+- **Quantum company editor**: Removed the "Quantum Focus" and "Employee Count" inputs, which had no database columns and never saved.
+- **Blog featured toggle** in the admin blog list now saves (it previously always failed validation).
+- **Site search** now covers blog posts, quantum hardware, software, companies and partner companies, and excludes soft-deleted items.
+- **README** now states the actual 24-hour ISR safety net.
+- **Sitemap**: Quantum company and partner company URLs pointed at non-existent singular paths (`/paths/quantum-company/…`, `/paths/partner-company/…`) and 404'd. Sitemap paths now come from the CMS registry's `basePath` (the same source revalidation uses), every content-type listing page is included, and soft-deleted items are excluded.
+- **Missing industry pages return a real 404**: `/paths/industry/<unknown-slug>` rendered "Industry not found" with a 200 status; it now uses `notFound()` like every other detail page.
+- **Soft-deleted content in public lists**: Listing, related-content and search fetchers in `content-fetchers.ts` now exclude soft-deleted rows, not just unpublished ones.
+- **Public list API pagination**: `GET /api/<type>` now rejects non-integer or non-positive `page`/`pageSize` with a 400 and caps `pageSize` at 100 (previously unbounded; `NaN` values reached the query).
+- **Missing publish dates**: Publishing any content type from the CMS now records `published_at` the first time it is published (republishing keeps the original date). Previously only blog posts and personas got one. Migration `20260923160000_backfill_published_at.sql` fills in an estimated date (last updated, else created) for already-published items without one.
+- **Publish date triggers**: Migration `20260923161000_published_at_triggers_all_types.sql` sets `published_at` at the database level for all 9 content types (covering bulk publish), and stops blog posts and personas from resetting their publish date when republished.
+- **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
+
 ### Security
+- **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
+- **`user_preferences` read leak closed**: Signed-in users could read every admin's preference row. Policies now use a new `is_admin()` helper to check the *caller*, non-admins cannot promote themselves, and `anon` SELECT is revoked.
+- **Safe defaults for new database objects**: The baseline gave `anon`/`authenticated` full rights on every future table, sequence and function in `public`. The same migration now makes new tables read-only for those roles (RLS still applies) and new functions/sequences unavailable to them unless explicitly granted.
 - **ReDoS Elimination in Slug Validator**: Replaced backtracking regex in `src/utils/form-validation.ts` with a linear-time, non-backtracking validation check, eliminating the `security/detect-unsafe-regex` advisory.
 - **Internal Query Hardening**: Removed `'use server'` from `src/lib/relationship-queries.ts`, ensuring internal database helper functions are not exposed as public network-callable Server Action RPC endpoints.
 - **Next.js Critical RCE & SSRF Patch**: Upgraded Next.js and `eslint-config-next` to `16.3.5`, resolving critical vulnerability (GHSA-2xp9-vwfh-vxw4 AVIF image optimization RCE, GHSA-p9j2-gv94-2wf4 SSRF in rewrites, GHSA-89xv-2m56-2m9x SSRF in Server Actions, and GHSA-6gpp-xcg3-4w24 middleware bypass).

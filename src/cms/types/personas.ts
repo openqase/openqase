@@ -11,6 +11,7 @@ export const personas = defineContentType({
     { name: 'slug', type: 'slug', from: 'name' },
     { name: 'description', type: 'textarea', maxLength: 1000 },
     { name: 'main_content', type: 'markdown' },
+    { name: 'expertise', type: 'tags' },
     { name: 'recommended_reading', type: 'textarea' },
   ],
   relationships: [

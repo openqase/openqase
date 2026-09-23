@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { draftMode } from 'next/headers'
 import { getContentType } from '../registry'
-import { buildRelationshipSelect, flattenRelationships } from './relationships'
+import { buildRelationshipSelect, flattenRelationships, type FlattenOptions } from './relationships'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
 
@@ -10,10 +10,11 @@ import { fromTable } from '@/lib/internal-queries'
 // ---------------------------------------------------------------------------
 function flattenContentRow(
   data: Record<string, unknown>,
-  ct: ReturnType<typeof getContentType>
+  ct: ReturnType<typeof getContentType>,
+  options: FlattenOptions = {}
 ): Record<string, unknown> {
   if (!ct) return data
-  const relationships = flattenRelationships(data, ct)
+  const relationships = flattenRelationships(data, ct, options)
   const base: Record<string, unknown> = { ...data }
   for (const rel of ct.relationships) {
     delete base[rel.junction]
@@ -50,7 +51,7 @@ async function _fetchContentBySlug(
 
   if (error || !data) return null
 
-  return flattenContentRow(data as Record<string, unknown>, ct)
+  return flattenContentRow(data as Record<string, unknown>, ct, { publishedOnly: true })
 }
 
 // Wrap in React.cache() for request-scoped deduplication.
@@ -64,10 +65,10 @@ export const fetchContentBySlug = cache(_fetchContentBySlug)
 // persona, and blog pages.
 //
 // NOTE: This fix addresses the top-level public-content leak. Nested-
-// relationship draft data continues to be governed by RLS at the related
-// entity tables (which enforce published = true for leaf tables) — no
-// regression, but worth noting since it's the long-standing JS-filtering
-// pattern (see GitHub issue #143).
+// relationship data is NOT protected by RLS here — the service-role client
+// bypasses RLS entirely. Draft / soft-deleted related entities are filtered
+// out in JS by flattenRelationships() (the long-standing JS-filtering
+// pattern, see GitHub issue #143).
 // ---------------------------------------------------------------------------
 async function _fetchPreviewContentBySlug(
   typeSlug: string,
@@ -120,8 +121,11 @@ export async function listContent(
   const { page = 1, pageSize = 50, search, publishedOnly = true } = options
   const supabase = createServiceRoleSupabaseClient()
 
+  // Soft-deleted (trashed) rows are never listed. Every registered content
+  // table has a deleted_at column (see src/types/supabase.ts).
   let query = fromTable(supabase, ct.tableName)
     .select('*', { count: 'exact' })
+    .is('deleted_at', null)
 
   if (publishedOnly) {
     query = query.eq('published', true)

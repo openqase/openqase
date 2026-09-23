@@ -216,10 +216,18 @@ export function BlogPostsList({ initialBlogPosts }: BlogPostsListProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Blog Posts</h1>
-        <Button onClick={() => router.push('/admin/blog/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/blog/trash">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Trash
+            </Link>
+          </Button>
+          <Button onClick={() => router.push('/admin/blog/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New
+          </Button>
+        </div>
       </div>
       
       <div className="flex items-center">

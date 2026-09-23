@@ -13,6 +13,7 @@ export const quantumCompanies = defineContentType({
     { name: 'main_content', type: 'markdown' },
     { name: 'company_type', type: 'text' },
     { name: 'founded_year', type: 'number', min: 1900, max: 2100 },
+    { name: 'funding_stage', type: 'text' },
     { name: 'headquarters', type: 'text' },
     { name: 'website_url', type: 'url' },
     { name: 'linkedin_url', type: 'url' },

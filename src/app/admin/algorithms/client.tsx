@@ -158,12 +158,20 @@ export function AlgorithmsClient({ data }: AlgorithmsClientProps) {
             Create and manage quantum algorithm descriptions and implementations.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/algorithms/new">
-            <Plus className="w-4 h-4 mr-2" />
-            New Algorithm
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/algorithms/trash">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Trash
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/algorithms/new">
+              <Plus className="w-4 h-4 mr-2" />
+              New Algorithm
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <AdminListFilters

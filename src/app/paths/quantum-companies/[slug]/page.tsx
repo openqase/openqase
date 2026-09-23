@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -26,7 +26,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: QuantumCompanyPageProps) {
   const resolvedParams = await params;
   
-  const quantumCompany = await fetchContentBySlug('quantum-companies', resolvedParams.slug) as EnrichedQuantumCompany | null;
+  const quantumCompany = await fetchPreviewContentBySlug('quantum-companies', resolvedParams.slug) as EnrichedQuantumCompany | null;
 
   if (!quantumCompany) {
     return {
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: QuantumCompanyPageProps) {
 export default async function QuantumCompanyDetailPage({ params }: QuantumCompanyPageProps) {
   const resolvedParams = await params;
   
-  const quantumCompany = await fetchContentBySlug('quantum-companies', resolvedParams.slug) as EnrichedQuantumCompany | null;
+  const quantumCompany = await fetchPreviewContentBySlug('quantum-companies', resolvedParams.slug) as EnrichedQuantumCompany | null;
 
   if (!quantumCompany) {
     notFound();

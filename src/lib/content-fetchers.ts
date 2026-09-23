@@ -22,7 +22,9 @@ export async function getStaticContentList<T>(
   
   let query = supabase
     .from(contentType)
-    .select('*');
+    .select('*')
+    // Soft-deleted content never appears on public pages (preview included)
+    .is('deleted_at', null);
 
   // Apply published filter unless in preview mode
   if (!options.preview) {
@@ -128,7 +130,8 @@ export async function getRelatedContent<T>(
   let query = supabase
     .from(targetContentType)
     .select('*')
-    .in('id', relatedIds);
+    .in('id', relatedIds)
+    .is('deleted_at', null);
 
   if (!options.preview) {
     query = query.eq('published', true);
@@ -249,14 +252,26 @@ export interface SearchableItem {
  * - Truncated descriptions (150 chars)
  * - Limited companies (first 2)
  * - Limited use cases (first 2) 
- * - Published content only
+ * - Published, non-deleted content only
  */
 export async function fetchSearchData(
   options: { preview?: boolean } = {}
 ): Promise<SearchableItem[]> {
   const supabase = createServiceRoleSupabaseClient();
-  
-  const contentTypes: ContentType[] = ['case_studies', 'algorithms', 'industries', 'personas'];
+
+  // Every searchable table has a public [slug] page and a deleted_at column.
+  // URLs per type are mapped in src/components/GlobalSearch.tsx.
+  const contentTypes: ContentType[] = [
+    'case_studies',
+    'algorithms',
+    'industries',
+    'personas',
+    'blog_posts',
+    'quantum_hardware',
+    'quantum_software',
+    'quantum_companies',
+    'partner_companies',
+  ];
   const searchItems: SearchableItem[] = [];
 
   // Helper function to truncate text
@@ -282,8 +297,14 @@ export async function fetchSearchData(
         case 'algorithms':
           selectFields = 'id, name, description, slug, quantum_advantage, use_cases';
           break;
+        case 'quantum_hardware':
+        case 'quantum_software':
+          selectFields = 'id, name, description, slug, vendor';
+          break;
         case 'industries':
         case 'personas':
+        case 'quantum_companies':
+        case 'partner_companies':
           selectFields = 'id, name, description, slug';
           break;
         default:
@@ -292,7 +313,8 @@ export async function fetchSearchData(
 
       let query = supabase
         .from(contentType)
-        .select(selectFields);
+        .select(selectFields)
+        .is('deleted_at', null);
 
       if (!options.preview) {
         query = query.eq('published', true);
@@ -317,6 +339,7 @@ export async function fetchSearchData(
           year?: number | null;
           quantum_advantage?: string | null;
           use_cases?: string[];
+          vendor?: string | null;
         };
         const transformedItems: SearchableItem[] = (data as unknown as SearchRow[]).map((item) => ({
           id: item.id,
@@ -329,6 +352,8 @@ export async function fetchSearchData(
             ...(item.quantum_companies && { 
               companies: limitArray([...(item.quantum_companies || []), ...(item.partner_companies || [])], 2) 
             }),
+            // Hardware/software vendor is searchable like a company name
+            ...(item.vendor && { companies: [item.vendor] }),
             ...(item.year && { year: item.year }),
             ...(item.quantum_advantage && { quantum_advantage: item.quantum_advantage }),
             // Limit use cases to first 2
@@ -379,7 +404,8 @@ export async function searchContent<T>(
       let query = supabase
         .from(contentType)
         .select('*')
-        .or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%,main_content.ilike.%${sanitized}%`);
+        .or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%,main_content.ilike.%${sanitized}%`)
+        .is('deleted_at', null);
 
       if (!options.preview) {
         query = query.eq('published', true);

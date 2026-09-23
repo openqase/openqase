@@ -3,6 +3,7 @@
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
 import type { TablesInsert } from '@/types/supabase'
+import type { ResourceLink } from '@/components/admin/ResourceLinksEditor'
 
 interface CaseStudyFormData {
   id?: string
@@ -13,7 +14,7 @@ interface CaseStudyFormData {
   published?: boolean
   featured?: boolean
   academic_references?: string | null
-  resource_links?: string | null
+  resource_links?: ResourceLink[] | null
   year?: number | null
   industries?: string[]
   algorithms?: string[]
@@ -28,14 +29,17 @@ export const saveCaseStudy = withAdmin(async (values: CaseStudyFormData): Promis
   try {
     const { id, industries, algorithms, personas, quantum_software, quantum_hardware, quantum_companies, partner_companies, ...data } = values
 
+    // Pass every defined array through, including [] — an empty array means
+    // "the editor removed all links" and must clear the junction rows.
+    // Only undefined (field not sent) leaves existing links untouched.
     const relationships: Record<string, string[]> = {}
-    if (industries?.length) relationships.industries = industries
-    if (algorithms?.length) relationships.algorithms = algorithms
-    if (personas?.length) relationships.personas = personas
-    if (quantum_software?.length) relationships.quantum_software = quantum_software
-    if (quantum_hardware?.length) relationships.quantum_hardware = quantum_hardware
-    if (quantum_companies?.length) relationships.quantum_companies = quantum_companies
-    if (partner_companies?.length) relationships.partner_companies = partner_companies
+    if (industries !== undefined) relationships.industries = industries
+    if (algorithms !== undefined) relationships.algorithms = algorithms
+    if (personas !== undefined) relationships.personas = personas
+    if (quantum_software !== undefined) relationships.quantum_software = quantum_software
+    if (quantum_hardware !== undefined) relationships.quantum_hardware = quantum_hardware
+    if (quantum_companies !== undefined) relationships.quantum_companies = quantum_companies
+    if (partner_companies !== undefined) relationships.partner_companies = partner_companies
 
     if (id) {
       const result = await updateContent('case-studies', id, data, relationships)
