@@ -3,20 +3,22 @@ import { publicQuery, getPublishedBySlug } from './public-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 
+// Mirrors supabase-js: `.from()` returns a query builder with only
+// select/insert/update/delete — filter methods exist only after `.select()`.
 function makeMockClient() {
   const calls: Array<{ method: string; args: unknown[] }> = [];
   const builder: Record<string, unknown> = {};
-  const recorder = (method: string) =>
+  const recorder = (method: string, returns: unknown = builder) =>
     vi.fn((...args: unknown[]) => {
       calls.push({ method, args });
-      return builder;
+      return returns;
     });
-  builder.select = recorder('select');
   builder.eq = recorder('eq');
   builder.is = recorder('is');
+  builder.order = recorder('order');
   builder.maybeSingle = recorder('maybeSingle');
-  builder.from = recorder('from');
-  const client = { from: builder.from } as unknown as SupabaseClient<Database>;
+  const queryBuilder = { select: recorder('select') };
+  const client = { from: recorder('from', queryBuilder) } as unknown as SupabaseClient<Database>;
   return { client, calls, builder };
 }
 
@@ -34,12 +36,25 @@ describe('publicQuery', () => {
     expect(calls).toContainEqual({ method: 'is', args: ['deleted_at', null] });
   });
 
-  it('returns a builder that supports further chaining (.select, .eq, .order)', () => {
+  it('selects before filtering (from() alone has no filter methods)', () => {
+    const { client, calls } = makeMockClient();
+    publicQuery(client, 'case_studies', 'id, slug');
+    expect(calls.map(c => c.method)).toEqual(['from', 'select', 'eq', 'is']);
+    expect(calls).toContainEqual({ method: 'select', args: ['id, slug'] });
+  });
+
+  it('defaults to selecting all columns', () => {
+    const { client, calls } = makeMockClient();
+    publicQuery(client, 'case_studies');
+    expect(calls).toContainEqual({ method: 'select', args: ['*'] });
+  });
+
+  it('returns a filter builder that supports further chaining (.eq, .order)', () => {
     const { client, builder } = makeMockClient();
     const result = publicQuery(client, 'case_studies');
     expect(result).toBe(builder);
-    expect(typeof result.select).toBe('function');
     expect(typeof result.eq).toBe('function');
+    expect(typeof result.order).toBe('function');
   });
 });
 

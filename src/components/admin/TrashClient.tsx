@@ -7,9 +7,22 @@ import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useState } from 'react'
-import type { CaseStudy as BaseCaseStudy } from './page'
 
-type CaseStudy = BaseCaseStudy & { deleted_by_email?: string }
+export interface TrashItem {
+  id: string
+  title: string
+  deleted_at: string | null
+  deleted_by_email?: string
+}
+
+interface TrashClientProps {
+  data: TrashItem[]
+  label: { singular: string; plural: string }
+  /** Admin listing page, e.g. /admin/case-studies */
+  adminPath: string
+  /** API base, e.g. /api/case-studies (…/restore, …/permanent-delete) */
+  apiBase: string
+}
 
 const createColumns = (
   selectedItems: Set<string>,
@@ -18,13 +31,13 @@ const createColumns = (
   allSelected: boolean,
   onRestore: (id: string) => void,
   onPermanentDelete: (id: string) => void
-): ColumnDef<CaseStudy>[] => [
+): ColumnDef<TrashItem>[] => [
   {
     id: 'select',
-    header: ({ table }) => (
+    header: () => (
       <Checkbox
         checked={allSelected}
-        onCheckedChange={onSelectAll}
+        onCheckedChange={(checked) => onSelectAll(!!checked)}
         aria-label="Select all"
       />
     ),
@@ -72,38 +85,41 @@ const createColumns = (
   {
     accessorKey: 'actions',
     header: '',
-    cell: ({ row }) => {
-      return (
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onRestore(row.original.id)}
-          >
-            <RotateCcw className="w-4 h-4 mr-1" />
-            Restore
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onPermanentDelete(row.original.id)}
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Delete Forever
-          </Button>
-        </div>
-      );
-    }
+    cell: ({ row }) => (
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onRestore(row.original.id)}
+        >
+          <RotateCcw className="w-4 h-4 mr-1" />
+          Restore
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onPermanentDelete(row.original.id)}
+        >
+          <Trash2 className="w-4 h-4 mr-1" />
+          Delete Forever
+        </Button>
+      </div>
+    )
   }
 ]
 
-interface TrashClientProps {
-  data: CaseStudy[]
-}
-
-export function TrashClient({ data }: TrashClientProps) {
+/**
+ * Shared trash UI for every CMS content type. Rendered by AdminTrashPage;
+ * see src/app/admin/<type>/trash/page.tsx.
+ */
+export function TrashClient({ data, label, adminPath, apiBase }: TrashClientProps) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
+
+  const singular = label.singular.toLowerCase()
+  const plural = label.plural.toLowerCase()
+  const noun = (count: number) => (count === 1 ? singular : plural)
+  const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
   const handleSelectItem = (id: string, selected: boolean) => {
     const newSelection = new Set(selectedItems)
@@ -116,115 +132,75 @@ export function TrashClient({ data }: TrashClientProps) {
   }
 
   const handleSelectAll = (selected: boolean) => {
-    if (selected) {
-      setSelectedItems(new Set(data.map(item => item.id)))
-    } else {
-      setSelectedItems(new Set())
-    }
+    setSelectedItems(selected ? new Set(data.map(item => item.id)) : new Set())
   }
 
-  const handleRestore = async (id: string) => {
-    if (!confirm('Restore this case study?')) return
+  /** POST ids to /restore or /permanent-delete, then reload on success. */
+  const runAction = async (
+    action: 'restore' | 'permanent-delete',
+    ids: string[],
+    messages: { confirm: string; success: string; failure: string; error: string }
+  ) => {
+    if (ids.length === 0) return
+    if (!confirm(messages.confirm)) return
 
     setIsLoading(true)
     try {
-      const response = await fetch('/api/case-studies/restore', {
+      const response = await fetch(`${apiBase}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify(ids.length === 1 ? { id: ids[0] } : { ids })
       })
 
       if (response.ok) {
-        alert('Case study restored')
-        window.location.reload()
-      } else {
-        const error = await response.text()
-        alert(`Failed to restore: ${error}`)
-      }
-    } catch (error) {
-      console.error('Restore error:', error)
-      alert('Error restoring case study')
-    }
-    setIsLoading(false)
-  }
-
-  const handlePermanentDelete = async (id: string) => {
-    if (!confirm('PERMANENTLY delete this case study? This cannot be undone!')) return
-
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/case-studies/permanent-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      })
-
-      if (response.ok) {
-        alert('Case study permanently deleted')
-        window.location.reload()
-      } else {
-        const error = await response.text()
-        alert(`Failed to delete: ${error}`)
-      }
-    } catch (error) {
-      console.error('Delete error:', error)
-      alert('Error deleting case study')
-    }
-    setIsLoading(false)
-  }
-
-  const handleBulkRestore = async () => {
-    if (selectedItems.size === 0) return
-    if (!confirm(`Restore ${selectedItems.size} case studies?`)) return
-
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/case-studies/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedItems) })
-      })
-
-      if (response.ok) {
-        alert(`Restored ${selectedItems.size} case studies`)
+        alert(messages.success)
         setSelectedItems(new Set())
         window.location.reload()
       } else {
         const error = await response.text()
-        alert(`Failed to restore: ${error}`)
+        alert(`${messages.failure}: ${error}`)
       }
     } catch (error) {
-      console.error('Bulk restore error:', error)
-      alert('Error restoring case studies')
+      console.error(`${action} error:`, error)
+      alert(messages.error)
     }
     setIsLoading(false)
   }
 
-  const handleBulkPermanentDelete = async () => {
-    if (selectedItems.size === 0) return
-    if (!confirm(`PERMANENTLY delete ${selectedItems.size} case studies? This cannot be undone!`)) return
+  const handleRestore = (id: string) =>
+    runAction('restore', [id], {
+      confirm: `Restore this ${singular}?`,
+      success: `${capitalise(singular)} restored`,
+      failure: 'Failed to restore',
+      error: `Error restoring ${singular}`,
+    })
 
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/case-studies/permanent-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedItems) })
-      })
+  const handlePermanentDelete = (id: string) =>
+    runAction('permanent-delete', [id], {
+      confirm: `PERMANENTLY delete this ${singular}? This cannot be undone!`,
+      success: `${capitalise(singular)} permanently deleted`,
+      failure: 'Failed to delete',
+      error: `Error deleting ${singular}`,
+    })
 
-      if (response.ok) {
-        alert(`Permanently deleted ${selectedItems.size} case studies`)
-        setSelectedItems(new Set())
-        window.location.reload()
-      } else {
-        const error = await response.text()
-        alert(`Failed to delete: ${error}`)
-      }
-    } catch (error) {
-      console.error('Bulk delete error:', error)
-      alert('Error deleting case studies')
-    }
-    setIsLoading(false)
+  const handleBulkRestore = () => {
+    const ids = Array.from(selectedItems)
+    return runAction('restore', ids, {
+      confirm: `Restore ${ids.length} ${noun(ids.length)}?`,
+      success: `Restored ${ids.length} ${noun(ids.length)}`,
+      failure: 'Failed to restore',
+      error: `Error restoring ${plural}`,
+    })
+  }
+
+  const handleBulkPermanentDelete = () => {
+    const ids = Array.from(selectedItems)
+    return runAction('permanent-delete', ids, {
+      confirm: `PERMANENTLY delete ${ids.length} ${noun(ids.length)}? This cannot be undone!`,
+      success: `Permanently deleted ${ids.length} ${noun(ids.length)}`,
+      failure: 'Failed to delete',
+      error: `Error deleting ${plural}`,
+    })
   }
 
   const allSelected = data.length > 0 && selectedItems.size === data.length
@@ -243,16 +219,16 @@ export function TrashClient({ data }: TrashClientProps) {
         <div>
           <div className="flex items-center gap-4 mb-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/admin/case-studies">
+              <Link href={adminPath}>
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Case Studies
+                Back to {label.plural}
               </Link>
             </Button>
           </div>
           <h1 className="text-3xl font-bold mb-2">Trash</h1>
           <p className="text-muted-foreground">
-            {data.length} deleted case {data.length === 1 ? 'study' : 'studies'}.
-            Restore or permanently delete items here.
+            {data.length} deleted {noun(data.length)}.
+            Restore or permanently delete items here. Restored items come back as drafts.
           </p>
         </div>
       </div>

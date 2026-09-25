@@ -20,9 +20,11 @@ export type ContentTable =
 /**
  * Sanctioned anonymous-read primitive for content tables.
  *
- * Returns a Supabase query builder with `.eq('published', true)` and
- * `.is('deleted_at', null)` already chained. Callers can keep adding
- * `.select(...)`, `.eq(...)`, `.order(...)`, etc.
+ * Returns a Supabase filter builder for `.select(columns)` with
+ * `.eq('published', true)` and `.is('deleted_at', null)` already chained.
+ * Callers can keep adding `.eq(...)`, `.order(...)`, `.range(...)`, etc.
+ * (`.select()` must come first: the builder returned by `.from()` has no
+ * filter methods.)
  *
  * Use with an RLS-respecting client (`createServerSupabaseClient()`),
  * NOT a service-role client. Service-role bypasses RLS, which defeats
@@ -30,9 +32,11 @@ export type ContentTable =
  */
 export function publicQuery<T extends ContentTable>(
   client: SupabaseClient<Database>,
-  table: T
+  table: T,
+  columns = '*'
 ) {
   return fromTable(client, table)
+    .select(columns)
     .eq('published', true)
     .is('deleted_at', null);
 }
@@ -44,7 +48,8 @@ export function publicQuery<T extends ContentTable>(
 export function getPublishedBySlug<T extends ContentTable>(
   client: SupabaseClient<Database>,
   table: T,
-  slug: string
+  slug: string,
+  columns = '*'
 ) {
-  return publicQuery(client, table).eq('slug', slug).maybeSingle();
+  return publicQuery(client, table, columns).eq('slug', slug).maybeSingle();
 }

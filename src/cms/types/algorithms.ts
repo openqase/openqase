@@ -11,7 +11,7 @@ export const algorithms = defineContentType({
     { name: 'slug', type: 'slug', from: 'name' },
     { name: 'description', type: 'textarea', maxLength: 1000 },
     { name: 'main_content', type: 'markdown' },
-    { name: 'use_cases', type: 'textarea' },
+    { name: 'use_cases', type: 'tags' },
     { name: 'steps', type: 'markdown' },
     { name: 'academic_references', type: 'markdown' },
     { name: 'quantum_advantage', type: 'textarea' },

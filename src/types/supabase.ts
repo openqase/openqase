@@ -1309,6 +1309,7 @@ export type Database = {
     }
     Functions: {
       create_slug: { Args: { name_text: string }; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
       recover_content: {
         Args: { content_id: string; table_name: string }
         Returns: boolean

@@ -1,8 +1,13 @@
-import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
 import { BulkActionSchema } from '@/lib/schemas/bulk-action'
+import { deleteContentMany } from '@/cms/operations'
 
+/**
+ * Soft delete (move to trash) one or more blog posts.
+ * Uses the shared CMS soft-delete path: sets deleted_at / deleted_by,
+ * published=false and revalidates admin list, public list and slug pages.
+ */
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin()
@@ -18,33 +23,23 @@ export async function POST(request: NextRequest) {
     }
     const { id, ids } = parsed.data
 
-    const supabase = createServiceRoleSupabaseClient()
-    
     // Handle both single and bulk delete
     const idsToDelete = ids || (id ? [id] : [])
-    
-    const errors: string[] = []
-    for (const contentId of idsToDelete) {
-      const { error } = await supabase.rpc('soft_delete_content', {
-        table_name: 'blog_posts',
-        content_id: contentId
-      })
-      
-      if (error) {
-        console.error(`Error soft deleting blog post ${contentId}:`, error)
-        errors.push(contentId)
-      }
-    }
 
-    if (errors.length > 0) {
-      return NextResponse.json({ 
-        error: `Failed to delete some blog posts: ${errors.join(', ')}` 
+    const { failed, errors } = await deleteContentMany('blog-posts', idsToDelete, {
+      deletedBy: auth.user.id,
+    })
+
+    if (failed.length > 0) {
+      console.error('Error soft deleting blog posts:', errors)
+      return NextResponse.json({
+        error: `Failed to delete some blog posts: ${failed.join(', ')}`
       }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Unexpected error in blog-posts delete:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

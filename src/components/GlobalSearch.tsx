@@ -43,6 +43,16 @@ const SearchResultItem = memo(function SearchResultItem({ result, onSelect }: Se
         return `/paths/industry/${item.slug}`;
       case 'personas':
         return `/paths/persona/${item.slug}`;
+      case 'blog_posts':
+        return `/blog/${item.slug}`;
+      case 'quantum_hardware':
+        return `/paths/quantum-hardware/${item.slug}`;
+      case 'quantum_software':
+        return `/paths/quantum-software/${item.slug}`;
+      case 'quantum_companies':
+        return `/paths/quantum-companies/${item.slug}`;
+      case 'partner_companies':
+        return `/paths/partner-companies/${item.slug}`;
       default:
         return `/${item.slug}`;
     }
@@ -55,6 +65,9 @@ const SearchResultItem = memo(function SearchResultItem({ result, onSelect }: Se
         return item.metadata.companies?.slice(0, 2) || [];
       case 'algorithms':
         return item.metadata.quantum_advantage ? [item.metadata.quantum_advantage] : [];
+      case 'quantum_hardware':
+      case 'quantum_software':
+        return item.metadata.companies?.slice(0, 1) || [];
       default:
         return [];
     }
@@ -216,7 +229,32 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
                 results={searchResults.personas}
                 onSelect={closeSearch}
               />
-              
+              <SearchResultGroup
+                title="Quantum Hardware"
+                results={searchResults.quantum_hardware}
+                onSelect={closeSearch}
+              />
+              <SearchResultGroup
+                title="Quantum Software"
+                results={searchResults.quantum_software}
+                onSelect={closeSearch}
+              />
+              <SearchResultGroup
+                title="Quantum Companies"
+                results={searchResults.quantum_companies}
+                onSelect={closeSearch}
+              />
+              <SearchResultGroup
+                title="Partner Companies"
+                results={searchResults.partner_companies}
+                onSelect={closeSearch}
+              />
+              <SearchResultGroup
+                title="Blog"
+                results={searchResults.blog_posts}
+                onSelect={closeSearch}
+              />
+
               {/* View All Results Footer */}
               {totalResults > 9 && (
                 <div className="border-t border-border mt-2 pt-2 px-3">

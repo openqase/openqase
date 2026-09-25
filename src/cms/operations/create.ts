@@ -34,10 +34,13 @@ export async function createContent(
 
   const record = result as Record<string, unknown>
 
+  let relError: string | undefined
   if (relationships && record.id) {
-    await saveRelationships(ct, record.id as string, relationships)
+    relError = (await saveRelationships(ct, record.id as string, relationships)).error
   }
 
   revalidateContentType(typeSlug, record.slug as string | undefined)
-  return { data: record }
+  // The row itself was created, so return it alongside any relationship
+  // error — callers check `error` first and surface it to the editor.
+  return relError ? { data: record, error: relError } : { data: record }
 }

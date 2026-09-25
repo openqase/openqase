@@ -36,10 +36,13 @@ export async function updateContent(
 
   const record = result as Record<string, unknown>
 
+  let relError: string | undefined
   if (relationships) {
-    await saveRelationships(ct, id, relationships)
+    relError = (await saveRelationships(ct, id, relationships)).error
   }
 
   revalidateContentType(typeSlug, record.slug as string | undefined)
-  return { data: record }
+  // The row itself was updated, so return it alongside any relationship
+  // error — callers check `error` first and surface it to the editor.
+  return relError ? { data: record, error: relError } : { data: record }
 }

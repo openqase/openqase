@@ -13,7 +13,7 @@ import { PublishButton } from '@/components/admin/PublishButton';
 import { TagInput } from '@/components/ui/tag-input';
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation';
 import { useTransition } from 'react';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { saveAlgorithm, publishAlgorithm, unpublishAlgorithm } from './actions';
 import { Tables } from '@/types/supabase';
@@ -274,6 +274,22 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
               )}
             </Button>
             
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Open preview in new tab (draft mode via /api/preview)
+                const previewUrl = `/api/preview?type=algorithm&slug=${encodeURIComponent(values.slug)}`;
+                window.open(previewUrl, '_blank');
+              }}
+              disabled={!values.id || !values.slug}
+              className="min-w-[100px]"
+              title={!values.id || !values.slug ? "Save the algorithm first to preview" : "Preview algorithm"}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Button>
             <PublishButton
               isPublished={values.published}
               onPublish={handlePublish}

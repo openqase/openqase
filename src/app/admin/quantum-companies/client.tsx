@@ -143,6 +143,12 @@ export function QuantumCompaniesClient({ data }: QuantumCompaniesClientProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/quantum-companies/trash">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Trash
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/admin/quantum-companies/new">
               <Plus className="w-4 h-4 mr-2" />
