@@ -75,8 +75,9 @@ describe('sitemap', () => {
     const entries = await sitemap()
     expect(entries.length).toBeGreaterThan(0)
     for (const entry of entries) {
-      expect(entry.url.startsWith(BASE_URL)).toBe(true)
-      const urlPath = entry.url.slice(BASE_URL.length) || '/'
+      const url = new URL(entry.url)
+      expect(url.origin).toBe(new URL(BASE_URL).origin)
+      const urlPath = url.pathname.replace(/\/$/, '') || '/'
       expect(routeExists(urlPath), `no route for ${urlPath}`).toBe(true)
     }
   })
