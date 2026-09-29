@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
+import type { Tables } from '@/types/supabase'
 import { PartnerCompanyForm } from './client'
 
 export const dynamic = 'force-dynamic'
@@ -21,8 +22,8 @@ export default async function PartnerCompanyEditPage({ params }: PartnerCompanyE
   const supabase = createServiceRoleSupabaseClient()
   const isNew = resolvedParams.id === 'new'
 
-  let partnerCompany = null
-  let caseStudies: any[] = []
+  let partnerCompany: Tables<'partner_companies'> | null = null
+  let caseStudies: Array<{ id: string; title: string; slug: string }> = []
 
   try {
     // Get case studies for relationship selector

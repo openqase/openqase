@@ -164,7 +164,7 @@ describe('getFAQSchema', () => {
   it('has main entity questions', () => {
     const schema = getFAQSchema()
     expect(schema.mainEntity.length).toBeGreaterThanOrEqual(3)
-    schema.mainEntity.forEach((q: any) => {
+    schema.mainEntity.forEach(q => {
       expect(q['@type']).toBe('Question')
       expect(q.name).toBeDefined()
       expect(q.acceptedAnswer['@type']).toBe('Answer')

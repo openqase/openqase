@@ -20,8 +20,6 @@ interface PersonaListProps {
   personas: Persona[];
 }
 
-type SortOption = 'name-asc' | 'name-desc' | 'updated-asc' | 'updated-desc';
-
 const PERSONAS_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'updated-desc'] as const;
 
 export default function PersonaList({ personas }: PersonaListProps) {

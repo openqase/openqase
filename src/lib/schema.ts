@@ -10,7 +10,7 @@ interface BaseContent {
   slug?: string;
 }
 
-interface CaseStudy extends BaseContent {
+export interface CaseStudy extends BaseContent {
   id: string;
   title: string;
   description: string;
@@ -28,14 +28,14 @@ interface CaseStudy extends BaseContent {
   case_study_partner_company_relations?: Array<{ partner_companies: { name: string; slug?: string | null } | null }>;
 }
 
-interface LearningContent extends BaseContent {
+export interface LearningContent extends BaseContent {
   id: string;
   name: string;
   description: string;
   slug: string;
 }
 
-interface BlogPost extends BaseContent {
+export interface BlogPost extends BaseContent {
   id: string;
   title: string;
   description?: string;
@@ -47,7 +47,7 @@ interface BlogPost extends BaseContent {
   content?: string;
 }
 
-interface QuantumEntity extends BaseContent {
+export interface QuantumEntity extends BaseContent {
   id: string;
   name: string;
   description: string;

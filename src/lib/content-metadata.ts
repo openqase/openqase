@@ -27,13 +27,21 @@ function formatDate(dateString: string | null): string | null {
 }
 
 // Metadata configuration for each content type
-export const contentMetadataConfig = {
+type AnyContent = CaseStudy | Algorithm | Industry | Persona;
+
+type ContentTypeConfigMap = {
+  'case-studies': ContentTypeConfig<CaseStudy>;
+  'algorithms': ContentTypeConfig<Algorithm>;
+  'industries': ContentTypeConfig<Industry>;
+  'personas': ContentTypeConfig<Persona>;
+};
+
+// Metadata configuration for each content type
+export const contentMetadataConfig: ContentTypeConfigMap = {
   'case-studies': {
-    list: (item: CaseStudy) => {
-      return [
-        item.year
-      ];
-    }
+    list: (item: CaseStudy) => [
+      item.year
+    ]
   },
   'algorithms': {
     list: (item: Algorithm) => [
@@ -50,10 +58,10 @@ export const contentMetadataConfig = {
       formatDate(item.updated_at)
     ]
   }
-} as const satisfies Record<string, ContentTypeConfig<any>>;
+};
 
 // Type for valid content type keys
-export type ContentType = keyof typeof contentMetadataConfig;
+export type ContentType = keyof ContentTypeConfigMap;
 
 /**
  * Get metadata for a content item based on content type and view mode
@@ -65,7 +73,7 @@ export type ContentType = keyof typeof contentMetadataConfig;
  */
 export function getContentMetadata(
   contentType: ContentType,
-  item: any,
+  item: AnyContent | Record<string, unknown>,
   viewMode: ViewMode
 ): Array<string | number> {
   const config = contentMetadataConfig[contentType];
@@ -89,7 +97,7 @@ export function getContentMetadata(
   
   try {
     // Extract metadata and filter out null/undefined values
-    return extractor(item).filter((value): value is string | number => 
+    return (extractor as MetadataExtractor<unknown>)(item).filter((value): value is string | number => 
       value !== null && value !== undefined
     );
   } catch (error) {

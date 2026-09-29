@@ -11,25 +11,52 @@ import { Textarea } from '@/components/ui/textarea';
 import { ContentCompleteness } from '@/components/admin/ContentCompleteness';
 import { PublishButton } from '@/components/admin/PublishButton';
 import { Checkbox } from '@/components/ui/checkbox';
-import { TagInput } from '@/components/ui/tag-input';
 import { ResourceLinksEditor } from '@/components/admin/ResourceLinksEditor';
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation';
 import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { saveCaseStudy, publishCaseStudy, unpublishCaseStudy } from './actions';
-import { validateContent as validateContentSpelling, type ContentIssue } from '@/lib/content-validation';
+import { validateContent as validateContentSpelling } from '@/lib/content-validation';
 import { ContentValidationWarnings } from '@/components/admin/ContentValidationWarnings';
+import type { ResourceLink } from '@/components/admin/ResourceLinksEditor';
 
+
+interface OptionItem {
+  id: string;
+  slug: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+interface CaseStudyFormData {
+  id?: string;
+  title?: string;
+  slug?: string;
+  description?: string | null;
+  main_content?: string | null;
+  quantum_software?: string[];
+  quantum_hardware?: string[];
+  quantum_companies?: string[];
+  partner_companies?: string[];
+  algorithms?: string[];
+  industries?: string[];
+  personas?: string[];
+  published?: boolean | null;
+  featured?: boolean | null;
+  academic_references?: string | null;
+  resource_links?: ResourceLink[] | null;
+  year?: number | null;
+}
 
 interface CaseStudyFormProps {
-  caseStudy: any | null;
-  algorithms: any[];
-  industries: any[];
-  personas: any[];
-  quantumSoftware: any[];
-  quantumHardware: any[];
-  quantumCompanies: any[];
-  partnerCompanies: any[];
+  caseStudy: CaseStudyFormData | null;
+  algorithms: OptionItem[];
+  industries: OptionItem[];
+  personas: OptionItem[];
+  quantumSoftware: OptionItem[];
+  quantumHardware: OptionItem[];
+  quantumCompanies: OptionItem[];
+  partnerCompanies: OptionItem[];
   isNew: boolean;
 }
 
@@ -64,7 +91,7 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     published: isNew ? false : caseStudy?.published || false,
     featured: isNew ? false : caseStudy?.featured || false,
     academic_references: isNew ? '' : caseStudy?.academic_references || '',
-    resource_links: isNew ? [] : caseStudy?.resource_links || [],
+    resource_links: (isNew ? [] : caseStudy?.resource_links || []) as ResourceLink[],
     year: isNew ? new Date().getFullYear() : caseStudy?.year || new Date().getFullYear(),
   });
   const [isDirty, setIsDirty] = useState(false);
@@ -79,14 +106,14 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
   const completionPercentage = calculateCompletionPercentage({ values, validationRules });
   
   // Handle field change
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     const newValues = {
       ...values,
       [field]: value
     };
     
     // Auto-generate slug from title if slug is empty
-    if (field === 'title' && value && !values.slug) {
+    if (field === 'title' && typeof value === 'string' && value && !values.slug) {
       const autoSlug = value
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
@@ -158,13 +185,8 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     
     
     startTransition(async () => {
-      const submitStartTime = Date.now();
-      
       try {
-        
         const result = await saveCaseStudy(values);
-        
-        const submitTime = Date.now() - submitStartTime;
         
         if (result?.error) {
           throw new Error(result.error);
@@ -173,7 +195,6 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
         if (!result?.caseStudy) {
           throw new Error('Save operation did not return case study data');
         }
-        
         
         // If this was a new case study and we got an ID back, redirect to edit page
         if (isNew && result.caseStudy?.id) {
@@ -188,8 +209,6 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           duration: 3000,
         });
       } catch (error: unknown) {
-        const submitTime = Date.now() - submitStartTime;
-
         // Show specific error message if available
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while saving';
         
@@ -217,8 +236,6 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     
     
     startTransition(async () => {
-      const publishStartTime = Date.now();
-      
       try {
         // First save the content
         const saveResult = await saveCaseStudy(values);
@@ -234,8 +251,6 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           throw new Error(publishResult?.error || 'Publish operation failed');
         }
         
-        const publishTime = Date.now() - publishStartTime;
-        
         setValues(prev => ({ ...prev, published: true }));
         
         toast({
@@ -244,8 +259,6 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           duration: 3000,
         });
       } catch (error: unknown) {
-        const publishTime = Date.now() - publishStartTime;
-
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while publishing';
         
         toast({
@@ -264,16 +277,12 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     
     
     startTransition(async () => {
-      const unpublishStartTime = Date.now();
-      
       try {
         const result = await unpublishCaseStudy(values.id!, values.slug);
         
         if (result?.error || !result?.success) {
           throw new Error(result?.error || 'Unpublish operation failed');
         }
-        
-        const unpublishTime = Date.now() - unpublishStartTime;
         
         setValues(prev => ({ ...prev, published: false }));
         
@@ -283,8 +292,6 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           duration: 3000,
         });
       } catch (error: unknown) {
-        const unpublishTime = Date.now() - unpublishStartTime;
-
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while unpublishing';
         
         toast({
@@ -383,7 +390,7 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
               onUnpublish={handleUnpublish}
               validateContent={validateContent}
               disabled={isPending}
-              onTabChange={(tab: string) => {}}
+              onTabChange={() => {}}
               getTabLabel={(tab: string) => tab}
             />
           </div>

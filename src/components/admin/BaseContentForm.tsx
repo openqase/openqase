@@ -16,14 +16,14 @@ import {
   ValidationIssues
 } from '@/utils/form-validation';
 
-interface BaseContentFormProps<T extends Record<string, any>> {
+interface BaseContentFormProps<T extends Record<string, unknown>> {
   initialValues: T;
   onSave: (values: T) => Promise<void>;
   onPublish?: (values: T) => Promise<void>;
   onUnpublish?: (values: T) => Promise<void>;
   validationRules: ValidationRule[];
   tabs: Omit<TabItem, 'content'>[];
-  renderTabContent: (tabValue: string, values: T, onChange: (field: keyof T, value: any) => void) => React.ReactNode;
+  renderTabContent: (tabValue: string, values: T, onChange: (field: keyof T, value: unknown) => void) => React.ReactNode;
   backUrl: string;
   isNew?: boolean;
   contentType: string;
@@ -45,7 +45,7 @@ interface BaseContentFormProps<T extends Record<string, any>> {
  * @param isNew - Whether this is a new content item
  * @param contentType - Type of content being edited
  */
-export function BaseContentForm<T extends Record<string, any>>({
+export function BaseContentForm<T extends Record<string, unknown>>({
   initialValues,
   onSave,
   onPublish,
@@ -54,7 +54,7 @@ export function BaseContentForm<T extends Record<string, any>>({
   tabs,
   renderTabContent,
   backUrl,
-  isNew = false,
+  isNew: _isNew = false,
   contentType
 }: BaseContentFormProps<T>) {
   const router = useRouter();
@@ -63,7 +63,7 @@ export function BaseContentForm<T extends Record<string, any>>({
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [validationIssues, setValidationIssues] = useState<ValidationIssues>({});
+  const [_validationIssues, setValidationIssues] = useState<ValidationIssues>({});
   const [isDirty, setIsDirty] = useState(false);
   const completionPercentage = useMemo(
     () => calculateCompletionPercentage({ values, validationRules }),
@@ -71,7 +71,7 @@ export function BaseContentForm<T extends Record<string, any>>({
   );
   
   // Handle field change
-  const handleChange = useCallback((field: keyof T, value: any) => {
+  const handleChange = useCallback((field: keyof T, value: unknown) => {
     setValues(prev => ({
       ...prev,
       [field]: value

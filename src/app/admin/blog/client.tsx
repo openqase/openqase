@@ -121,7 +121,7 @@ export function BlogPostsList({ initialBlogPosts }: BlogPostsListProps) {
         description: `"${blogPost.title}" is now ${blogPost.published ? 'unpublished' : 'published'}`,
         duration: 3000,
       });
-    } catch (_error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -162,7 +162,7 @@ export function BlogPostsList({ initialBlogPosts }: BlogPostsListProps) {
         description: `"${blogPost.title}" is now ${blogPost.featured ? 'unfeatured' : 'featured'}`,
         duration: 3000,
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -301,7 +301,6 @@ export function BlogPostsList({ initialBlogPosts }: BlogPostsListProps) {
                 }
                 // Determine date to show
                 const dateToShow = post.published_at || post.created_at;
-                const dateLabel = status === 'Draft' ? 'Created' : 'Published';
                 return (
                   <TableRow key={post.id}>
                     <TableCell className="font-medium">
@@ -415,7 +414,7 @@ export function BlogPostsList({ initialBlogPosts }: BlogPostsListProps) {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete the blog post 
-              "{blogPostToDelete?.title}"? It will be moved to trash and can be recovered later.
+              &quot;{blogPostToDelete?.title}&quot;? It will be moved to trash and can be recovered later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -11,7 +11,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase-browser'
 import { getSafeRedirectPath } from '@/lib/redirect-utils'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
-export function AuthContent({ redirectTo }: { redirectTo?: string }) {
+export function AuthContent({ redirectTo: _redirectTo }: { redirectTo?: string }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createBrowserSupabaseClient()
@@ -42,7 +42,7 @@ export function AuthContent({ redirectTo }: { redirectTo?: string }) {
     }
     checkAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, _session: Session | null) => {
       if (event === 'SIGNED_IN') {
         toast({
           title: 'Success',

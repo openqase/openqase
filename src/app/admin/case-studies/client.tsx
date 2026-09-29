@@ -20,7 +20,7 @@ const createColumns = (
 ): ColumnDef<CaseStudy>[] => [
   {
     id: 'select',
-    header: ({ table }) => (
+    header: () => (
       <Checkbox
         checked={allSelected}
         onCheckedChange={onSelectAll}

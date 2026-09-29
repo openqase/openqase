@@ -14,7 +14,7 @@ interface CacheEntry<T> {
  * Simple in-memory LRU cache for development
  */
 class InMemoryCache {
-  private store = new Map<string, CacheEntry<any>>();
+  private store = new Map<string, CacheEntry<unknown>>();
   private maxSize: number;
 
   constructor(maxSize: number = 1000) {
@@ -47,7 +47,7 @@ class InMemoryCache {
   /**
    * Set a value in cache
    */
-  set(key: string, value: any, ttlSeconds: number = 3600): boolean {
+  set(key: string, value: unknown, ttlSeconds: number = 3600): boolean {
     // Enforce size limit (LRU eviction)
     if (this.store.size >= this.maxSize) {
       // Delete oldest entry (first in map)
@@ -155,7 +155,7 @@ class HybridCache {
   /**
    * Set a value in cache (writes to both Redis and in-memory)
    */
-  async set(key: string, value: any, ttlSeconds: number = CACHE_TTL.LONG): Promise<boolean> {
+  async set(key: string, value: unknown, ttlSeconds: number = CACHE_TTL.LONG): Promise<boolean> {
     let success = false;
 
     // Try Redis if available
@@ -254,7 +254,7 @@ class HybridCache {
    * Wrap a function with caching
    * Returns a cached version of the function
    */
-  wrap<TArgs extends any[], TReturn>(
+  wrap<TArgs extends unknown[], TReturn>(
     fn: (...args: TArgs) => Promise<TReturn>,
     options: {
       keyGenerator: (...args: TArgs) => string;

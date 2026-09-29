@@ -5,7 +5,6 @@ import { notFound } from 'next/navigation';
 import { PersonaForm } from './client';
 
 type Persona = Database['public']['Tables']['personas']['Row'];
-type Industry = Database['public']['Tables']['industries']['Row'];
 
 interface PersonaPageProps {
   params: Promise<{

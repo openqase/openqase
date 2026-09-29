@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { z } from 'zod'
 import { generateZodSchema } from './schema'
 import { defineContentType } from './define'
 

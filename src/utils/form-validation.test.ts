@@ -72,7 +72,7 @@ describe('validators.isSlug', () => {
   })
 
   it('rejects non-string', () => {
-    expect(validators.isSlug(123 as any)).toBe(false)
+    expect(validators.isSlug(123 as unknown as string)).toBe(false)
   })
 })
 
@@ -90,7 +90,7 @@ describe('validators.isEmail', () => {
   })
 
   it('rejects non-string', () => {
-    expect(validators.isEmail(null as any)).toBe(false)
+    expect(validators.isEmail(null as unknown as string)).toBe(false)
   })
 })
 
@@ -108,7 +108,7 @@ describe('validators.isUrl', () => {
   })
 
   it('rejects non-string', () => {
-    expect(validators.isUrl(42 as any)).toBe(false)
+    expect(validators.isUrl(42 as unknown as string)).toBe(false)
   })
 })
 
@@ -127,7 +127,7 @@ describe('validators.minLength / maxLength', () => {
   })
 
   it('minLength rejects non-string', () => {
-    expect(validators.minLength(1)(123 as any)).toBe(false)
+    expect(validators.minLength(1)(123 as unknown as string)).toBe(false)
   })
 
   it('maxLength accepts strings at or below threshold', () => {
@@ -151,7 +151,7 @@ describe('validators.min / max', () => {
   })
 
   it('min rejects non-number', () => {
-    expect(validators.min(1)('5' as any)).toBe(false)
+    expect(validators.min(1)('5' as unknown as number)).toBe(false)
   })
 
   it('max accepts numbers at or below threshold', () => {
@@ -215,7 +215,7 @@ describe('validators.matches', () => {
   })
 
   it('rejects non-string', () => {
-    expect(validators.matches(/a/)(123 as any)).toBe(false)
+    expect(validators.matches(/a/)(123 as unknown as string)).toBe(false)
   })
 })
 

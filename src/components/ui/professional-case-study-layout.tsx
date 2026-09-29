@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ArrowLeft, Users, Cpu, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Cpu, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import type { Json } from '@/types/supabase';

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock React's cache to be a pass-through
 vi.mock('react', () => ({
-  cache: (fn: any) => fn,
+  cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
 }))
 
 // Reset markdown-it singleton between tests by clearing module cache

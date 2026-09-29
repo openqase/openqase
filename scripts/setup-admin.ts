@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { config } from 'dotenv'
 import { resolve } from 'path'
 import * as readline from 'readline'
@@ -155,7 +155,7 @@ async function checkEnvironment() {
   console.log('✅ Environment configuration looks good\n')
 }
 
-async function testDatabaseConnection(supabase: any) {
+async function testDatabaseConnection(supabase: SupabaseClient) {
   console.log('🔌 Testing database connection...')
   
   try {
@@ -172,7 +172,7 @@ async function testDatabaseConnection(supabase: any) {
   }
 }
 
-async function checkExistingAdmin(supabase: any, email: string): Promise<boolean> {
+async function checkExistingAdmin(supabase: SupabaseClient, email: string): Promise<boolean> {
   console.log('👤 Checking for existing admin user...')
   
   try {
@@ -193,7 +193,7 @@ async function checkExistingAdmin(supabase: any, email: string): Promise<boolean
   }
 }
 
-async function createAdminUser(supabase: any, credentials: AdminCredentials) {
+async function createAdminUser(supabase: SupabaseClient, credentials: AdminCredentials) {
   console.log('👤 Creating admin user account...')
   
   try {
@@ -236,7 +236,7 @@ async function createAdminUser(supabase: any, credentials: AdminCredentials) {
   }
 }
 
-async function setAdminRole(supabase: any, userId: string) {
+async function setAdminRole(supabase: SupabaseClient, userId: string) {
   console.log('🛡️ Setting admin role...')
   
   try {

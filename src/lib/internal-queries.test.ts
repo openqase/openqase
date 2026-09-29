@@ -5,32 +5,33 @@ import { fromTable } from './internal-queries';
 
 function makeMockClient() {
   const mockBuilder = { select: vi.fn(), eq: vi.fn(), is: vi.fn() };
+  const mockFrom = vi.fn().mockReturnValue(mockBuilder);
   const mockClient = {
-    from: vi.fn().mockReturnValue(mockBuilder),
+    from: mockFrom,
   } as unknown as SupabaseClient<Database>;
-  return { mockClient, mockBuilder };
+  return { mockClient, mockFrom, mockBuilder };
 }
 
 describe('fromTable', () => {
   it('accepts content tables', () => {
-    const { mockClient } = makeMockClient();
+    const { mockClient, mockFrom } = makeMockClient();
     const builder = fromTable(mockClient, 'case_studies');
     expect(builder).toBeDefined();
     expect(typeof builder.select).toBe('function');
-    expect((mockClient as any).from).toHaveBeenCalledWith('case_studies');
+    expect(mockFrom).toHaveBeenCalledWith('case_studies');
   });
 
   it('accepts junction tables', () => {
-    const { mockClient } = makeMockClient();
+    const { mockClient, mockFrom } = makeMockClient();
     const builder = fromTable(mockClient, 'algorithm_case_study_relations');
     expect(builder).toBeDefined();
-    expect((mockClient as any).from).toHaveBeenCalledWith('algorithm_case_study_relations');
+    expect(mockFrom).toHaveBeenCalledWith('algorithm_case_study_relations');
   });
 
   it('accepts lookup tables (user_preferences)', () => {
-    const { mockClient } = makeMockClient();
+    const { mockClient, mockFrom } = makeMockClient();
     const builder = fromTable(mockClient, 'user_preferences');
     expect(builder).toBeDefined();
-    expect((mockClient as any).from).toHaveBeenCalledWith('user_preferences');
+    expect(mockFrom).toHaveBeenCalledWith('user_preferences');
   });
 });

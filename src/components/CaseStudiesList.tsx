@@ -25,8 +25,6 @@ interface CaseStudiesListProps {
   relationshipMap?: Record<string, CaseStudyRelationships>;
 }
 
-type SortOption = 'title-asc' | 'title-desc' | 'updated-asc' | 'updated-desc' | 'year-asc' | 'year-desc';
-
 const CASE_STUDIES_SORT_OPTIONS = ['title-asc', 'title-desc', 'updated-asc', 'updated-desc', 'year-asc', 'year-desc'] as const;
 
 const FILTER_GROUP_LABELS: Record<string, string> = {

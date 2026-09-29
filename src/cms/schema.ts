@@ -1,4 +1,4 @@
-import { z, type ZodType } from 'zod'
+import { z, type ZodType, type ZodRawShape } from 'zod'
 import type { ContentTypeDefinition, FieldDefinition } from './define'
 
 const SLUG_REGEX = /^[a-z0-9-]+$/
@@ -96,7 +96,7 @@ function fieldToZod(field: FieldDefinition): ZodType {
 // validation schemas — they are managed by the database/operations layer
 const SYSTEM_FIELD_NAMES = new Set(['id', 'published', 'created_at', 'updated_at'])
 
-export function generateZodSchema(contentType: ContentTypeDefinition): z.ZodObject<any> {
+export function generateZodSchema(contentType: ContentTypeDefinition): z.ZodObject<ZodRawShape> {
   const shape: Record<string, ZodType> = {}
 
   for (const field of contentType.fields) {

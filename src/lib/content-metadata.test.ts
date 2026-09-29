@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { getContentMetadata } from './content-metadata'
+import { getContentMetadata, type ContentType } from './content-metadata'
 
 describe('getContentMetadata', () => {
   describe('case-studies', () => {
@@ -67,7 +67,7 @@ describe('getContentMetadata', () => {
   describe('error handling', () => {
     it('warns and returns empty for unknown content type', () => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const result = getContentMetadata('unknown-type' as any, {}, 'list')
+      const result = getContentMetadata('unknown-type' as unknown as ContentType, {}, 'list')
       expect(result).toEqual([])
       expect(spy).toHaveBeenCalled()
       spy.mockRestore()

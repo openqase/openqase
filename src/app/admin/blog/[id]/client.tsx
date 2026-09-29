@@ -21,7 +21,7 @@ import { saveBlogPost, publishBlogPost, unpublishBlogPost } from './actions';
 import { Tables } from '@/types/supabase';
 
 interface BlogPostWithRelations extends Tables<'blog_posts'> {
-  related_posts?: string[];
+  related_posts?: (string | { id: string })[];
 }
 
 interface BlogPostFormProps {
@@ -52,7 +52,7 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
     featured_image: isNew ? '' : blogPost?.featured_image || '',
     category: isNew ? '' : blogPost?.category || '',
     tags: isNew ? [] : blogPost?.tags || [],
-    related_posts: isNew ? [] : blogPost?.related_posts?.map((post: any) => post.id) || [],
+    related_posts: isNew ? [] : (blogPost?.related_posts?.map((post: string | { id: string }) => typeof post === 'string' ? post : post.id) || []),
     published: isNew ? false : blogPost?.published || false,
     featured: isNew ? false : blogPost?.featured || false,
     published_at: isNew ? null : blogPost?.published_at || null,
@@ -64,14 +64,14 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
   const completionPercentage = calculateCompletionPercentage({ values, validationRules });
   
   // Handle field change
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     const newValues = {
       ...values,
       [field]: value
     };
     
     // Auto-generate slug from title if slug is empty
-    if (field === 'title' && value && !values.slug) {
+    if (field === 'title' && typeof value === 'string' && value && !values.slug) {
       const autoSlug = value
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '') // Remove special chars

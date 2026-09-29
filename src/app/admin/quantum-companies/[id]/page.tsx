@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
+import type { Tables } from '@/types/supabase'
 import { QuantumCompanyForm } from './client'
 
 export const dynamic = 'force-dynamic'
@@ -21,8 +22,8 @@ export default async function QuantumCompanyEditPage({ params }: QuantumCompanyE
   const supabase = createServiceRoleSupabaseClient()
   const isNew = resolvedParams.id === 'new'
 
-  let quantumCompany = null
-  let caseStudies: any[] = []
+  let quantumCompany: Tables<'quantum_companies'> | null = null
+  let caseStudies: Array<{ id: string; title: string; slug: string }> = []
 
   try {
     // Get case studies for relationship selector

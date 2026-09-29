@@ -35,8 +35,8 @@ type InitialSpecRow = {
 }
 
 interface QuantumHardwareFormProps {
-  quantumHardware: any
-  caseStudies: any[]
+  quantumHardware: Database['public']['Tables']['quantum_hardware']['Row'] | null
+  caseStudies: Array<{ id: string; title: string; slug: string }>
   isNew: boolean
   initialSpecs: InitialSpecRow[]
   definitions: SpecDefinition[]
@@ -76,11 +76,11 @@ export function QuantumHardwareForm({
   const validationRules = createContentValidationRules('quantum_hardware')
   const completionPercentage = calculateCompletionPercentage({ values, validationRules })
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setValues(prev => ({ ...prev, [field]: value }))
     
     // Auto-generate slug from name
-    if (field === 'name' && isNew) {
+    if (field === 'name' && isNew && typeof value === 'string') {
       const slug = value.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')

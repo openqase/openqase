@@ -35,7 +35,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             <div className="space-y-2">
               <h2 className="text-2xl font-bold tracking-tight">Something went wrong</h2>
               <p className="text-muted-foreground">
-                We've encountered an error. Our team has been notified.
+                We&apos;ve encountered an error. Our team has been notified.
               </p>
             </div>
             

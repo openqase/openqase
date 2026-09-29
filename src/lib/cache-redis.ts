@@ -67,7 +67,7 @@ export class RedisCache {
    * @param value - Value to cache (must be JSON serializable)
    * @param ttlSeconds - Time to live in seconds (default: 3600 = 1 hour)
    */
-  async set(key: string, value: any, ttlSeconds: number = 3600): Promise<boolean> {
+  async set(key: string, value: unknown, ttlSeconds: number = 3600): Promise<boolean> {
     if (!this.enabled || !this.redis) {
       return false;
     }
@@ -277,14 +277,14 @@ export class RedisCache {
    * @param entries - Object with key-value pairs
    * @param ttlSeconds - Time to live in seconds (applied to all keys)
    */
-  async mset(entries: Record<string, any>, ttlSeconds?: number): Promise<boolean> {
+  async mset(entries: Record<string, unknown>, ttlSeconds?: number): Promise<boolean> {
     if (!this.enabled || !this.redis) {
       return false;
     }
 
     try {
       // Convert object to array format for mset
-      const pairs: [string, any][] = Object.entries(entries);
+      const pairs: [string, unknown][] = Object.entries(entries);
 
       await this.redis.mset(Object.fromEntries(pairs));
 

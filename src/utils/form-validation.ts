@@ -14,7 +14,7 @@ export type ValidationRule = {
   field: string;
   tab: string;
   label: string;
-  validator: (value: any) => boolean;
+  validator: (value: unknown) => boolean;
 };
 
 /**
@@ -28,7 +28,7 @@ export function validateFormValues({
   values,
   validationRules
 }: {
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   validationRules: ValidationRule[];
 }): ValidationIssues {
   const issues: ValidationIssues = {};
@@ -63,7 +63,7 @@ export function calculateCompletionPercentage({
   values,
   validationRules
 }: {
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   validationRules: ValidationRule[];
 }): number {
   const totalRules = validationRules.length;
@@ -87,7 +87,7 @@ export function isTabComplete({
   validationRules,
   tabName
 }: {
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   validationRules: ValidationRule[];
   tabName: string;
 }): boolean {
@@ -104,7 +104,7 @@ export const validators = {
   /**
    * Checks if a value is not empty
    */
-  required: (value: any): boolean => {
+  required: (value: unknown): boolean => {
     if (typeof value === 'string') {
       return value.trim().length > 0;
     }
@@ -120,7 +120,7 @@ export const validators = {
   /**
    * Checks if a string has at least a minimum length
    */
-  minLength: (length: number) => (value: string): boolean => {
+  minLength: (length: number) => (value: unknown): boolean => {
     if (typeof value !== 'string') return false;
     return value.trim().length >= length;
   },
@@ -128,7 +128,7 @@ export const validators = {
   /**
    * Checks if a string doesn't exceed a maximum length
    */
-  maxLength: (length: number) => (value: string): boolean => {
+  maxLength: (length: number) => (value: unknown): boolean => {
     if (typeof value !== 'string') return false;
     return value.trim().length <= length;
   },
@@ -136,7 +136,7 @@ export const validators = {
   /**
    * Checks if a string is a valid slug (lowercase, alphanumeric, hyphens)
    */
-  isSlug: (value: string): boolean => {
+  isSlug: (value: unknown): boolean => {
     if (typeof value !== 'string' || value.length === 0) return false;
     if (value.startsWith('-') || value.endsWith('-') || value.includes('--')) return false;
     return /^[a-z0-9-]+$/.test(value);
@@ -145,7 +145,7 @@ export const validators = {
   /**
    * Checks if a string is a valid email address
    */
-  isEmail: (value: string): boolean => {
+  isEmail: (value: unknown): boolean => {
     if (typeof value !== 'string') return false;
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   },
@@ -153,7 +153,7 @@ export const validators = {
   /**
    * Checks if a string is a valid URL
    */
-  isUrl: (value: string): boolean => {
+  isUrl: (value: unknown): boolean => {
     if (typeof value !== 'string') return false;
     try {
       new URL(value);
@@ -166,7 +166,7 @@ export const validators = {
   /**
    * Checks if a value matches a regular expression
    */
-  matches: (pattern: RegExp) => (value: string): boolean => {
+  matches: (pattern: RegExp) => (value: unknown): boolean => {
     if (typeof value !== 'string') return false;
     return pattern.test(value);
   },
@@ -174,7 +174,7 @@ export const validators = {
   /**
    * Checks if a value is a number
    */
-  isNumber: (value: any): boolean => {
+  isNumber: (value: unknown): boolean => {
     if (typeof value === 'number') return !isNaN(value);
     if (typeof value === 'string') return !isNaN(Number(value));
     return false;
@@ -183,7 +183,7 @@ export const validators = {
   /**
    * Checks if a number is greater than a minimum value
    */
-  min: (min: number) => (value: number): boolean => {
+  min: (min: number) => (value: unknown): boolean => {
     if (typeof value !== 'number') return false;
     return value >= min;
   },
@@ -191,7 +191,7 @@ export const validators = {
   /**
    * Checks if a number is less than a maximum value
    */
-  max: (max: number) => (value: number): boolean => {
+  max: (max: number) => (value: unknown): boolean => {
     if (typeof value !== 'number') return false;
     return value <= max;
   },
@@ -199,14 +199,14 @@ export const validators = {
   /**
    * Combines multiple validators with AND logic
    */
-  and: (...validators: ((value: any) => boolean)[]) => (value: any): boolean => {
+  and: (...validators: ((value: unknown) => boolean)[]) => (value: unknown): boolean => {
     return validators.every(validator => validator(value));
   },
   
   /**
    * Combines multiple validators with OR logic
    */
-  or: (...validators: ((value: any) => boolean)[]) => (value: any): boolean => {
+  or: (...validators: ((value: unknown) => boolean)[]) => (value: unknown): boolean => {
     return validators.some(validator => validator(value));
   }
 };
