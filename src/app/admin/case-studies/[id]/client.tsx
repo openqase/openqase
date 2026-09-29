@@ -366,10 +366,10 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
               size="sm"
               onClick={() => {
                 // Open preview in new tab
-                const previewUrl = `/api/preview?type=case-study&slug=${values.slug}`;
+                const previewUrl = `/api/preview?type=case-study&slug=${encodeURIComponent(values.slug)}`;
                 window.open(previewUrl, '_blank');
               }}
-              disabled={!values.slug}
+              disabled={!values.id || !values.slug}
               className="min-w-[100px]"
               title={!values.slug ? "Save the case study first to preview" : "Preview case study"}
             >

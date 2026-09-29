@@ -3,7 +3,7 @@
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import type { Database } from '@/types/supabase'
+import type { Database, Tables } from '@/types/supabase'
 
 type HardwareSpecDefinition =
   Database['public']['Tables']['hardware_spec_definitions']['Row']
@@ -15,20 +15,44 @@ export type HardwareSpecInput = {
   unit: string | null
 }
 
-export const saveQuantumHardware = withAdmin(async (values: any) => {
-  const { id, ...data } = values
-  // Empty select → null for optional enum column
-  if (data.technology_type === '' || data.technology_type === undefined) {
-    data.technology_type = null
-  }
+// Shape sent by src/app/admin/quantum-hardware/[id]/client.tsx. Number inputs
+// arrive as strings ('' when empty); the CMS schema coerces them.
+interface QuantumHardwareFormData {
+  id?: string
+  name: string
+  slug: string
+  description?: string | null
+  main_content?: string | null
+  vendor?: string | null
+  technology_type?: string | null
+  qubit_count?: number | string | null
+  connectivity?: string | null
+  gate_fidelity?: number | string | null
+  coherence_time?: string | null
+  availability?: string | null
+  access_model?: string | null
+  website_url?: string | null
+  documentation_url?: string | null
+  published?: boolean
+  related_case_studies?: string[]
+}
+
+export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<Tables<'quantum_hardware'>> => {
+  const { id, related_case_studies, ...data } = values
+
+  // Relationship keys match the relationship names in src/cms/types/<type>.ts.
+  // Omitted (undefined) leaves existing links untouched; an array (even an
+  // empty one) replaces them.
+  const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
+  // '' → null for optional fields (e.g. technology_type) is handled by the CMS schema.
   if (id) {
-    const result = await updateContent('quantum-hardware', id, data)
+    const result = await updateContent('quantum-hardware', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    return result.data
+    return result.data as Tables<'quantum_hardware'>
   }
-  const result = await createContent('quantum-hardware', data)
+  const result = await createContent('quantum-hardware', data, relationships)
   if (result.error) throw new Error(result.error)
-  return result.data
+  return result.data as Tables<'quantum_hardware'>
 })
 
 export const publishQuantumHardware = withAdmin(async (id: string): Promise<void> => {

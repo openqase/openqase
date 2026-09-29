@@ -15,6 +15,8 @@ const testType = defineContentType({
     { name: 'active', type: 'boolean' },
     { name: 'website', type: 'url' },
     { name: 'description', type: 'textarea' },
+    { name: 'keywords', type: 'tags' },
+    { name: 'links', type: 'json' },
   ],
   relationships: [
     { name: 'industries', targetType: 'industries', junction: 'test_industry', foreignKey: 'test_id', targetKey: 'industry_id' },
@@ -70,5 +72,29 @@ describe('parseFormData', () => {
     const { data } = parseFormData(fd, testType)
     expect(data).not.toHaveProperty('id')
     expect(data).not.toHaveProperty('unknown_field')
+  })
+
+  it('parses tags fields from JSON arrays', () => {
+    const fd = makeFormData({ name: 'Test', slug: 'test', keywords: JSON.stringify(['a', ' b ', '']) })
+    const { data } = parseFormData(fd, testType)
+    expect(data.keywords).toEqual(['a', 'b'])
+  })
+
+  it('parses tags fields from comma-separated strings', () => {
+    const fd = makeFormData({ name: 'Test', slug: 'test', keywords: 'a, b,,c' })
+    const { data } = parseFormData(fd, testType)
+    expect(data.keywords).toEqual(['a', 'b', 'c'])
+  })
+
+  it('parses json fields', () => {
+    const links = [{ url: 'https://example.com', label: 'Example', order: 1 }]
+    const fd = makeFormData({ name: 'Test', slug: 'test', links: JSON.stringify(links) })
+    const { data } = parseFormData(fd, testType)
+    expect(data.links).toEqual(links)
+  })
+
+  it('throws on invalid json', () => {
+    const fd = makeFormData({ name: 'Test', slug: 'test', links: '{not json' })
+    expect(() => parseFormData(fd, testType)).toThrow(/links must be valid JSON/)
   })
 })

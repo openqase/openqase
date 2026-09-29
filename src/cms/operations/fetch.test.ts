@@ -23,7 +23,7 @@ const mockIs = vi.fn()
 // mockEq chains through eq, is, maybeSingle, single, order, ilike
 const mockEq = vi.fn()
 mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs, order: mockOrder, ilike: mockIlike })
-mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs, order: mockOrder, ilike: mockIlike })
 mockIlike.mockReturnValue({ order: mockOrder, eq: mockEq })
 const mockSelect = vi.fn(() => ({ eq: mockEq, order: mockOrder, ilike: mockIlike, is: mockIs }))
 const mockFrom = vi.fn(() => ({ select: mockSelect }))
@@ -40,7 +40,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   // Re-establish default chain after clearAllMocks
   mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs, order: mockOrder, ilike: mockIlike })
-  mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs })
+  mockIs.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, is: mockIs, order: mockOrder, ilike: mockIlike })
   mockIlike.mockReturnValue({ order: mockOrder, eq: mockEq })
   mockSelect.mockReturnValue({ eq: mockEq, order: mockOrder, ilike: mockIlike, is: mockIs })
   mockFrom.mockReturnValue({ select: mockSelect })
@@ -112,5 +112,15 @@ describe('listContent', () => {
     // eq should not be called with 'published'
     const publishedCall = mockEq.mock.calls.find(([field]) => field === 'published')
     expect(publishedCall).toBeUndefined()
+  })
+
+  it('always excludes soft-deleted rows (deleted_at IS NULL)', async () => {
+    await listContent('industries')
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null)
+  })
+
+  it('excludes soft-deleted rows even when publishedOnly is false', async () => {
+    await listContent('industries', { publishedOnly: false })
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null)
   })
 })

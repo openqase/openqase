@@ -143,6 +143,12 @@ export function QuantumHardwareClient({ data }: QuantumHardwareClientProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/quantum-hardware/trash">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Trash
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/admin/quantum-hardware/new">
               <Plus className="w-4 h-4 mr-2" />

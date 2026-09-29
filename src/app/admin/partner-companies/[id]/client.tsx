@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PublishButton } from '@/components/admin/PublishButton'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { savePartnerCompany, publishPartnerCompany, unpublishPartnerCompany } from './actions'
 
@@ -31,7 +31,7 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies, isNew }: Partn
     company_size: partnerCompany?.company_size || '',
     headquarters: partnerCompany?.headquarters || '',
     partnership_type: partnerCompany?.partnership_type || '',
-    quantum_use_cases: partnerCompany?.quantum_use_cases || '',
+    quantum_initiatives: partnerCompany?.quantum_initiatives || '',
     website_url: partnerCompany?.website_url || '',
     linkedin_url: partnerCompany?.linkedin_url || '',
     published: partnerCompany?.published || false,
@@ -172,6 +172,22 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies, isNew }: Partn
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Open preview in new tab (draft mode via /api/preview)
+                const previewUrl = `/api/preview?type=partner-companies&slug=${encodeURIComponent(values.slug)}`
+                window.open(previewUrl, '_blank')
+              }}
+              disabled={!values.id || !values.slug}
+              className="min-w-[100px]"
+              title={!values.id || !values.slug ? "Save the partner company first to preview" : "Preview partner company"}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Button>
             <PublishButton
               isPublished={values.published}
               onPublish={handlePublish}
@@ -278,11 +294,11 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies, isNew }: Partn
             </div>
 
             <div>
-              <Label htmlFor="quantum_use_cases" >Quantum Use Cases</Label>
+              <Label htmlFor="quantum_initiatives" >Quantum Initiatives</Label>
               <Input
-                id="quantum_use_cases"
-                value={values.quantum_use_cases}
-                onChange={(e) => handleChange('quantum_use_cases', e.target.value)}
+                id="quantum_initiatives"
+                value={values.quantum_initiatives}
+                onChange={(e) => handleChange('quantum_initiatives', e.target.value)}
                 placeholder="e.g., Optimization, Simulation, Machine Learning"
                 className="mt-1"
               />

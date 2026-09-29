@@ -13,6 +13,7 @@ export const blogPosts = defineContentType({
     { name: 'content', type: 'markdown' },
     { name: 'author', type: 'text' },
     { name: 'category', type: 'text' },
+    { name: 'tags', type: 'tags' },
     { name: 'featured_image', type: 'url' },
     { name: 'featured', type: 'boolean' },
     { name: 'published_at', type: 'text' },

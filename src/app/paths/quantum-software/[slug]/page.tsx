@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { fetchContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
+import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { processMarkdown } from '@/lib/markdown-server';
@@ -28,7 +28,7 @@ export const revalidate = 86400;
 export async function generateMetadata({ params }: QuantumSoftwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumSoftware = await fetchContentBySlug('quantum-software', resolvedParams.slug) as EnrichedQuantumSoftware | null;
+  const quantumSoftware = await fetchPreviewContentBySlug('quantum-software', resolvedParams.slug) as EnrichedQuantumSoftware | null;
 
   if (!quantumSoftware) {
     return {
@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: QuantumSoftwarePageProps) {
 export default async function QuantumSoftwareDetailPage({ params }: QuantumSoftwarePageProps) {
   const resolvedParams = await params;
   
-  const quantumSoftware = await fetchContentBySlug('quantum-software', resolvedParams.slug) as EnrichedQuantumSoftware | null;
+  const quantumSoftware = await fetchPreviewContentBySlug('quantum-software', resolvedParams.slug) as EnrichedQuantumSoftware | null;
 
   if (!quantumSoftware) {
     notFound();

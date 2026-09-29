@@ -1,8 +1,16 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { listContent, fetchContentBySlug, deleteContent, publishContent, unpublishContent } from '@/cms/operations'
+import { parsePagination } from '@/lib/pagination'
+import {
+  listContent,
+  fetchContentBySlug,
+  deleteContent,
+  deleteContentMany,
+  publishContent,
+  unpublishContent,
+  revalidateContentType,
+} from '@/cms/operations'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/supabase-untyped'
 import { MAX_BULK_IDS } from '@/lib/validation/constants'
 import { requireAdmin } from '@/lib/auth'
 
@@ -17,8 +25,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(data)
     }
 
-    const page = parseInt(searchParams.get('page') || '1')
-    const pageSize = parseInt(searchParams.get('pageSize') || '10')
+    const pagination = parsePagination(searchParams, { pageSize: 10 })
+    if (!pagination.ok) return NextResponse.json({ error: pagination.error }, { status: 400 })
+    const { page, pageSize } = pagination
 
     const { items, total } = await listContent('case-studies', { page, pageSize })
 
@@ -46,7 +55,7 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
 
-    const result = await deleteContent('case-studies', id)
+    const result = await deleteContent('case-studies', id, { deletedBy: auth.user.id })
     if (!result.success) return NextResponse.json({ error: 'Failed to delete case study' }, { status: 500 })
 
     return NextResponse.json({ success: true })
@@ -80,7 +89,7 @@ export async function PATCH(request: NextRequest) {
 
       if (operation === 'publish') return handleBulkPublish(ids, true)
       if (operation === 'unpublish') return handleBulkPublish(ids, false)
-      if (operation === 'delete') return handleBulkDelete(ids)
+      if (operation === 'delete') return handleBulkDelete(ids, auth.user.id)
     }
 
     // Handle single item publish/unpublish
@@ -106,15 +115,26 @@ export async function PATCH(request: NextRequest) {
 async function handleBulkPublish(ids: string[], published: boolean) {
   try {
     const supabase = createServiceRoleSupabaseClient()
-    const { data, error } = await supabase
+    let query = supabase
       .from('case_studies')
       .update({ published, updated_at: new Date().toISOString() })
       .in('id', ids)
-      .select()
+
+    // Never publish soft-deleted (trashed) case studies.
+    if (published) {
+      query = query.is('deleted_at', null)
+    }
+
+    const { data, error } = await query.select()
 
     if (error) {
       return NextResponse.json({ error: `Failed to ${published ? 'publish' : 'unpublish'} case studies` }, { status: 500 })
     }
+
+    revalidateContentType(
+      'case-studies',
+      (data ?? []).map(row => row.slug).filter((s): s is string => !!s)
+    )
 
     return NextResponse.json({
       success: true,
@@ -126,39 +146,24 @@ async function handleBulkPublish(ids: string[], published: boolean) {
   }
 }
 
-async function handleBulkDelete(ids: string[]) {
+/**
+ * Bulk delete = soft delete (move to trash) via the shared CMS path.
+ * Hard deletion is only available from the trash (permanent-delete route).
+ */
+async function handleBulkDelete(ids: string[], deletedBy: string) {
   try {
-    const supabase = createServiceRoleSupabaseClient()
+    const { failed, errors } = await deleteContentMany('case-studies', ids, { deletedBy })
+    const deleted = ids.length - failed.length
 
-    // Delete relationships first (all 7 junction tables)
-    const relationshipTables = [
-      'algorithm_case_study_relations',
-      'case_study_industry_relations',
-      'case_study_persona_relations',
-      'case_study_quantum_software_relations',
-      'case_study_quantum_hardware_relations',
-      'case_study_quantum_company_relations',
-      'case_study_partner_company_relations',
-    ]
-
-    for (const table of relationshipTables) {
-      await fromTable(supabase, table).delete().in('case_study_id', ids)
-    }
-
-    const { data, error } = await supabase
-      .from('case_studies')
-      .delete()
-      .in('id', ids)
-      .select()
-
-    if (error) {
+    if (failed.length > 0) {
+      console.error('Error soft deleting case studies:', errors)
       return NextResponse.json({ error: 'Failed to delete case studies' }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      deleted: data?.length || 0,
-      message: `Successfully deleted ${data?.length || 0} case studies`,
+      deleted,
+      message: `Successfully deleted ${deleted} case studies`,
     })
   } catch {
     return NextResponse.json({ error: 'Failed to process bulk delete' }, { status: 500 })

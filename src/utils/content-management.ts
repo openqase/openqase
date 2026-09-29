@@ -1,7 +1,8 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { fromTable } from '@/lib/supabase-untyped';
-import { PostgrestError } from '@supabase/supabase-js';
-import * as Sentry from '@sentry/nextjs';
+import { getContentTypeByTableName } from '@/cms/registry';
+import { deleteContent, restoreContent, permanentlyDeleteContent } from '@/cms/operations/delete';
+import { revalidateContentType } from '@/cms/operations/revalidate';
 
 /**
  * Content types supported by the CMS
@@ -51,7 +52,7 @@ export async function fetchContentItems({
   
   // Apply published filter if not including unpublished
   if (!includeUnpublished) {
-    query = query.eq('published', true);
+    query = query.eq('published', true).is('deleted_at', null);
   }
   
   // Apply direct filters
@@ -113,7 +114,7 @@ export async function fetchContentItem({
     .eq(identifierType, identifier);
   
   if (!includeUnpublished) {
-    query = query.eq('published', true);
+    query = query.eq('published', true).is('deleted_at', null);
   }
   
   const { data: item, error } = await query.single();
@@ -233,7 +234,25 @@ export async function saveContentItem({
 }
 
 /**
- * Deletes a content item and its relationships (soft delete by default)
+ * Resolve a table name (legacy ContentType) to the CMS registry slug.
+ */
+function registrySlugFor(contentType: ContentType): string | null {
+  return getContentTypeByTableName(contentType)?.slug ?? null;
+}
+
+/**
+ * Deletes a content item (soft delete by default).
+ *
+ * Soft delete delegates to the single CMS soft-delete path
+ * (`deleteContent` in src/cms/operations/delete.ts), which sets deleted_at,
+ * deleted_by and published=false, soft-deletes junction rows that support it,
+ * writes the audit log and revalidates admin list + public list + slug page.
+ *
+ * `relationshipConfigs` is retained for API compatibility; junction tables are
+ * now derived from the CMS registry.
+ *
+ * Hard delete permanently removes the item, but only if it is already in the
+ * trash (see `permanentlyDeleteContent`).
  */
 export async function deleteContentItem({
   contentType,
@@ -247,215 +266,53 @@ export async function deleteContentItem({
   relationshipConfigs?: RelationshipConfig[];
   hardDelete?: boolean;
   deletedBy?: string | null;
-}) {
-  const serviceClient = await createServiceRoleSupabaseClient();
-  
-  // If hard delete is requested (or soft delete not supported), use original logic
+}): Promise<{ success: boolean; error: Error | null }> {
+  const typeSlug = registrySlugFor(contentType);
+  if (!typeSlug) {
+    return { success: false, error: new Error(`Unknown content type: ${contentType}`) };
+  }
+
   if (hardDelete) {
-    // First delete relationships in junction tables
-    for (const config of relationshipConfigs) {
-      const { junctionTable, contentIdField } = config;
-      
-      const { error: relDeleteError } = await fromTable(serviceClient, junctionTable)
-        .delete()
-        .eq(contentIdField, id);
-
-      if (relDeleteError) {
-        console.error(`Error deleting relationships in ${junctionTable}:`, relDeleteError);
-        // Continue with deletion even if relationship deletion fails
-      }
-    }
-    
-    // Then delete the content item
-    const { error: deleteError } = await serviceClient
-      .from(contentType)
-      .delete()
-      .eq('id', id);
-      
-    return { success: !deleteError, error: deleteError };
+    const extraJunctions = relationshipConfigs.map(({ junctionTable, contentIdField }) => ({
+      junctionTable,
+      contentIdField
+    }));
+    const result = await permanentlyDeleteContent(typeSlug, [id], extraJunctions);
+    return { success: result.success, error: result.error ? new Error(result.error) : null };
   }
-  
-  // Soft delete implementation
-  try {
-    // Step 0: Fetch content before deletion for audit snapshot
-    let contentSnapshot = null;
-    let contentName = null;
-    try {
-      const { data: contentData } = await serviceClient
-        .from(contentType)
-        .select('*')
-        .eq('id', id)
-        .single();
 
-      if (contentData) {
-        contentSnapshot = contentData;
-        // Extract content name from common fields
-        const record = contentData as Record<string, unknown>;
-        contentName = (record.title as string) || (record.name as string) || null;
-      }
-    } catch (snapshotError) {
-      // Non-critical: continue with deletion even if snapshot fails
-      console.error('Failed to capture content snapshot:', snapshotError);
-    }
-
-    // Step 1: Soft delete relationships in junction tables
-    for (const config of relationshipConfigs) {
-      const { junctionTable, contentIdField } = config;
-
-      // Update junction table entries with deleted_at timestamp
-      const { error: relDeleteError } = await fromTable(serviceClient, junctionTable)
-        .update({
-          deleted_at: new Date().toISOString()
-        })
-        .eq(contentIdField, id)
-        .is('deleted_at', null); // Only update if not already deleted
-
-      if (relDeleteError) {
-        console.error(`Error soft deleting relationships in ${junctionTable}:`, relDeleteError);
-        // Continue - non-critical error
-      }
-    }
-
-    // Step 2: Soft delete the main content item
-    const { error: deleteError } = await serviceClient
-      .from(contentType)
-      .update({
-        deleted_at: new Date().toISOString(),
-        deleted_by: deletedBy,
-        published: false // Immediately unpublish when soft deleted
-      })
-      .eq('id', id);
-
-    // Step 3: Log the deletion for audit trail
-    if (!deleteError && deletedBy) {
-      try {
-        await fromTable(serviceClient, 'deletion_audit_log')
-          .insert({
-            content_type: contentType,
-            content_id: id,
-            content_name: contentName,
-            action: 'soft_delete',
-            performed_by: deletedBy,
-            performed_at: new Date().toISOString(),
-            metadata: {
-              content_snapshot: contentSnapshot,
-              relationship_configs: relationshipConfigs.length
-            }
-          });
-      } catch (auditError) {
-        // Don't fail the delete if audit logging fails
-        console.error('Failed to log deletion to audit trail:', auditError);
-        Sentry.captureException(auditError, {
-          tags: {
-            operation: 'audit_log',
-            action: 'soft_delete',
-            content_type: contentType
-          },
-          extra: {
-            content_id: id,
-            content_name: contentName
-          }
-        });
-      }
-    }
-
-    return { success: !deleteError, error: deleteError };
-  } catch (error) {
-    console.error('Soft delete failed:', error);
-    return { success: false, error: error as PostgrestError | null };
-  }
+  const result = await deleteContent(typeSlug, id, { deletedBy });
+  return { success: result.success, error: result.error ? new Error(result.error) : null };
 }
 
 /**
- * Recovers a soft-deleted content item and its relationships
+ * Recovers a soft-deleted content item and its relationships.
+ *
+ * Delegates to `restoreContent` in src/cms/operations/delete.ts: clears
+ * deleted_at / deleted_by, keeps published=false (restored content is always
+ * a draft), restores junction rows, writes the audit log and revalidates.
+ * `relationshipConfigs` is retained for API compatibility.
  */
 export async function recoverContentItem({
   contentType,
   id,
-  relationshipConfigs = [],
   recoveredBy = null
 }: {
   contentType: ContentType;
   id: string;
   relationshipConfigs?: RelationshipConfig[];
   recoveredBy?: string | null;
-}) {
-  const serviceClient = await createServiceRoleSupabaseClient();
-  
-  try {
-    // Step 1: Recover the main content item
-    const { data, error: recoverError } = await serviceClient
-      .from(contentType)
-      .update({ 
-        deleted_at: null,
-        deleted_by: null,
-        published: false // Always recover as draft for safety
-      })
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (recoverError || !data) {
-      return { success: false, error: recoverError };
-    }
-    
-    // Step 2: Recover relationships in junction tables
-    for (const config of relationshipConfigs) {
-      const { junctionTable, contentIdField } = config;
-      
-      const { error: relRecoverError } = await fromTable(serviceClient, junctionTable)
-        .update({
-          deleted_at: null
-        })
-        .eq(contentIdField, id);
-        
-      if (relRecoverError) {
-        console.error(`Error recovering relationships in ${junctionTable}:`, relRecoverError);
-        // Continue - non-critical error
-      }
-    }
-    
-    // Step 3: Log the recovery for audit trail
-    if (recoveredBy) {
-      // Extract content name from recovered data
-      const recoveredData = data as Record<string, unknown>;
-      const contentName = (recoveredData.title as string) || (recoveredData.name as string) || null;
-
-      try {
-        await fromTable(serviceClient, 'deletion_audit_log')
-          .insert({
-            content_type: contentType,
-            content_id: id,
-            content_name: contentName,
-            action: 'restore',
-            performed_by: recoveredBy,
-            performed_at: new Date().toISOString(),
-            metadata: {
-              relationship_configs: relationshipConfigs.length
-            }
-          });
-      } catch (auditError) {
-        // Don't fail the restore if audit logging fails
-        console.error('Failed to log restore to audit trail:', auditError);
-        Sentry.captureException(auditError, {
-          tags: {
-            operation: 'audit_log',
-            action: 'restore',
-            content_type: contentType
-          },
-          extra: {
-            content_id: id,
-            content_name: contentName
-          }
-        });
-      }
-    }
-
-    return { success: true, data };
-  } catch (error) {
-    console.error('Recovery failed:', error);
-    return { success: false, error: error as PostgrestError | null };
+}): Promise<{ success: boolean; data?: Record<string, unknown>; error: Error | null }> {
+  const typeSlug = registrySlugFor(contentType);
+  if (!typeSlug) {
+    return { success: false, error: new Error(`Unknown content type: ${contentType}`) };
   }
+
+  const result = await restoreContent(typeSlug, id, { restoredBy: recoveredBy });
+  if (!result.success) {
+    return { success: false, error: new Error(result.error ?? 'Recovery failed') };
+  }
+  return { success: true, data: result.data, error: null };
 }
 
 /**
@@ -478,12 +335,24 @@ export async function updatePublishedStatus({
     ...(published ? { published_at: new Date().toISOString() } : {})
   };
 
-  const { data, error } = await fromTable(serviceClient, contentType)
+  let query = fromTable(serviceClient, contentType)
     .update(updateData)
-    .eq('id', id)
+    .eq('id', id);
+
+  // Never publish soft-deleted (trashed) content.
+  if (published) {
+    query = query.is('deleted_at', null);
+  }
+
+  const { data, error } = await query
     .select('*')
     .single();
-    
+
+  if (!error) {
+    const typeSlug = registrySlugFor(contentType);
+    if (typeSlug) revalidateContentType(typeSlug, (data as Record<string, unknown> | null)?.slug as string | undefined);
+  }
+
   return { data, error };
 }
 

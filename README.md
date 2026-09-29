@@ -44,7 +44,7 @@ OpenQase uses a **hybrid static/dynamic architecture**:
 
 - **Static generation** for all public content (case studies, algorithms, personas, industries, blog)
 - **Dynamic rendering** for admin CMS and API routes
-- **On-demand revalidation** when content is published/updated, with 1-hour ISR safety net
+- **On-demand revalidation** when content is published/updated, with a 24-hour ISR safety net
 - **Unified content fetching** with `React.cache()` deduplication
 
 ### Tech Stack

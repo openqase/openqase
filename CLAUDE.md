@@ -51,7 +51,7 @@ Update the CHANGELOG for these types of changes:
 - Never expose unpublished content in public queries
 
 ### Database Query Patterns
-- Use `getStaticContentWithRelationships()` for single content items
+- Use `fetchContentBySlug()` (or `fetchPreviewContentBySlug()` on preview-aware pages) from `src/cms/operations/fetch.ts` for single content items
 - Use `getStaticContentList()` for content lists
 - Include `published` field in relationship queries when filtering is needed
 - Apply published filters conditionally based on preview mode
@@ -72,10 +72,11 @@ Two client factories exist in `src/lib/supabase-server.ts`. Use the right one fo
 **Do not** use the service role client in client components or expose the key via `NEXT_PUBLIC_` env vars. See GitHub issue #144 for the full audit.
 
 ### Deletion System
-- **Soft delete**: Use `soft_delete_content()` database function
-- **Recovery**: Use `recover_content()` database function
-- Content has `content_status` field: 'draft', 'published', 'archived', 'deleted'
-- 30-day retention period for soft-deleted content before permanent deletion
+- **One path for all 9 types**: `deleteContent()` / `deleteContentMany()` in `src/cms/operations/delete.ts` soft-delete (set `deleted_at`, `deleted_by`, `published = false`) and revalidate the admin list, public list and slug page. Every delete route goes through it.
+- **Recovery**: `restoreContent()` clears `deleted_at` and keeps the item as a draft. **Permanent delete**: `permanentlyDeleteContent()` only acts on rows already in the trash.
+- The `soft_delete_content()` / `recover_content()` DB functions still exist but are **not used by the app** and are restricted to `service_role`/admins (migration `20260923152216`). Don't grant them to `anon`/`authenticated`.
+- `publishContent()` refuses soft-deleted rows. Public reads filter both `published = true` and `deleted_at IS NULL`.
+- Soft-deleted items stay in the trash (`/admin/<type>/trash`) until an admin restores or permanently deletes them. The intended 30-day retention is **not enforced** — there is no purge job.
 - **Note**: The `public_*`, `admin_*`, and `trash_*` database views were planned but **do not exist**. Filtering is done via `.eq('published', true)` in queries and JS-level filtering.
 
 ## Architecture Principles
@@ -104,12 +105,12 @@ All dynamic `[slug]/page.tsx` files export `revalidate = 86400` (24 hours). This
 3. Use `generateStaticParams()` with `generateStaticParamsForContentType()` for build-time generation
 
 #### Request-Scoped Deduplication
-`getStaticContentWithRelationships()` is wrapped with `React.cache()` so that `generateMetadata()` and the page component share a single database call per request, not two.
+`fetchContentBySlug()` / `fetchPreviewContentBySlug()` are wrapped with `React.cache()` so that `generateMetadata()` and the page component share a single database call per request, not two.
 
 ### Two Relationship-Fetching Patterns (intentional)
 The codebase has two different patterns for fetching entity relationships. **This is intentional — do not try to consolidate them.**
 
-1. **Single-item nested joins** (`src/lib/content-fetchers.ts`, config: `RELATIONSHIP_MAPS`) — used by static pages to fetch one item with all its relationships in a single Supabase query. Returns nested shapes like `{ case_study_industry_relations: [{ industries: { id, name, slug } }] }`.
+1. **Single-item nested joins** (`src/cms/operations/fetch.ts` + `relationships.ts`, config: `relationships` in `src/cms/types/*.ts`) — used by static pages to fetch one item with all its relationships in a single Supabase query. Returns nested shapes like `{ case_study_industry_relations: [{ industries: { id, name, slug } }] }`.
 
 2. **Batch junction table queries** (`src/lib/relationship-queries.ts` + API routes, config: `relationshipConfigs`) — used by API routes and admin pages to fetch relationships for a *list* of items efficiently. Uses `.in('case_study_id', ids)` to batch, returns flat arrays like `{ related_industries: [{ id, slug, name }] }`.
 
@@ -144,10 +145,9 @@ These serve different query patterns (single-item vs. list) with different outpu
   - On industry pages: contains personas (use nested key: 'personas')
 
 #### Implementation Notes
-- The `filterRelationships()` function in `content-fetchers.ts` handles context detection
-- Content type is determined by checking unique properties (e.g., `quantum_advantage` for algorithms)
-- NEVER filter the same relationship data multiple times - it will destroy the data
-- Currently, published field filtering is disabled for relationships due to inconsistent data
+- Each content type's relationships (junction table, foreign keys, nested key) are declared in `src/cms/types/<type>.ts`; `buildRelationshipSelect()` / `flattenRelationships()` in `src/cms/operations/relationships.ts` build the query and flatten the result.
+- **Draft/deleted related items are filtered out on public pages**: `flattenRelationships(..., { publishedOnly: true })` and `filterVisibleEntities()` in `relationship-queries.ts` drop related rows with `published === false` or `deleted_at` set. `published = null` (legacy data) is kept. The preview path keeps drafts.
+- `saveRelationships()` diffs against current links (deletes removed ids, inserts added ids) and returns errors. Pass an array (even `[]`) to replace a relationship; omit the key to leave it untouched.
 - **Relationship filtering happens in JS, not at the DB level.** PostgREST nested joins cannot filter on related entity fields (e.g., `industries.published`). This is a known limitation. The data volumes per item are small (3-10 relations), so the JS filtering cost is negligible. See GitHub issue #143 for the full analysis.
 
 ### Code Quality

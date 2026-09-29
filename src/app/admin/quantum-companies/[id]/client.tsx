@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PublishButton } from '@/components/admin/PublishButton'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { saveQuantumCompany, publishQuantumCompany, unpublishQuantumCompany } from './actions'
 
@@ -31,8 +31,6 @@ export function QuantumCompanyForm({ quantumCompany, caseStudies, isNew }: Quant
     founded_year: quantumCompany?.founded_year || '',
     funding_stage: quantumCompany?.funding_stage || '',
     headquarters: quantumCompany?.headquarters || '',
-    quantum_focus: quantumCompany?.quantum_focus || '',
-    employee_count: quantumCompany?.employee_count || '',
     website_url: quantumCompany?.website_url || '',
     linkedin_url: quantumCompany?.linkedin_url || '',
     published: quantumCompany?.published || false,
@@ -173,6 +171,22 @@ export function QuantumCompanyForm({ quantumCompany, caseStudies, isNew }: Quant
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Open preview in new tab (draft mode via /api/preview)
+                const previewUrl = `/api/preview?type=quantum-companies&slug=${encodeURIComponent(values.slug)}`
+                window.open(previewUrl, '_blank')
+              }}
+              disabled={!values.id || !values.slug}
+              className="min-w-[100px]"
+              title={!values.id || !values.slug ? "Save the quantum company first to preview" : "Preview quantum company"}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Button>
             <PublishButton
               isPublished={values.published}
               onPublish={handlePublish}

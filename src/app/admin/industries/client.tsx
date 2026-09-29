@@ -137,12 +137,20 @@ export function IndustriesClient({ data }: IndustriesClientProps) {
             Create and manage industry categories and their relationships.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/industries/new">
-            <Plus className="w-4 h-4 mr-2" />
-            New Industry
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/industries/trash">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Trash
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/industries/new">
+              <Plus className="w-4 h-4 mr-2" />
+              New Industry
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <AdminListFilters

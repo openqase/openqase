@@ -1,4 +1,5 @@
 // src/app/paths/industry/[slug]/page.tsx
+import { notFound } from 'next/navigation';
 import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import { Database } from '@/types/supabase';
 import ProfessionalIndustryDetailLayout from '@/components/ui/professional-industry-detail-layout';
@@ -79,7 +80,7 @@ export default async function IndustryPage({ params }: PageParams) {
   const industry = await fetchPreviewContentBySlug('industries', slug) as EnrichedIndustry | null;
 
   if (!industry) {
-    return <div>Industry not found</div>;
+    notFound();
   }
 
   // Flat relationship shape from the CMS engine

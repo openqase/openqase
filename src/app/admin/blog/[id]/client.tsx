@@ -15,7 +15,7 @@ import { ContentCompleteness } from '@/components/admin/ContentCompleteness';
 import { PublishButton } from '@/components/admin/PublishButton';
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation';
 import { useTransition } from 'react';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { saveBlogPost, publishBlogPost, unpublishBlogPost } from './actions';
 import { Tables } from '@/types/supabase';
@@ -241,6 +241,22 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
                   Save
                 </>
               )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Open preview in new tab (draft mode via /api/preview)
+                const previewUrl = `/api/preview?type=blog&slug=${encodeURIComponent(values.slug)}`;
+                window.open(previewUrl, '_blank');
+              }}
+              disabled={!values.id || !values.slug}
+              className="min-w-[100px]"
+              title={!values.id || !values.slug ? "Save the blog post first to preview" : "Preview blog post"}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
             </Button>
             <PublishButton
               isPublished={values.published}

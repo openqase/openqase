@@ -1,10 +1,21 @@
-export type FieldType = 'text' | 'textarea' | 'markdown' | 'slug' | 'url' | 'number' | 'select' | 'boolean' | 'date'
+export type FieldType =
+  | 'text'
+  | 'textarea'
+  | 'markdown'
+  | 'slug'
+  | 'url'
+  | 'number'
+  | 'select'
+  | 'boolean'
+  | 'date'
+  | 'tags'   // text[] column, edited with a tag input; validated as string[]
+  | 'json'   // jsonb column (e.g. resource_links); validated as any JSON value
 
 export interface FieldDefinition {
   name: string
   type: FieldType
   required?: boolean
-  maxLength?: number
+  maxLength?: number     // for tags fields: max length of each tag
   min?: number
   max?: number
   from?: string          // for slug fields: source field name
