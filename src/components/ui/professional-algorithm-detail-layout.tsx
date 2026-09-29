@@ -122,9 +122,9 @@ export default function ProfessionalAlgorithmDetailLayout({
                 Algorithm Details
               </h3>
               <div className="space-y-4">
-                {algorithm.use_cases && algorithm.use_cases.length > 0 && (
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-2">Applications</div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-2">Applications</div>
+                  {algorithm.use_cases && algorithm.use_cases.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
                       {algorithm.use_cases.map((useCase: string) => (
                         <Badge key={useCase} variant="outline" className="text-xs">
@@ -132,8 +132,10 @@ export default function ProfessionalAlgorithmDetailLayout({
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-xs text-muted-foreground">None specified</span>
+                  )}
+                </div>
               </div>
             </div>
 

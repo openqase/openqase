@@ -33,9 +33,21 @@ function renderEntityLinks(
   entities: RelatedEntity[] | undefined,
   basePath: string,
   title: string,
-  icon?: React.ReactNode
+  icon?: React.ReactNode,
+  fallback?: string
 ) {
-  if (!entities || entities.length === 0) return null;
+  if (!entities || entities.length === 0) {
+    if (!fallback) return null;
+    return (
+      <div>
+        <div className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
+          {icon}
+          {title}
+        </div>
+        <span className="text-xs text-muted-foreground">{fallback}</span>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -125,32 +137,39 @@ export default function ProfessionalCaseStudyLayout({
             <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
               <h3 className="text-lg font-semibold mb-4 text-foreground">Quick Facts</h3>
               <div className="space-y-4">
-                {caseStudy.year && (
+                {caseStudy.year ? (
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Year</div>
                     <Badge variant="secondary" className="font-medium">
                       {caseStudy.year}
                     </Badge>
                   </div>
+                ) : (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Year</div>
+                    <span className="text-xs text-muted-foreground">Not specified</span>
+                  </div>
                 )}
 
                 {renderEntityLinks(
                   caseStudy.partner_companies,
                   'partner-companies',
-                  'Partner Companies'
+                  'Partner Companies',
+                  undefined,
+                  'None specified'
                 )}
 
                 {renderEntityLinks(
                   caseStudy.quantum_companies,
                   'quantum-companies',
-                  'Quantum Companies'
+                  'Quantum Companies',
+                  undefined,
+                  'None specified'
                 )}
               </div>
             </div>
 
-            {/* Technical Details - only show if hardware or software relations exist */}
-            {((caseStudy.quantum_hardware && caseStudy.quantum_hardware.length > 0) ||
-              (caseStudy.quantum_software && caseStudy.quantum_software.length > 0)) && (
+            {/* Technical Details */}
             <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
               <h3 className="text-lg font-semibold mb-4 text-foreground">Technical Details</h3>
               <div className="space-y-4">
@@ -158,17 +177,19 @@ export default function ProfessionalCaseStudyLayout({
                   caseStudy.quantum_hardware,
                   'quantum-hardware',
                   'Quantum Hardware',
-                  <Cpu className="h-3 w-3" />
+                  <Cpu className="h-3 w-3" />,
+                  'No information available'
                 )}
 
                 {renderEntityLinks(
                   caseStudy.quantum_software,
                   'quantum-software',
-                  'Quantum Software'
+                  'Quantum Software',
+                  undefined,
+                  'No information available'
                 )}
               </div>
             </div>
-            )}
 
             {/* Categories */}
             <div className="bg-card rounded-lg p-6 border border-border shadow-sm">

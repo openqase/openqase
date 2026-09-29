@@ -122,9 +122,9 @@ export default function ProfessionalPersonaDetailLayout({
                 Professional Profile
               </h3>
               <div className="space-y-4">
-                {persona.expertise && persona.expertise.length > 0 && (
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-2">Core Expertise</div>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-2">Core Expertise</div>
+                  {persona.expertise && persona.expertise.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
                       {persona.expertise.map((item: string) => (
                         <Badge key={item} variant="outline" className="text-xs">
@@ -132,8 +132,10 @@ export default function ProfessionalPersonaDetailLayout({
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-xs text-muted-foreground">None specified</span>
+                  )}
+                </div>
               </div>
             </div>
 
