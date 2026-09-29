@@ -47,7 +47,7 @@ export default function PrivacyPolicyPage() {
 
       <h2 className="text-2xl font-semibold mb-2">5. Changes to This Privacy Policy</h2>
       <p className="mb-4">
-        We may update this Privacy Policy from time to time. The updated version will be indicated by an updated "Revised" date and the updated version will be effective as soon as it is accessible. We encourage you to review this Privacy Policy frequently to be informed of how we are protecting your information.
+        We may update this Privacy Policy from time to time. The updated version will be indicated by an updated &quot;Revised&quot; date and the updated version will be effective as soon as it is accessible. We encourage you to review this Privacy Policy frequently to be informed of how we are protecting your information.
       </p>
 
       <h2 className="text-2xl font-semibold mb-2">6. Contact Us</h2>

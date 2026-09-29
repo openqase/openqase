@@ -19,7 +19,7 @@ export default function GlobalError({
       <div className="text-center space-y-4">
         <h1 className="text-2xl font-bold text-foreground">Something went wrong!</h1>
         <p className="text-muted-foreground">
-          We're sorry, but something unexpected happened. Please try refreshing the page.
+          We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
         </p>
         <button
           onClick={() => reset()}

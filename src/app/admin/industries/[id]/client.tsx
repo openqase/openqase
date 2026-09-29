@@ -9,15 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ContentCompleteness } from '@/components/admin/ContentCompleteness';
 import { PublishButton } from '@/components/admin/PublishButton';
-import { TagInput } from '@/components/ui/tag-input';
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation';
 import { useTransition } from 'react';
 import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { saveIndustry, publishIndustry, unpublishIndustry } from './actions';
+import type { Tables } from '@/types/supabase';
 
 interface IndustryFormProps {
-  industry: any | null;
+  industry: Tables<'industries'> | null;
   isNew: boolean;
 }
 
@@ -47,7 +47,7 @@ export function IndustryForm({ industry, isNew }: IndustryFormProps) {
   const completionPercentage = calculateCompletionPercentage({ values, validationRules });
   
   // Handle field change
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setValues(prev => ({
       ...prev,
       [field]: value
@@ -225,7 +225,7 @@ export function IndustryForm({ industry, isNew }: IndustryFormProps) {
               onUnpublish={handleUnpublish}
               validateContent={validateContent}
               disabled={isPending}
-              onTabChange={(tab: string) => {}}
+              onTabChange={() => {}}
               getTabLabel={(tab: string) => tab}
             />
           </div>

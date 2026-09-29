@@ -24,7 +24,7 @@ export function useNewsletter(options: UseNewsletterOptions = {}) {
     // Validate email
     try {
       emailSchema.parse(email)
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Invalid email",

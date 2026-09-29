@@ -192,7 +192,7 @@ export function QuantumSoftwareClient({ data }: QuantumSoftwareClientProps) {
               Delete Quantum Software
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{softwareToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{softwareToDelete?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

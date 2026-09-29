@@ -192,7 +192,7 @@ export function PartnerCompaniesClient({ data }: PartnerCompaniesClientProps) {
               Delete Partner Company
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{companyToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{companyToDelete?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

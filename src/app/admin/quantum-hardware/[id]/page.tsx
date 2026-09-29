@@ -24,8 +24,8 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
   const supabase = createServiceRoleSupabaseClient()
   const isNew = resolvedParams.id === 'new'
 
-  let quantumHardware = null
-  let caseStudies: any[] = []
+  let quantumHardware: Database['public']['Tables']['quantum_hardware']['Row'] | null = null
+  let caseStudies: Array<{ id: string; title: string; slug: string }> = []
   let initialSpecs: { spec_key: string; value: string; unit: string | null }[] = []
   let definitions: SpecDefinition[] = []
 

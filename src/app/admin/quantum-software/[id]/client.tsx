@@ -14,14 +14,17 @@ import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { createContentValidationRules, calculateCompletionPercentage, validateFormValues } from '@/utils/form-validation'
 import { saveQuantumSoftware, publishQuantumSoftware, unpublishQuantumSoftware } from './actions'
+import type { Database } from '@/types/supabase'
+
+type QuantumSoftware = Database['public']['Tables']['quantum_software']['Row']
 
 interface QuantumSoftwareFormProps {
-  quantumSoftware: any
-  caseStudies: any[]
+  quantumSoftware: QuantumSoftware | null
+  caseStudies: Array<{ id: string; title: string; slug: string }>
   isNew: boolean
 }
 
-export function QuantumSoftwareForm({ quantumSoftware, caseStudies, isNew }: QuantumSoftwareFormProps) {
+export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies, isNew }: QuantumSoftwareFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [values, setValues] = useState({
@@ -42,11 +45,11 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies, isNew }: Qua
   const validationRules = createContentValidationRules('quantum_software')
   const completionPercentage = calculateCompletionPercentage({ values, validationRules })
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setValues(prev => ({ ...prev, [field]: value }))
     
     // Auto-generate slug from name
-    if (field === 'name' && isNew) {
+    if (field === 'name' && isNew && typeof value === 'string') {
       const slug = value.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')

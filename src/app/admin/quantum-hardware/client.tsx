@@ -192,7 +192,7 @@ export function QuantumHardwareClient({ data }: QuantumHardwareClientProps) {
               Delete Quantum Hardware
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{hardwareToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{hardwareToDelete?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

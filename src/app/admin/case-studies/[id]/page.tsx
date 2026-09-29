@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
-import type { Database } from '@/types/supabase'
 import { notFound } from 'next/navigation'
 import { CaseStudyForm } from './client'
 
@@ -9,15 +8,6 @@ export const metadata: Metadata = {
   title: 'Edit Case Study',
   description: 'Create or edit a case study'
 }
-
-type CaseStudy = Database['public']['Tables']['case_studies']['Row']
-type Industry = Database['public']['Tables']['industries']['Row']
-type Algorithm = Database['public']['Tables']['algorithms']['Row']
-type Persona = Database['public']['Tables']['personas']['Row']
-type QuantumSoftware = Database['public']['Tables']['quantum_software']['Row']
-type QuantumHardware = Database['public']['Tables']['quantum_hardware']['Row']
-type QuantumCompany = Database['public']['Tables']['quantum_companies']['Row']
-type PartnerCompany = Database['public']['Tables']['partner_companies']['Row']
 
 interface CaseStudyPageProps {
   params: Promise<{

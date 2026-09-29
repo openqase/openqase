@@ -28,7 +28,7 @@ export default function SettingsPage() {
               <Construction className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="font-semibold mb-2">Coming Soon</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                We're building powerful import/export tools to help you manage your content more efficiently.
+                We&apos;re building powerful import/export tools to help you manage your content more efficiently.
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 text-left">

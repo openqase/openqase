@@ -163,16 +163,16 @@ export class DualNewsletterService {
     subscribed: boolean
     status: string
     services: {
-      beehiiv?: any
-      database?: any
+      beehiiv?: unknown
+      database?: unknown
     }
   }> {
     const result: {
       subscribed: boolean;
       status: string;
       services: {
-        beehiiv?: any;
-        database?: any;
+        beehiiv?: unknown;
+        database?: unknown;
       };
     } = {
       subscribed: false,

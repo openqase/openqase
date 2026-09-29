@@ -115,9 +115,9 @@ async function sampleTable(table: string, contentField: string, sampleSize: numb
   if (!data || data.length === 0) { console.log(`[${table}.${contentField}] no rows`); return; }
   console.log(`\n========== ${table}.${contentField} (total: ${data.length}) ==========`);
   const sample = [...data].sort(() => Math.random() - 0.5).slice(0, sampleSize);
-  const aggregate: any = {};
+  const aggregate: Record<string, number> = {};
   for (const row of sample) {
-    const r = row as any;
+    const r = row as unknown as Record<string, unknown>;
     const md = r[contentField] as string;
     const p = analyse(md);
     console.log(`\n--- ${r.slug} ---`);
@@ -131,7 +131,7 @@ async function sampleTable(table: string, contentField: string, sampleSize: numb
   console.log('\n--- aggregate ---');
   console.log(aggregate || {});
   for (const row of sample) {
-    const md = (row as any)[contentField] as string;
+    const md = (row as unknown as Record<string, unknown>)[contentField] as string;
     const p = analyse(md);
     for (const [k, v] of Object.entries(p)) aggregate[k] = (aggregate[k] || 0) + (v as number);
   }

@@ -3,10 +3,8 @@ import { notFound } from 'next/navigation';
 import { fetchPreviewContentBySlug, generateStaticParamsFor } from '@/cms/page-helpers';
 import type { Database } from '@/types/supabase';
 import ProfessionalCaseStudyLayout from '@/components/ui/professional-case-study-layout';
-import { Badge } from '@/components/ui/badge';
 import { ReferencesRenderer, processContentWithReferences } from '@/components/ui/ReferencesRenderer';
 import { processMarkdown } from '@/lib/markdown-server';
-import Link from 'next/link';
 import { AutoSchema } from '@/components/AutoSchema';
 
 // Define enriched types using flat relationship shapes from the CMS engine

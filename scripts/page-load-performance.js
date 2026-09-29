@@ -177,9 +177,7 @@ async function loadCaseStudyPage(slug) {
 }
 
 async function loadAdminPage() {
-  // Simulate what happens when you load /admin (dashboard with counts)
-  const queries = [];
-  
+
   const start = performance.now();
   const [
     caseStudiesResponse,

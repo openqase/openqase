@@ -9,7 +9,7 @@ interface BeehiivSubscriptionData {
   utm_campaign?: string
   utm_medium?: string
   referring_site?: string
-  custom_fields?: Record<string, any>
+  custom_fields?: Record<string, unknown>
 }
 
 interface BeehiivSubscriptionResponse {
@@ -23,7 +23,7 @@ interface BeehiivSubscriptionResponse {
 interface BeehiivErrorResponse {
   error: string
   message: string
-  details?: any
+  details?: unknown
 }
 
 // Configuration schema

@@ -10,15 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PublishButton } from '@/components/admin/PublishButton'
 import { ArrowLeft, Save, Loader2, Eye } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
+import type { Tables } from '@/types/supabase'
 import { savePartnerCompany, publishPartnerCompany, unpublishPartnerCompany } from './actions'
 
 interface PartnerCompanyFormProps {
-  partnerCompany: any
-  caseStudies: any[]
+  partnerCompany: Tables<'partner_companies'> | null
+  caseStudies: Array<{ id: string; title: string; slug: string }>
   isNew: boolean
 }
 
-export function PartnerCompanyForm({ partnerCompany, caseStudies, isNew }: PartnerCompanyFormProps) {
+export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, isNew }: PartnerCompanyFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [values, setValues] = useState({
@@ -38,11 +39,11 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies, isNew }: Partn
   })
 
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setValues(prev => ({ ...prev, [field]: value }))
     
     // Auto-generate slug from name
-    if (field === 'name' && isNew) {
+    if (field === 'name' && isNew && typeof value === 'string') {
       const slug = value.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')

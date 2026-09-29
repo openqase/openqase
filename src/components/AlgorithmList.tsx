@@ -19,8 +19,6 @@ interface AlgorithmListProps {
   algorithms: Algorithm[];
 }
 
-type SortOption = 'name-asc' | 'name-desc' | 'updated-asc' | 'updated-desc';
-
 const ALGORITHMS_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'updated-desc'] as const;
 
 export default function AlgorithmList({ algorithms }: AlgorithmListProps) {

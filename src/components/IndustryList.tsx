@@ -20,8 +20,6 @@ interface IndustryListProps {
   industries: Industry[];
 }
 
-type SortOption = 'name-asc' | 'name-desc' | 'updated-asc' | 'updated-desc';
-
 const INDUSTRIES_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'updated-desc'] as const;
 
 export default function IndustryList({ industries }: IndustryListProps) {

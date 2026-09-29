@@ -3,7 +3,7 @@
 // src/components/Footer.tsx
 import Link from 'next/link'
 import Image from 'next/image'
-import { Github, Twitter, Linkedin, MessageCircle, ChevronDown } from 'lucide-react'
+import { Github, Twitter, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'

@@ -161,24 +161,29 @@ export function AuditLogClient({ data }: AuditLogClientProps) {
     {
       id: 'snapshot',
       header: '',
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end">
-          {row.original.metadata?.content_snapshot && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                // Show snapshot in a modal or console for now
-                console.log('Content snapshot:', row.original.metadata.content_snapshot)
-                alert('Content snapshot logged to console. Modal view coming soon!')
-              }}
-              title="View content snapshot"
-            >
-              <FileText className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const metadata = row.original.metadata && typeof row.original.metadata === 'object' && !Array.isArray(row.original.metadata)
+          ? (row.original.metadata as Record<string, unknown>)
+          : null;
+        return (
+          <div className="flex items-center justify-end">
+            {metadata?.content_snapshot ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // Show snapshot in a modal or console for now
+                  console.log('Content snapshot:', metadata.content_snapshot)
+                  alert('Content snapshot logged to console. Modal view coming soon!')
+                }}
+                title="View content snapshot"
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
     },
   ]
 

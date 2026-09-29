@@ -9,12 +9,18 @@ import {
   getBreadcrumbSchema,
   getQuantumEntitySchema,
   getBlogPostSchema,
-  getWebSiteSchema 
+  getWebSiteSchema,
+  type CaseStudy,
+  type LearningContent,
+  type BlogPost,
+  type QuantumEntity
 } from '@/lib/schema';
+
+export type SchemaData = CaseStudy | LearningContent | BlogPost | QuantumEntity | Record<string, unknown>;
 
 interface AutoSchemaProps {
   type: 'organization' | 'case-study' | 'course' | 'faq' | 'breadcrumb' | 'quantum-entity' | 'blog-post' | 'website';
-  data?: any;
+  data?: SchemaData;
   courseType?: 'persona' | 'industry' | 'algorithm';
   entityType?: 'quantum-companies' | 'partner-companies' | 'quantum-software' | 'quantum-hardware';
   breadcrumbs?: Array<{name: string, url: string}>;
@@ -29,19 +35,19 @@ export function AutoSchema({ type, data, courseType, entityType, breadcrumbs }: 
       break;
     case 'case-study':
       if (!data) return null;
-      schema = getCaseStudySchema(data);
+      schema = getCaseStudySchema(data as CaseStudy);
       break;
     case 'course':
       if (!data || !courseType) return null;
-      schema = getCourseSchema(data, courseType);
+      schema = getCourseSchema(data as LearningContent, courseType);
       break;
     case 'quantum-entity':
       if (!data || !entityType) return null;
-      schema = getQuantumEntitySchema(data, entityType);
+      schema = getQuantumEntitySchema(data as QuantumEntity, entityType);
       break;
     case 'blog-post':
       if (!data) return null;
-      schema = getBlogPostSchema(data);
+      schema = getBlogPostSchema(data as BlogPost);
       break;
     case 'website':
       schema = getWebSiteSchema();
@@ -71,7 +77,7 @@ export function AutoSchema({ type, data, courseType, entityType, breadcrumbs }: 
 interface MultiSchemaProps {
   schemas: Array<{
     type: AutoSchemaProps['type'];
-    data?: any;
+    data?: SchemaData;
     courseType?: AutoSchemaProps['courseType'];
     entityType?: AutoSchemaProps['entityType'];
     breadcrumbs?: AutoSchemaProps['breadcrumbs'];

@@ -19,9 +19,21 @@ import { toast } from '@/components/ui/use-toast';
 import { savePersona, publishPersona, unpublishPersona } from './actions';
 
 
+interface PersonaFormData {
+  id?: string;
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  expertise?: string[] | null;
+  main_content?: string | null;
+  recommended_reading?: string | null;
+  industry?: string[] | null;
+  published?: boolean | null;
+}
+
 interface PersonaFormProps {
-  persona: any | null;
-  industries: any[];
+  persona: PersonaFormData | null;
+  industries: Array<{ id: string; name: string; slug: string }>;
   isNew: boolean;
 }
 
@@ -55,7 +67,7 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
   const completionPercentage = calculateCompletionPercentage({ values, validationRules });
   
   // Handle field change
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setValues(prev => ({
       ...prev,
       [field]: value
@@ -234,7 +246,7 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
                 onUnpublish={handleUnpublish}
                 validateContent={validateContent}
                 disabled={isPending}
-                onTabChange={(tab: string) => {}}
+                onTabChange={() => {}}
                 getTabLabel={(tab: string) => tab}
               />
             </div>

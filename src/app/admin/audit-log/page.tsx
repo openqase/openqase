@@ -1,4 +1,5 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
+import type { Json } from '@/types/supabase'
 import { AuditLogClient } from './client'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,7 @@ export type AuditLogEntry = {
   action: string
   performed_by: string
   performed_at: string
-  metadata: any
+  metadata: Json
   created_at: string
   user_email?: string
 }

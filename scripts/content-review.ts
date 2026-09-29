@@ -5,7 +5,7 @@
  * Uses LanguageTool API with custom quantum computing dictionary
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import dotenv from 'dotenv';
@@ -84,8 +84,21 @@ interface ContentReviewReport {
   };
 }
 
+interface LanguageToolMatch {
+  offset: number;
+  length: number;
+  message: string;
+  rule?: { id?: string; issueType?: string };
+  replacements?: Array<{ value: string }>;
+  context?: { text?: string };
+}
+
+interface LanguageToolResponse {
+  matches?: LanguageToolMatch[];
+}
+
 class ContentReviewer {
-  private supabase: any;
+  private supabase: SupabaseClient;
   private issues: ContentIssue[] = [];
   private usSpellings: ContentIssue[] = [];
   private stats = {
@@ -108,7 +121,7 @@ class ContentReviewer {
   /**
    * Check text using LanguageTool API
    */
-  async checkWithLanguageTool(text: string): Promise<any> {
+  async checkWithLanguageTool(text: string): Promise<LanguageToolResponse | null> {
     const params = new URLSearchParams({
       text: text,
       language: LANGUAGE,
@@ -170,7 +183,7 @@ class ContentReviewer {
    * Process LanguageTool results and filter out false positives
    */
   processLanguageToolResults(
-    result: any,
+    result: LanguageToolResponse | null,
     text: string,
     table: string,
     id: string,
@@ -203,7 +216,7 @@ class ContentReviewer {
               match.rule?.issueType === 'grammar' ? 'grammar' : 'style',
         message: match.message,
         found: matchedText,
-        suggestions: match.replacements?.map((r: any) => r.value) || [],
+        suggestions: match.replacements?.map(r => r.value) || [],
         context: match.context?.text || '',
         offset: match.offset,
         length: match.length,
@@ -219,23 +232,23 @@ class ContentReviewer {
    */
   async checkContent(
     table: string,
-    item: any,
+    item: Record<string, unknown>,
     fields: string[]
   ): Promise<void> {
-    const title = item.title || item.name || `ID: ${item.id}`;
+    const title = String(item.title || item.name || `ID: ${item.id}`);
     
     for (const field of fields) {
       if (!item[field]) continue;
       
       this.stats.fieldsChecked++;
-      const text = item[field];
+      const text = String(item[field]);
       
       // Check for US spellings
       const usSpellings = this.checkUSSpellings(text);
       for (const spelling of usSpellings) {
         this.usSpellings.push({
           table,
-          id: item.id,
+          id: String(item.id),
           title,
           field,
           type: 'us-spelling',
@@ -255,7 +268,7 @@ class ContentReviewer {
         : text;
       
       const result = await this.checkWithLanguageTool(textToCheck);
-      this.processLanguageToolResults(result, textToCheck, table, item.id, title, field);
+      this.processLanguageToolResults(result, textToCheck, table, String(item.id), title, field);
       
       // Rate limiting to avoid hitting API limits
       await new Promise(resolve => setTimeout(resolve, 100));

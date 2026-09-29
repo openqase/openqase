@@ -1,17 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Check, ChevronsUpDown, X, Search, PlusCircle } from 'lucide-react';
+import { Check, ChevronsUpDown, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
 import {
   Popover,
   PopoverContent,
@@ -19,11 +10,10 @@ import {
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Item {
   id: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface RelationshipSelectorProps {
@@ -87,7 +77,7 @@ export function RelationshipSelector({
 
   // Memoize selected items data — only recomputes when selection changes
   const selectedItemsData = useMemo(() =>
-    items.filter(item => selectedItems.includes(item[itemValueKey])),
+    items.filter(item => selectedItems.includes(String(item[itemValueKey]))),
     [items, selectedItems, itemValueKey]
   );
   
@@ -111,7 +101,7 @@ export function RelationshipSelector({
 
 
   const handleSelectAll = () => {
-    const allItemIds = items.map(item => item[itemValueKey]);
+    const allItemIds = items.map(item => String(item[itemValueKey]));
     onChange(allItemIds);
   };
 
@@ -180,11 +170,11 @@ export function RelationshipSelector({
                   <div className="flex flex-wrap gap-1">
                     {selectedItemsData.map(item => (
                       <Badge
-                        key={item[itemValueKey]}
+                        key={String(item[itemValueKey])}
                         variant="secondary"
                         className="rounded-sm px-1 font-normal"
                       >
-                        {item[itemLabelKey]}
+                        {String(item[itemLabelKey] ?? '')}
                       </Badge>
                     ))}
                   </div>
@@ -229,22 +219,22 @@ export function RelationshipSelector({
                 <div className="p-1">
                   {filteredItems.map(item => (
                     <div
-                      key={item[itemValueKey]}
+                      key={String(item[itemValueKey])}
                       className={cn(
                         "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                        selectedItems.includes(item[itemValueKey]) && "bg-accent text-accent-foreground"
+                        selectedItems.includes(String(item[itemValueKey])) && "bg-accent text-accent-foreground"
                       )}
-                      onClick={() => handleSelect(item[itemValueKey])}
+                      onClick={() => handleSelect(String(item[itemValueKey]))}
                     >
                       <Check
                         className={cn(
                           'mr-2 h-4 w-4',
-                          selectedItems.includes(item[itemValueKey])
+                          selectedItems.includes(String(item[itemValueKey]))
                             ? 'opacity-100'
                             : 'opacity-0'
                         )}
                       />
-                      <span>{item[itemLabelKey]}</span>
+                      <span>{String(item[itemLabelKey] ?? '')}</span>
                     </div>
                   ))}
                 </div>
@@ -257,14 +247,14 @@ export function RelationshipSelector({
         <div className="flex flex-wrap gap-1.5 mt-1.5">
           {selectedItemsData.map(item => (
             <Badge
-              key={item[itemValueKey]}
+              key={String(item[itemValueKey])}
               variant="secondary"
               className="flex items-center gap-1 px-2 py-1 rounded-md"
             >
-              {item[itemLabelKey]}
+              {String(item[itemLabelKey] ?? '')}
               <X
                 className="h-3.5 w-3.5 cursor-pointer ml-1 hover:text-destructive"
-                onClick={(e) => handleRemove(item[itemValueKey], e)}
+                onClick={(e) => handleRemove(String(item[itemValueKey]), e)}
               />
             </Badge>
           ))}

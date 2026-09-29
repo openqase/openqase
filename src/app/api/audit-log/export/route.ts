@@ -12,7 +12,7 @@ function formatFilenameDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
     const auth = await requireAdmin()
     if (auth.error) return auth.error

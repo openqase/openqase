@@ -37,7 +37,7 @@ export async function fetchContentItems({
   includeUnpublished?: boolean;
   page?: number;
   pageSize?: number;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   searchQuery?: string;
   searchFields?: string[];
   orderBy?: string;
@@ -159,7 +159,7 @@ export async function saveContentItem({
   relationships = []
 }: {
   contentType: ContentType;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   id?: string | null;
   relationships?: Array<{
     relationshipConfig: RelationshipConfig;
