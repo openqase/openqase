@@ -12,8 +12,37 @@ interface RelatedEntity {
 
 interface ResourceLink {
   url: string;
-  label: string;
-  order: number;
+  label?: string;
+  title?: string;
+  source?: string;
+  order?: number;
+}
+
+export function formatResourceLink(link: ResourceLink): string {
+  // 1. If descriptive title exists and is not a raw URL, prefer it
+  if (link.title && !link.title.startsWith('http://') && !link.title.startsWith('https://')) {
+    return link.title.trim();
+  }
+
+  // 2. If descriptive label exists and is not a raw URL, use it
+  if (link.label && !link.label.startsWith('http://') && !link.label.startsWith('https://')) {
+    return link.label.trim();
+  }
+
+  // 3. Otherwise extract domain and filename/last path segment from URL
+  try {
+    const parsed = new URL(link.url);
+    const domain = parsed.hostname.replace(/^www\./, '');
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    const lastSegment = segments[segments.length - 1];
+
+    if (lastSegment) {
+      return `${domain} — ${decodeURIComponent(lastSegment)}`;
+    }
+    return domain;
+  } catch {
+    return link.url || 'Resource Link';
+  }
 }
 
 interface CaseStudyWithRelations {
@@ -281,19 +310,23 @@ export default function ProfessionalCaseStudyLayout({
                 </h3>
                 <div className="space-y-2">
                   {(caseStudy.resource_links as unknown as ResourceLink[])
-                    .sort((a, b) => a.order - b.order)
-                    .map((link, index) => (
-                      <a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
-                      >
-                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{link.label}</span>
-                      </a>
-                    ))}
+                    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                    .map((link, index) => {
+                      const displayText = formatResourceLink(link);
+                      return (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={link.url}
+                          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 hover:underline transition-colors group"
+                        >
+                          <ExternalLink className="h-3 w-3 flex-shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="truncate">{displayText}</span>
+                        </a>
+                      );
+                    })}
                 </div>
               </div>
             )}

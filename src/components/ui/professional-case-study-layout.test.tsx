@@ -1,9 +1,51 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import ProfessionalCaseStudyLayout from './professional-case-study-layout';
+import ProfessionalCaseStudyLayout, { formatResourceLink } from './professional-case-study-layout';
 import ProfessionalAlgorithmDetailLayout from './professional-algorithm-detail-layout';
 import ProfessionalIndustryDetailLayout from './professional-industry-detail-layout';
 import ProfessionalPersonaDetailLayout from './professional-persona-detail-layout';
+
+describe('formatResourceLink', () => {
+  it('prefers human-readable title when provided', () => {
+    const text = formatResourceLink({
+      url: 'https://www.nature.com/articles/d41573-022-00001-9',
+      label: 'nature.com',
+      title: 'Quantum Computing in Drug Discovery and Development',
+    });
+    expect(text).toBe('Quantum Computing in Drug Discovery and Development');
+  });
+
+  it('uses human-readable label when title is absent', () => {
+    const text = formatResourceLink({
+      url: 'https://arxiv.org/abs/2001.01120',
+      label: 'Quantum Chemistry Simulations of Dominant Products',
+    });
+    expect(text).toBe('Quantum Chemistry Simulations of Dominant Products');
+  });
+
+  it('formats raw URL into domain and filename when title and label are absent', () => {
+    const text = formatResourceLink({
+      url: 'https://www.cigref.fr/wp/wp-content/uploads/2020/04/Cigref-Quantum-Report.pdf',
+    });
+    expect(text).toBe('cigref.fr — Cigref-Quantum-Report.pdf');
+  });
+
+  it('formats URL with domain-only path when no sub-path is present', () => {
+    const text = formatResourceLink({
+      url: 'https://www.qrypt.com/',
+    });
+    expect(text).toBe('qrypt.com');
+  });
+
+  it('falls back to title over a label that is a raw URL', () => {
+    const text = formatResourceLink({
+      url: 'https://www.qrypt.com/resources/',
+      label: 'https://www.qrypt.com/resources/',
+      title: 'Qrypt Resources - Quantum Security Solutions',
+    });
+    expect(text).toBe('Qrypt Resources - Quantum Security Solutions');
+  });
+});
 
 describe('Professional Layout Sidebars', () => {
   describe('ProfessionalCaseStudyLayout', () => {
@@ -68,6 +110,39 @@ describe('Professional Layout Sidebars', () => {
       expect(html).toContain('Qiskit');
       expect(html).toContain('/paths/quantum-software/qiskit');
       expect(html).toContain('Finance');
+    });
+
+    it('renders Additional Resources with formatted descriptive text and title attributes', () => {
+      const html = renderToStaticMarkup(
+        <ProfessionalCaseStudyLayout
+          title="Sample Study"
+          caseStudy={{
+            resource_links: [
+              {
+                url: 'https://www.qrypt.com/resources/',
+                label: 'https://www.qrypt.com/resources/',
+                title: 'Qrypt Resources - Quantum Security Solutions',
+                order: 1,
+              },
+              {
+                url: 'https://www.cigref.fr/wp/wp-content/uploads/2020/04/Cigref-Quantum-computing-Report.pdf',
+                order: 2,
+              },
+            ],
+          }}
+        >
+          <p>Article body</p>
+        </ProfessionalCaseStudyLayout>
+      );
+
+      expect(html).toContain('Additional Resources');
+      // Uses descriptive title over raw URL label
+      expect(html).toContain('Qrypt Resources - Quantum Security Solutions');
+      // Cleans raw URL into domain — filename
+      expect(html).toContain('cigref.fr — Cigref-Quantum-computing-Report.pdf');
+      // Includes title attribute with full destination URL
+      expect(html).toContain('title="https://www.qrypt.com/resources/"');
+      expect(html).toContain('title="https://www.cigref.fr/wp/wp-content/uploads/2020/04/Cigref-Quantum-computing-Report.pdf"');
     });
   });
 
