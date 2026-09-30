@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Users, Building2, Atom, Code, Cpu, Factory, Handshake } from 'lucide-react';
+import { Users, Building2, Atom, Code, Cpu, Factory, Handshake, BookOpen } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Related Content | Find Quantum Computing Case Studies by Role & Industry - OpenQase',
@@ -55,6 +55,12 @@ export default async function LearningPathsPage() {
       description: "Explore organizations collaborating on quantum initiatives.",
       href: "/paths/partner-companies",
       Icon: Handshake
+    },
+    {
+      title: "All Case Studies",
+      description: "Browse the complete repository of quantum computing business implementations.",
+      href: "/case-study",
+      Icon: BookOpen
     }
   ];
 
@@ -70,9 +76,9 @@ export default async function LearningPathsPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-12 md:mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 md:mb-16">
             {paths.map((path) => (
-              <Link key={path.title} href={path.href} className="group w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
+              <Link key={path.title} href={path.href} className="group block h-full">
                 <Card className={cn(
                   "h-full card-link-hover-effect"
                 )}>
