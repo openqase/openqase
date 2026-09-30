@@ -32,7 +32,7 @@ Extended the existing ContentCard component with variant support using class-var
   - `lastUpdated?: string` - Last update timestamp
 
 **Variants:**
-- **Grid View**: Original 3-column responsive layout (320px fixed height)
+- **Grid View**: Responsive multi-column layout with dynamic height (`h-full min-h-[200px]`) that auto-sizes to the tallest card in each row
 - **List View**: Horizontal cards with enhanced metadata display
 
 ### Implementation Approach
@@ -46,7 +46,7 @@ const contentCardVariants = cva(
   {
     variants: {
       variant: {
-        grid: "h-[320px] flex-col",
+        grid: "h-full min-h-[200px] flex-col",
         list: "h-auto flex-row gap-6"
       }
     },

@@ -9,7 +9,7 @@ const contentCardVariants = cva(
   {
     variants: {
       variant: {
-        grid: "h-[320px] flex-col",
+        grid: "h-full min-h-[200px] flex-col",
         list: "h-auto flex-row gap-6"
       }
     },
@@ -24,6 +24,7 @@ interface ContentCardProps extends VariantProps<typeof contentCardVariants> {
   description: string;
   badges: string[];
   href: string;
+  className?: string;
   metadata?: {
     year?: number;
     companyCount?: number;
@@ -37,6 +38,7 @@ const ContentCard = memo(function ContentCard({
   badges,
   href,
   variant = "grid",
+  className,
   metadata
 }: ContentCardProps) {
   // Memoize badge processing to avoid recalculating on every render
@@ -51,7 +53,7 @@ const ContentCard = memo(function ContentCard({
     return (
       <Link href={href} className="group block">
         <Card 
-          className={cn(contentCardVariants({ variant }))}>
+          className={cn(contentCardVariants({ variant }), className)}>
           <div className="flex-shrink-0 w-16 h-16 bg-muted/50 rounded-lg flex items-center justify-center">
             <div className="w-8 h-8 bg-primary/20 rounded-md"></div>
           </div>
@@ -95,33 +97,35 @@ const ContentCard = memo(function ContentCard({
   }
 
   return (
-    <Link href={href} className="group block">
+    <Link href={href} className="group block h-full">
       <Card
-        className={cn(contentCardVariants({ variant }))}>
+        className={cn(contentCardVariants({ variant }), className)}>
         <div className="flex flex-col h-full">
-          <h3 className="text-xl font-semibold text-[var(--text-primary)] min-h-[3.5rem] mb-3 line-clamp-2">
+          <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-3 line-clamp-2">
             {title}
           </h3>
 
-          <p className={`text-[var(--text-secondary)] mb-auto ${badges.length === 0 ? 'line-clamp-6' : 'line-clamp-4'} min-h-[5rem]`}>
+          <p className="text-[var(--text-secondary)] line-clamp-4 flex-grow">
             {description}
           </p>
 
-          <div className="flex flex-wrap gap-2 mt-6">
-            {displayBadges.map((badge, index) => (
-              <span
-                key={`${index}-${badge}`}
-                className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
-              >
-                {badge}
-              </span>
-            ))}
-            {remainingCount > 0 && (
-              <span className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                +{remainingCount} more
-              </span>
-            )}
-          </div>
+          {(displayBadges.length > 0 || remainingCount > 0) && (
+            <div className="flex flex-wrap gap-2 mt-4 pt-2">
+              {displayBadges.map((badge, index) => (
+                <span
+                  key={`${index}-${badge}`}
+                  className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25"
+                >
+                  {badge}
+                </span>
+              ))}
+              {remainingCount > 0 && (
+                <span className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                  +{remainingCount} more
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </Card>
     </Link>
