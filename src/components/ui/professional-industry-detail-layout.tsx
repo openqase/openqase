@@ -122,6 +122,7 @@ export default function ProfessionalIndustryDetailLayout({
                 Industry Details
               </h3>
               <div className="space-y-4">
+                <span className="text-xs text-muted-foreground">No additional details available</span>
               </div>
             </div>
 
