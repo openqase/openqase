@@ -5,14 +5,17 @@
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
   
   // Performance monitoring
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
   
   // Profiling (helps identify slow functions)
-  profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
+  
+  // Only enable in production or when dev testing is explicitly enabled
+  enabled: process.env.NODE_ENV === 'production' || process.env.SENTRY_DEV === 'true',
   
   // Error filtering
   beforeSend(event) {
@@ -36,7 +39,7 @@ Sentry.init({
     return event;
   },
   
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.SENTRY_DEBUG === 'true',
   
   // Integrations
   integrations: [

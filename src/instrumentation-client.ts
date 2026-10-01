@@ -8,14 +8,18 @@ Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
   
-  // Performance monitoring
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  // Performance monitoring: sample 10% in production, disabled in development to prevent console noise
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
 
   // Session replay configuration
   replaysSessionSampleRate: 0, // Only record sessions that hit errors
-  replaysOnErrorSampleRate: 1.0, // Record 100% of sessions with errors
+  replaysOnErrorSampleRate: process.env.NODE_ENV === 'production' ? 1.0 : 0,
   
-  debug: process.env.NODE_ENV === 'development',
+  // Only enable Sentry error tracking in production (or if explicitly enabled for dev testing)
+  enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_SENTRY_DEV === 'true',
+
+  // Disable debug mode to prevent "Sentry Logger [error]" console noise in development
+  debug: process.env.NEXT_PUBLIC_SENTRY_DEBUG === 'true',
 });
 
 // Export required for Sentry navigation instrumentation
