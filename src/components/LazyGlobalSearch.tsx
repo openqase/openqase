@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense, lazy, forwardRef, useImperativeHandle, useCallback } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { SearchableItem } from '@/lib/content-fetchers';
 
 // Lazy load the actual search component
@@ -45,8 +45,9 @@ function SearchLoading({ className }: { className?: string }) {
           type="text"
           placeholder="Loading search..."
           disabled
-          className="w-full pl-12 pr-4 py-4 text-base bg-card border-2 border-border rounded-xl bg-muted/50 cursor-wait shadow-sm"
+          className="w-full pl-12 pr-12 py-4 text-base bg-card border-2 border-border rounded-xl bg-muted/50 cursor-wait shadow-sm"
         />
+        <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 animate-spin" />
       </div>
     </div>
   );

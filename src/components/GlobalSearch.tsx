@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import Link from 'next/link';
-import { Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Loader2, SearchX } from 'lucide-react';
 import { useGlobalSearch, SearchResult } from '@/hooks/useGlobalSearch';
 import { SearchableItem } from '@/lib/content-fetchers';
 import { cn } from '@/lib/utils';
@@ -145,11 +145,14 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
   ({ searchData, className }, ref) => {
   const {
     searchQuery,
+    debouncedSearchQuery,
     searchResults,
     totalResults,
     isOpen,
+    isSearching,
     handleSearchChange,
-    closeSearch
+    closeSearch,
+    clearSearch,
   } = useGlobalSearch(searchData);
 
   const searchRef = useRef<HTMLDivElement>(null);
@@ -193,21 +196,49 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
     <div ref={searchRef} className={cn("relative w-full max-w-2xl", className)}>
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary/70 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary/70 w-5 h-5 pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
           placeholder="Search case studies, algorithms, companies..."
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-background border border-border focus:outline-none focus:border-primary focus:ring-0 transition-colors duration-200 placeholder:text-muted-foreground text-foreground"
+          aria-label="Search case studies, algorithms, and companies"
+          className="w-full pl-10 pr-10 py-3 bg-background border border-border focus:outline-none focus:border-primary focus:ring-0 transition-colors duration-200 placeholder:text-muted-foreground text-foreground"
         />
+        {isSearching && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center" aria-hidden="true">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {!isSearching && searchQuery.length > 0 && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Search Results Dropdown */}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-xl z-[100] max-h-96 overflow-y-auto">
-          {totalResults > 0 ? (
+          {isSearching ? (
+            <div className="py-8 px-4 text-center" role="status" aria-live="polite">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-sm font-medium">Searching for &ldquo;{searchQuery}&rdquo;...</span>
+              </div>
+              <div className="space-y-2.5 max-w-md mx-auto px-4">
+                <div className="h-8 bg-muted/60 rounded-md animate-pulse" />
+                <div className="h-8 bg-muted/40 rounded-md animate-pulse" />
+                <div className="h-8 bg-muted/30 rounded-md animate-pulse" />
+              </div>
+            </div>
+          ) : totalResults > 0 ? (
             <div className="py-2">
               <SearchResultGroup
                 title="Case Studies"
@@ -268,16 +299,29 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
               )}
             </div>
           ) : (
-            <div className="py-8 px-4 text-center">
-              <p className="text-muted-foreground mb-2">No results found</p>
-              <p className="text-sm text-muted-foreground">
-                Try searching for &ldquo;HSBC&rdquo;, &ldquo;optimization&rdquo;, or &ldquo;finance&rdquo;
+            <div className="py-8 px-4 text-center" role="status" aria-live="polite">
+              <div className="w-10 h-10 rounded-full bg-muted/70 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
+                <SearchX className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <p className="font-semibold text-foreground mb-1">
+                No results found for &ldquo;{debouncedSearchQuery || searchQuery}&rdquo;
               </p>
-              <div className="mt-3">
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto mb-4">
+                Try searching for keywords like &ldquo;HSBC&rdquo;, &ldquo;optimization&rdquo;, or &ldquo;finance&rdquo;, or check your spelling.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors cursor-pointer"
+                >
+                  Clear search
+                </button>
+                <span className="text-muted-foreground/40">•</span>
                 <Link
                   href="/case-study"
                   onClick={closeSearch}
-                  className="text-sm text-primary hover:text-primary/80 transition-colors"
+                  className="text-xs text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   Browse all case studies →
                 </Link>
