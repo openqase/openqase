@@ -12,6 +12,10 @@ import { useSortPersistence } from '@/hooks/useSortPersistence';
 import { usePagination } from '@/hooks/use-pagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
+import { Loader2 } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { SearchEmptyState } from '@/components/ui/search-empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Explicitly import the Row type
 type Persona = Database['public']['Tables']['personas']['Row'];
@@ -24,6 +28,8 @@ const PERSONAS_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'updated-
 
 export default function PersonaList({ personas }: PersonaListProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 250);
+  const isSearching = searchQuery !== debouncedSearchQuery;
   
   // Use hooks for persistence
   const { viewMode, handleViewModeChange } = useViewSwitcher('personas-view-mode');
@@ -33,9 +39,9 @@ export default function PersonaList({ personas }: PersonaListProps) {
   const filteredPersonas = useMemo(() => {
     return personas
     .filter(persona => {
-      if (!searchQuery) return true;
+      if (!debouncedSearchQuery) return true;
       
-      const query = searchQuery.toLowerCase();
+      const query = debouncedSearchQuery.toLowerCase();
       return (
         (persona.name?.toLowerCase().includes(query) ?? false) ||
         (persona.description?.toLowerCase().includes(query) ?? false) ||
@@ -60,7 +66,7 @@ export default function PersonaList({ personas }: PersonaListProps) {
           return (a.name || '').localeCompare(b.name || '');
       }
     });
-  }, [personas, searchQuery, sortBy]);
+  }, [personas, debouncedSearchQuery, sortBy]);
 
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredPersonas });
 
@@ -78,14 +84,21 @@ export default function PersonaList({ personas }: PersonaListProps) {
             <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">
               Search personas
             </Label>
-            <Input
-              id="search"
-              type="search"
-              placeholder="Search by name, description, or expertise..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full"
-            />
+            <div className="relative">
+              <Input
+                id="search"
+                type="search"
+                placeholder="Search by name, description, or expertise..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pr-9"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="w-full sm:w-[200px]">
@@ -109,51 +122,86 @@ export default function PersonaList({ personas }: PersonaListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {filteredPersonas.length} persona{filteredPersonas.length !== 1 ? 's' : ''} found
+            {isSearching ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                Searching personas...
+              </span>
+            ) : (
+              `${filteredPersonas.length} persona${filteredPersonas.length !== 1 ? 's' : ''} found`
+            )}
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
       </div>
 
-      {/* Persona Grid/List */}
-      <div className={viewMode === 'grid' 
-        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        : "space-y-4"
-      }>
-        {paginatedItems.map((persona) => {
-          // Get metadata using the new system
-          const metadata = getContentMetadata('personas', persona, viewMode);
-          
-          return (
-            <ContentCard
-              key={persona.slug}
-              variant={viewMode}
-              title={persona.name || 'Untitled Persona'}
-              description={persona.description || ''}
-              badges={persona.expertise || []}
-              href={`/paths/persona/${persona.slug}`}
-              metadata={{
-                lastUpdated: metadata.join(' • ') || undefined
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Empty State */}
-      {filteredPersonas.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-lg text-muted-foreground">
-            No personas found matching your search.
-          </p>
+      {/* Persona Grid/List / Skeletons */}
+      {isSearching ? (
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          : "space-y-4"
+        }>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-56 rounded-xl border border-border bg-card/60 p-6 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          : "space-y-4"
+        }>
+          {paginatedItems.map((persona) => {
+            // Get metadata using the new system
+            const metadata = getContentMetadata('personas', persona, viewMode);
+            
+            return (
+              <ContentCard
+                key={persona.slug}
+                variant={viewMode}
+                title={persona.name || 'Untitled Persona'}
+                description={persona.description || ''}
+                badges={persona.expertise || []}
+                href={`/paths/persona/${persona.slug}`}
+                metadata={{
+                  lastUpdated: metadata.join(' • ') || undefined
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={goToPage}
-      />
+      {/* Empty State */}
+      {!isSearching && filteredPersonas.length === 0 && (
+        <SearchEmptyState
+          query={debouncedSearchQuery}
+          resourceName="personas"
+          onClearSearch={() => setSearchQuery('')}
+          suggestions={['Executive', 'Researcher', 'Developer', 'Engineer']}
+          onSuggestionClick={(suggestion) => setSearchQuery(suggestion)}
+        />
+      )}
+
+      {!isSearching && filteredPersonas.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+        />
+      )}
     </div>
   );
 } 

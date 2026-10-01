@@ -147,11 +147,16 @@ export function useGlobalSearch(searchData: SearchableItem[]) {
     setIsOpen(false);
   }, []);
 
+  // Check if search is currently pending debounce
+  const isSearching = searchQuery.trim().length >= 2 && searchQuery !== debouncedSearchQuery;
+
   return {
     searchQuery,
+    debouncedSearchQuery,
     searchResults,
     totalResults,
     isOpen,
+    isSearching,
     handleSearchChange,
     closeSearch,
     clearSearch

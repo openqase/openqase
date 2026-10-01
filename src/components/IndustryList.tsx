@@ -12,6 +12,10 @@ import { useSortPersistence } from '@/hooks/useSortPersistence';
 import { usePagination } from '@/hooks/use-pagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
+import { Loader2 } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { SearchEmptyState } from '@/components/ui/search-empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Use the exact Industry type from Database
 type Industry = Database['public']['Tables']['industries']['Row'];
@@ -25,6 +29,8 @@ const INDUSTRIES_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'update
 export default function IndustryList({ industries }: IndustryListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
+  const debouncedSearchQuery = useDebounce(searchQuery, 250);
+  const isSearching = searchQuery !== debouncedSearchQuery;
   
   // Use hooks for persistence
   const { viewMode, handleViewModeChange } = useViewSwitcher('industries-view-mode');
@@ -41,9 +47,9 @@ export default function IndustryList({ industries }: IndustryListProps) {
     .filter(industry => {
       // Skip sector filtering as industries don't have sectors
       if (sectorFilter !== 'all') return false;
-      if (!searchQuery) return true;
+      if (!debouncedSearchQuery) return true;
       
-      const query = searchQuery.toLowerCase();
+      const query = debouncedSearchQuery.toLowerCase();
       return (
         industry.name.toLowerCase().includes(query) ||
         industry.description?.toLowerCase().includes(query)
@@ -67,7 +73,7 @@ export default function IndustryList({ industries }: IndustryListProps) {
           return a.name.localeCompare(b.name);
       }
     });
-  }, [industries, sectorFilter, searchQuery, sortBy]);
+  }, [industries, sectorFilter, debouncedSearchQuery, sortBy]);
 
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredIndustries });
 
@@ -89,14 +95,21 @@ export default function IndustryList({ industries }: IndustryListProps) {
             <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">
               Search industries
             </Label>
-            <Input
-              id="search"
-              type="search"
-              placeholder="Search by name, description, or sector..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full"
-            />
+            <div className="relative">
+              <Input
+                id="search"
+                type="search"
+                placeholder="Search by name, description, or sector..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pr-9"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="w-full sm:w-[200px]">
@@ -139,51 +152,91 @@ export default function IndustryList({ industries }: IndustryListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {filteredIndustries.length} industr{filteredIndustries.length !== 1 ? 'ies' : 'y'} found
+            {isSearching ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                Searching industries...
+              </span>
+            ) : (
+              `${filteredIndustries.length} industr${filteredIndustries.length !== 1 ? 'ies' : 'y'} found`
+            )}
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
       </div>
 
-      {/* Industry Grid/List */}
-      <div className={viewMode === 'grid' 
-        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        : "space-y-4"
-      }>
-        {paginatedItems.map((industry) => {
-          // Get metadata using the new system
-          const metadata = getContentMetadata('industries', industry, viewMode);
-          
-          return (
-            <ContentCard
-              key={industry.slug}
-              variant={viewMode}
-              title={industry.name}
-              description={industry.description || ''}
-              badges={[]}
-              href={`/paths/industry/${industry.slug}`}
-              metadata={{
-                lastUpdated: metadata.join(' • ') || undefined
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Empty State */}
-      {filteredIndustries.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-lg text-muted-foreground">
-            No industries found matching your search.
-          </p>
+      {/* Industry Grid/List / Skeletons */}
+      {isSearching ? (
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          : "space-y-4"
+        }>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-56 rounded-xl border border-border bg-card/60 p-6 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          : "space-y-4"
+        }>
+          {paginatedItems.map((industry) => {
+            // Get metadata using the new system
+            const metadata = getContentMetadata('industries', industry, viewMode);
+            
+            return (
+              <ContentCard
+                key={industry.slug}
+                variant={viewMode}
+                title={industry.name}
+                description={industry.description || ''}
+                badges={[]}
+                href={`/paths/industry/${industry.slug}`}
+                metadata={{
+                  lastUpdated: metadata.join(' • ') || undefined
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={goToPage}
-      />
+      {/* Empty State */}
+      {!isSearching && filteredIndustries.length === 0 && (
+        <SearchEmptyState
+          query={debouncedSearchQuery}
+          hasFilters={sectorFilter !== 'all'}
+          resourceName="industries"
+          onClearSearch={() => setSearchQuery('')}
+          onClearAll={() => {
+            setSearchQuery('');
+            setSectorFilter('all');
+          }}
+          suggestions={['Finance', 'Healthcare', 'Aerospace', 'Energy']}
+          onSuggestionClick={(suggestion) => setSearchQuery(suggestion)}
+        />
+      )}
+
+      {!isSearching && filteredIndustries.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+        />
+      )}
     </div>
   );
 } 
