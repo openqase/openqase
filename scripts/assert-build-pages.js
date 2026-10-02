@@ -1,47 +1,44 @@
 #!/usr/bin/env node
 /**
- * Compare the static-page count from a fresh `next build` against an
- * expected baseline. Fails CI if the count drops, which usually signals
- * a missed SSG path during a refactor.
+ * Post-build guard: count the statically prerendered routes in
+ * .next/prerender-manifest.json and fail if the count collapsed. A database
+ * outage at build time otherwise yields a green build with almost no pages.
  *
- * Manually-invoked check (not part of default CI). Run with:
- *   node scripts/assert-build-pages.js
- * or via:
- *   npm run verify:build
+ * Runs after `next build` (see vercel.json buildCommand, and `npm run
+ * verify:build`). Never runs the build itself.
  */
+import { readFileSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 
-import { spawnSync } from 'node:child_process';
+// Static routes on 2026-10-01: 340. Floor leaves headroom for content removal
+// while catching a collapse. Raise when content grows.
+export const EXPECTED_MIN = 300
 
-const EXPECTED_MIN = 367; // baseline from 2026-04-27. Update when content grows.
-
-const result = spawnSync('npx', ['next', 'build'], { encoding: 'utf8' });
-process.stdout.write(result.stdout ?? '');
-process.stderr.write(result.stderr ?? '');
-if (result.status !== 0) {
-  console.error('next build failed; cannot verify page count.');
-  process.exit(result.status ?? 1);
+export function countPrerenderedRoutes(manifest) {
+  return Object.keys(manifest?.routes ?? {}).length
 }
 
-const match = (result.stdout ?? '').match(
-  /Generating static pages.*?\((\d+)\/\d+\)\s+in/
-);
-if (!match) {
-  // Regex fragile across Next.js versions. Don't fail the build on a parse
-  // miss — that's worse than not having the check. Warn and exit 0 so a
-  // human can investigate.
-  console.warn(
-    'WARN: could not parse static page count from build output. ' +
-    'Build succeeded; the count check is skipped. Consider updating the ' +
-    'parser or reading from .next/ build manifests directly.'
-  );
-  process.exit(0);
+function main() {
+  const strict = process.env.VERCEL_ENV === 'production'
+  let manifest
+  try {
+    manifest = JSON.parse(readFileSync('.next/prerender-manifest.json', 'utf8'))
+  } catch (err) {
+    const msg = `could not read .next/prerender-manifest.json (${err.message})`
+    if (strict) { console.error(`ERROR: ${msg}`); process.exit(1) }
+    console.warn(`WARN: ${msg}; page-count check skipped.`)
+    process.exit(0)
+  }
+  const count = countPrerenderedRoutes(manifest)
+  if (count < EXPECTED_MIN) {
+    const msg = `static page count ${count} is below the floor ${EXPECTED_MIN} — likely a content query failure during the build`
+    if (strict) { console.error(`ERROR: ${msg}`); process.exit(1) }
+    console.warn(`WARN: ${msg} (not failing outside Vercel production)`)
+    process.exit(0)
+  }
+  console.log(`Static page count OK: ${count} >= ${EXPECTED_MIN}`)
 }
-const count = parseInt(match[1], 10);
-if (count < EXPECTED_MIN) {
-  console.error(
-    `Static page count regressed: ${count} < ${EXPECTED_MIN}. ` +
-    'Likely a missed SSG path. Review generateStaticParams calls.'
-  );
-  process.exit(1);
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
 }
-console.log(`Static page count OK: ${count} >= ${EXPECTED_MIN}`);
