@@ -99,13 +99,13 @@ export function QuantumHardwareForm({
 
     await saveHardwareSpecs(hardwareId, specRows)
 
-    return hardwareId as string
+    return { hardwareId: hardwareId as string, warning: result.warning }
   }
 
   const handleSave = async () => {
     startTransition(async () => {
       try {
-        const hardwareId = await persistAll()
+        const { hardwareId, warning } = await persistAll()
 
         if (isNew || values.id !== hardwareId) {
           setValues(prev => ({ ...prev, id: hardwareId }))
@@ -114,11 +114,20 @@ export function QuantumHardwareForm({
           }
         }
         
-        toast({
-          title: 'Saved',
-          description: 'Quantum hardware has been saved successfully',
-          duration: 3000,
-        })
+        if (warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: warning,
+            duration: 8000,
+          })
+        } else {
+          toast({
+            title: 'Saved',
+            description: 'Quantum hardware has been saved successfully',
+            duration: 3000,
+          })
+        }
       } catch (error) {
         console.error("Error in handleSave:", error)
         
@@ -135,7 +144,7 @@ export function QuantumHardwareForm({
   const handlePublish = async () => {
     startTransition(async () => {
       try {
-        const hardwareId = await persistAll()
+        const { hardwareId, warning } = await persistAll()
         setValues(prev => ({ ...prev, id: hardwareId }))
         if (isNew) {
           router.replace(`/admin/quantum-hardware/${hardwareId}`)
@@ -148,6 +157,15 @@ export function QuantumHardwareForm({
           description: 'Quantum hardware is now published and visible to users',
           duration: 3000,
         })
+
+        if (warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: warning,
+            duration: 8000,
+          })
+        }
       } catch (error) {
         console.error("Error in handlePublish:", error)
         

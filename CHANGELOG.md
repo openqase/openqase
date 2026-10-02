@@ -28,6 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **/paths hub** has an eighth "All Case Studies" card and a 1/2/4-column responsive grid (#249).
 - **Reference links** in the case study sidebar show a readable title or `domain — filename` instead of the raw URL (#250).
 - **Sentry in development**: Sentry is disabled outside production unless `SENTRY_DEV` / `NEXT_PUBLIC_SENTRY_DEV=true`; debug logging and traces are off in dev; the server DSN falls back to `NEXT_PUBLIC_SENTRY_DSN`; the CSP `connect-src` was widened to `*.ingest.us.sentry.io` / `*.ingest.sentry.io` (#252).
+- **Sentry server config**: The server and edge Sentry configuration files are now actually loaded by the instrumentation hook, so their settings apply: browser-only noise (`ChunkLoadError`, ResizeObserver) is filtered and server transactions under 50 ms are dropped. The duplicate inline configuration in `src/instrumentation.ts` was removed.
+- **Sentry environment**: Events are tagged with the Vercel deployment environment (production / preview / development) instead of reporting every preview as production (client events need the Vercel project setting "Automatically expose System Environment Variables", which provides NEXT_PUBLIC_VERCEL_ENV).
+- **Rate limiting**: Client identification now prefers the platform-set IP header, and requests with no IP headers are no longer pooled into one shared limit.
+- **Admin trash**: Soft-deleted items no longer appear in the main admin lists for algorithms, blog posts, industries, personas, partner companies, quantum companies, hardware and software (they were already hidden for case studies).
+- **CMS create**: When an item saves but one of its relationship links fails, every content type's editor now shows a "Saved, but some links were not updated" warning instead of a failed save (which led to duplicate-slug errors on retry); on create the editor is taken to the new item.
+- **Bulk publish**: Bulk publish/unpublish of case studies now goes through the same publish path as single items, so trashed rows are refused and `published_at` is stamped consistently, and the editor is told which items were refused.
+- **Detail pages**: Related case studies without a publish date no longer show 01/01/1970 on hardware, software and company pages.
+- **Static generation**: Trashed rows are excluded from build-time slug lists.
+- **Slug rename**: Renaming an item's slug now also refreshes the page at the old slug.
+- **Hardware specs**: Saving hardware specs now refreshes the public hardware page immediately.
+- **Preview**: A malformed preview secret returns 401 instead of a server error.
+- **Reference links**: Case study reference links no longer crash the page when the stored link JSON has a non-string title.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
@@ -49,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
 - **`user_preferences` read leak closed**: Signed-in users could read every admin's preference row. Policies now use a new `is_admin()` helper to check the *caller*, non-admins cannot promote themselves, and `anon` SELECT is revoked.
 - **Safe defaults for new database objects**: The baseline gave `anon`/`authenticated` full rights on every future table, sequence and function in `public`. The same migration now makes new tables read-only for those roles (RLS still applies) and new functions/sequences unavailable to them unless explicitly granted.

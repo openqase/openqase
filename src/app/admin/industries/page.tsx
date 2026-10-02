@@ -16,6 +16,7 @@ export default async function IndustriesPage() {
   const { data: industries, error } = await supabase
     .from('industries')
     .select('*')
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {

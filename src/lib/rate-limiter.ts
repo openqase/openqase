@@ -173,27 +173,25 @@ export const RATE_LIMITS = {
 } as const;
 
 /**
- * Get client identifier for rate limiting
- * @param request - Next.js request object
- * @returns Unique identifier string
+ * Client key for rate limiting.
+ *
+ * Vercel sets both x-real-ip and x-forwarded-for from the connecting client
+ * and does not forward externally supplied values, so x-real-ip is the most
+ * direct signal; the first x-forwarded-for hop is the conventional fallback
+ * behind other proxies. A request with neither header gets a unique key so
+ * that one abusive anonymous client cannot exhaust a bucket shared by every
+ * other header-less request (and so the limiter fails open per request
+ * rather than closed for everyone).
  */
 export function getClientIdentifier(request: Request): string {
-  // In production, consider using a more sophisticated approach
-  // that handles proxy headers (X-Forwarded-For, etc.)
-  
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+
   const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  
-  if (realIp) {
-    return realIp;
-  }
-  
-  // Fallback - this won't work well in production behind a proxy
-  return 'unknown';
+  const firstHop = forwarded?.split(',')[0]?.trim();
+  if (firstHop) return firstHop;
+
+  return `anon:${crypto.randomUUID()}`;
 }
 
 /**

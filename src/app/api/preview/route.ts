@@ -15,11 +15,13 @@ export async function GET(request: NextRequest) {
   // signed-in admin session (the admin "Preview" button, which must not embed
   // the secret in client code).
   const validSecret = process.env.PREVIEW_SECRET;
+  const secretBytes = secret ? Buffer.from(secret) : null;
+  const validBytes = validSecret ? Buffer.from(validSecret) : null;
   const hasValidSecret =
-    !!validSecret &&
-    !!secret &&
-    secret.length === validSecret.length &&
-    crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(validSecret));
+    !!secretBytes &&
+    !!validBytes &&
+    secretBytes.length === validBytes.length &&
+    crypto.timingSafeEqual(secretBytes, validBytes);
 
   if (!hasValidSecret) {
     const auth = await requireAdmin();

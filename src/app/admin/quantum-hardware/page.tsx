@@ -18,6 +18,7 @@ export default async function QuantumHardwarePage() {
   const { data: quantumHardware, error } = await supabase
     .from('quantum_hardware')
     .select('*')
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {
