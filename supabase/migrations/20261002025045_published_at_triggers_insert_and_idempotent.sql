@@ -6,8 +6,9 @@
 --   (a) guarded only 2 of its 9 trigger definitions with DROP IF EXISTS,
 --       so re-applying it by hand fails with "trigger already exists"; and
 --   (b) attached the triggers BEFORE UPDATE only, so a row inserted already
---       published (imports, SQL console) never received a published_at, and
---       the function body would raise on INSERT because OLD is unassigned.
+--       published (imports, SQL console, createContent) never received a
+--       published_at; the TG_OP branch makes the INSERT path explicit (OLD is
+--       NULL, not an error, on INSERT in modern PostgreSQL).
 --
 -- Safe whether or not 20260923161000 was applied: the function is replaced
 -- and every trigger is dropped-if-exists then created.
@@ -51,6 +52,10 @@ CREATE TRIGGER "set_personas_published_at" BEFORE INSERT OR UPDATE ON "public"."
 
 DROP TRIGGER IF EXISTS "set_blog_posts_published_at" ON "public"."blog_posts";
 CREATE TRIGGER "set_blog_posts_published_at" BEFORE INSERT OR UPDATE ON "public"."blog_posts" FOR EACH ROW EXECUTE FUNCTION "public"."set_published_at_column"();
+
+-- The baseline's bespoke blog function is superseded by set_published_at_column();
+-- the trigger above has already been re-pointed, so this cannot fail on a dependency.
+DROP FUNCTION IF EXISTS "public"."set_blog_posts_published_at"();
 
 DROP TRIGGER IF EXISTS "set_quantum_hardware_published_at" ON "public"."quantum_hardware";
 CREATE TRIGGER "set_quantum_hardware_published_at" BEFORE INSERT OR UPDATE ON "public"."quantum_hardware" FOR EACH ROW EXECUTE FUNCTION "public"."set_published_at_column"();
