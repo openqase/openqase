@@ -60,7 +60,7 @@ OpenQase uses a **hybrid static/dynamic architecture**:
 | Email | Beehiiv (newsletter) + Resend (transactional) |
 | Caching | Redis (Upstash) with in-memory fallback |
 | Deployment | Vercel |
-| Testing | Vitest (570+ tests) |
+| Testing | Vitest (550+ tests) |
 
 ## Content Types
 

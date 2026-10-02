@@ -361,7 +361,7 @@ The middleware handles session refresh and route protection:
 
 ```typescript
 // src/proxy.ts
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   // Update session (refresh tokens if needed)
   const res = await updateSession(req);
 
