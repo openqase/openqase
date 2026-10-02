@@ -147,6 +147,11 @@ matches prod's.
 - **The ledger and the folder disagree.** `npx supabase migration list --db-url ...`
   shows both columns. Reconcile with `migration repair`, one version at a time,
   and understand why they diverged before marking anything applied.
+  Example: if `migration list` shows `20260923161000` pending but `db push`
+  fails with `trigger ... already exists`, the September triggers were applied
+  by hand; run `npx supabase migration repair --status applied 20260923161000
+  --db-url "$DEV_DB_URL"` (then the same for prod) and push again.
+  `20261002025045` supersedes it and is safe to apply over existing triggers.
 - **Bad data change reached prod.** Stop. Restore from the Supabase dashboard's
   Point in Time Recovery or the daily backup rather than writing a corrective
   `UPDATE` by hand. If the values exist in a git-tracked seed or import script,

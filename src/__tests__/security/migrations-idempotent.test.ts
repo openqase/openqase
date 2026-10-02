@@ -26,15 +26,21 @@ const stripLineComments = (sql: string) => sql.replace(/^\s*--.*$/gm, '')
 
 function createTriggers(sql: string): Array<{ name: string; table: string; index: number }> {
   const out: Array<{ name: string; table: string; index: number }> = []
-  const re = /CREATE\s+TRIGGER\s+"?(\w+)"?\s+[^;]*?ON\s+"?(?:public"?\."?)?(\w+)"?/gi
+  const re = /CREATE\s+(?:OR\s+REPLACE\s+)?TRIGGER\s+"?(\w+)"?\s+[^;]*?ON\s+"?(?:public"?\."?)?(\w+)"?/gi
   for (const m of sql.matchAll(re)) out.push({ name: m[1], table: m[2], index: m.index ?? 0 })
   return out
 }
 
 function hasDropBefore(sql: string, name: string, table: string, index: number): boolean {
-  const re = new RegExp(`DROP\\s+TRIGGER\\s+IF\\s+EXISTS\\s+"?${name}"?\\s+ON\\s+"?(?:public"?\\."?)?${table}"?`, 'i')
+  const re = new RegExp(`DROP\\s+TRIGGER\\s+IF\\s+EXISTS\\s+"?${name}"?\\s+ON\\s+"?(?:public"?\\."?)?${table}"?\\b`, 'i')
   const m = sql.match(re)
   return !!m && (m.index ?? Infinity) < index
+}
+
+function isReRunnable(sql: string, t: { name: string; table: string; index: number }): boolean {
+  const stmt = sql.slice(t.index, sql.indexOf(';', t.index))
+  const orReplace = /CREATE\s+OR\s+REPLACE\s+TRIGGER/i.test(stmt)
+  return orReplace || hasDropBefore(sql, t.name, t.table, t.index)
 }
 
 describe('published_at trigger migrations are idempotent', () => {
@@ -62,9 +68,20 @@ describe('published_at trigger migrations are idempotent', () => {
     for (const file of files.slice(start)) {
       const sql = stripLineComments(readFileSync(file, 'utf8'))
       for (const t of createTriggers(sql)) {
-        const orReplace = /CREATE\s+OR\s+REPLACE\s+TRIGGER/i.test(sql.slice(Math.max(0, t.index - 20), t.index + 30))
-        expect(orReplace || hasDropBefore(sql, t.name, t.table, t.index), `${file}: ${t.name} is not re-runnable`).toBe(true)
+        expect(isReRunnable(sql, t), `${file}: ${t.name} is not re-runnable`).toBe(true)
       }
     }
+  })
+
+  it('isReRunnable accepts CREATE OR REPLACE TRIGGER without DROP and rejects plain CREATE TRIGGER', () => {
+    const tail = ' BEFORE UPDATE ON "public"."x" FOR EACH ROW EXECUTE FUNCTION "public"."f"();'
+    const orReplaceSql = 'CREATE OR REPLACE TRIGGER "t"' + tail
+    const plainSql = 'CREATE TRIGGER "t"' + tail
+    const [a] = createTriggers(orReplaceSql)
+    const [b] = createTriggers(plainSql)
+    expect(a).toBeDefined()
+    expect(b).toBeDefined()
+    expect(isReRunnable(orReplaceSql, a)).toBe(true)
+    expect(isReRunnable(plainSql, b)).toBe(false)
   })
 })
