@@ -59,6 +59,16 @@ describe('PATCH /api/case-studies bulk publish', () => {
     expect(body.failed).toEqual([ID2])
   })
 
+  it('reports every id as failed when publishContent refuses them all', async () => {
+    publishContent.mockResolvedValue({ success: false, error: 'trashed' })
+    const res = await PATCH(bulkRequest('publish', [ID1, ID2]))
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(body.updated).toBe(0)
+    expect(body.failed).toEqual([ID1, ID2])
+    expect(body.message).toContain('could not be')
+  })
+
   it('unpublishes through unpublishContent', async () => {
     unpublishContent.mockResolvedValue({ success: true })
     const res = await PATCH(bulkRequest('unpublish', [ID1]))
