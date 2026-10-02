@@ -165,6 +165,28 @@ describe('Professional Layout Sidebars', () => {
       expect(html).toContain('title="https://www.qrypt.com/resources/"');
       expect(html).toContain('title="https://www.cigref.fr/wp/wp-content/uploads/2020/04/Cigref-Quantum-computing-Report.pdf"');
     });
+
+    it('skips null resource_links entries, sorts by order, and does not mutate the prop', () => {
+      const links = [
+        null,
+        { url: 'https://example.com/a.pdf', order: 2 },
+        { url: 'https://example.com/b.pdf', order: 1 },
+      ];
+      const html = renderToStaticMarkup(
+        <ProfessionalCaseStudyLayout
+          title="Sample Study"
+          caseStudy={{ resource_links: links }}
+        >
+          <p>Article body</p>
+        </ProfessionalCaseStudyLayout>
+      );
+
+      expect(html.indexOf('b.pdf')).toBeGreaterThan(-1);
+      expect(html.indexOf('b.pdf')).toBeLessThan(html.indexOf('a.pdf'));
+      expect(links[0]).toBeNull();
+      expect((links[1] as { url: string }).url).toBe('https://example.com/a.pdf');
+      expect((links[2] as { url: string }).url).toBe('https://example.com/b.pdf');
+    });
   });
 
   describe('ProfessionalAlgorithmDetailLayout', () => {

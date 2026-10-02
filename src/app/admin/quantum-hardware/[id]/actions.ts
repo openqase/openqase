@@ -102,6 +102,7 @@ function normalizeSpecKey(key: string): string {
 }
 
 async function revalidateHardwarePages(supabase: ReturnType<typeof createServiceRoleSupabaseClient>, hardwareId: string) {
+  // The read's error is intentionally ignored: on failure we still revalidate the admin and public lists, and the 24h ISR backstop covers the detail page.
   const { data } = await supabase.from('quantum_hardware').select('slug').eq('id', hardwareId).maybeSingle()
   revalidateContentType('quantum-hardware', data?.slug ?? undefined)
 }

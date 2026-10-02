@@ -314,7 +314,9 @@ export default function ProfessionalCaseStudyLayout({
                   Additional Resources
                 </h3>
                 <div className="space-y-2">
-                  {(caseStudy.resource_links as unknown as ResourceLink[])
+                  {(caseStudy.resource_links as unknown as unknown[])
+                    .filter((l): l is ResourceLink => !!l && typeof l === 'object')
+                    .slice()
                     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
                     .map((link, index) => {
                       const displayText = formatResourceLink(link);
