@@ -36,7 +36,9 @@ const FILTER_GROUP_LABELS: Record<string, string> = {
   personas: 'Role',
 };
 
-export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudiesListProps) {
+const EMPTY_RELATIONSHIP_MAP: NonNullable<CaseStudiesListProps['relationshipMap']> = {};
+
+export function CaseStudiesList({ caseStudies, relationshipMap = EMPTY_RELATIONSHIP_MAP }: CaseStudiesListProps) {
   const { query: searchQuery, deferredQuery, isPending, setQuery: setSearchQuery } = useSearchQuery();
 
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({
@@ -235,16 +237,14 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
               <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">
                 Search case studies
               </Label>
-              <div className="relative">
-                <Input
-                  id="search"
-                  type="search"
-                  placeholder="Search by title, description, or year..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full pr-9"
-                />
-              </div>
+              <Input
+                id="search"
+                type="search"
+                placeholder="Search by title, description, or year..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full"
+              />
             </div>
 
             <div className="w-full sm:w-[200px]">
@@ -305,7 +305,8 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
             viewMode === 'grid'
               ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
               : "space-y-4",
-            isPending && 'opacity-70 transition-opacity'
+            'transition-opacity motion-reduce:transition-none',
+            isPending && 'opacity-70'
           )}
         >
           {paginatedItems.map((caseStudy) => {

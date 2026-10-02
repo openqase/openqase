@@ -81,16 +81,14 @@ export default function PersonaList({ personas }: PersonaListProps) {
             <Label htmlFor="search" className="text-sm font-medium mb-1.5 block">
               Search personas
             </Label>
-            <div className="relative">
-              <Input
-                id="search"
-                type="search"
-                placeholder="Search by name, description, or expertise..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full pr-9"
-              />
-            </div>
+            <Input
+              id="search"
+              type="search"
+              placeholder="Search by name, description, or expertise..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full"
+            />
           </div>
 
           <div className="w-full sm:w-[200px]">
@@ -127,7 +125,8 @@ export default function PersonaList({ personas }: PersonaListProps) {
           viewMode === 'grid'
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             : "space-y-4",
-          isPending && 'opacity-70 transition-opacity'
+          'transition-opacity motion-reduce:transition-none',
+          isPending && 'opacity-70'
         )}
       >
         {paginatedItems.map((persona) => {

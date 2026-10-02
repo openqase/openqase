@@ -39,7 +39,7 @@ describe('CaseStudiesList', () => {
     expect(html).toContain('1 case study found');
   });
 
-  it('renders results in a grid that is never replaced by skeletons and exposes aria-busy', () => {
+  it('initial render exposes aria-busy and a live count with no skeleton markup', () => {
     const mockCaseStudies = [
       {
         id: '1',
