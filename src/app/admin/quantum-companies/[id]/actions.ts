@@ -32,10 +32,12 @@ export const saveQuantumCompany = withAdmin(async (values: QuantumCompanyFormDat
   if (id) {
     const result = await updateContent('quantum-companies', id, data, relationships)
     if (result.error) throw new Error(result.error)
+    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
     return result.data as Tables<'quantum_companies'>
   }
   const result = await createContent('quantum-companies', data, relationships)
   if (result.error) throw new Error(result.error)
+  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
   return result.data as Tables<'quantum_companies'>
 })
 

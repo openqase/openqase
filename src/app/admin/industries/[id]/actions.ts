@@ -19,11 +19,13 @@ export const saveIndustry = withAdmin(async (values: IndustryFormData): Promise<
   if (id) {
     const result = await updateContent('industries', id, data)
     if (result.error) throw new Error(result.error)
+    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
     return result.data as TablesInsert<'industries'>
   }
 
   const result = await createContent('industries', data)
   if (result.error) throw new Error(result.error)
+  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
   return result.data as TablesInsert<'industries'>
 })
 

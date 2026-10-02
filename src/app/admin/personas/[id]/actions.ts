@@ -21,11 +21,13 @@ export const savePersona = withAdmin(async (values: PersonaFormData) => {
   if (id) {
     const result = await updateContent('personas', id, data, relationships)
     if (result.error) throw new Error(result.error)
+    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
     return result.data
   }
 
   const result = await createContent('personas', data, relationships)
   if (result.error) throw new Error(result.error)
+  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
   return result.data
 })
 

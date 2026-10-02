@@ -32,6 +32,7 @@ export const saveBlogPost = withAdmin(async (values: BlogPostFormData) => {
   }
 
   if (result.error) throw new Error(result.error)
+  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
 
   // Revalidate homepage because it shows featured blog posts
   revalidatePath('/')

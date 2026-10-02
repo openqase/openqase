@@ -32,11 +32,13 @@ export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promis
   if (id) {
     const result = await updateContent('algorithms', id, data, relationships)
     if (result.error) throw new Error(result.error)
+    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
     return result.data as TablesInsert<'algorithms'>
   }
 
   const result = await createContent('algorithms', data, relationships)
   if (result.error) throw new Error(result.error)
+  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
   return result.data as TablesInsert<'algorithms'>
 })
 

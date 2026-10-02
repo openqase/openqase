@@ -32,10 +32,12 @@ export const savePartnerCompany = withAdmin(async (values: PartnerCompanyFormDat
   if (id) {
     const result = await updateContent('partner-companies', id, data, relationships)
     if (result.error) throw new Error(result.error)
+    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
     return result.data as Tables<'partner_companies'>
   }
   const result = await createContent('partner-companies', data, relationships)
   if (result.error) throw new Error(result.error)
+  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
   return result.data as Tables<'partner_companies'>
 })
 
