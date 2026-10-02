@@ -532,7 +532,7 @@ Dashboard → Authentication → URL Configuration:
 
 2. **Check Middleware**
 
-Ensure `middleware.ts` allows auth routes:
+Ensure `proxy.ts` allows auth routes:
 
 ```typescript
 export const config = {
