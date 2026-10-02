@@ -20,7 +20,7 @@ interface BlogPostFormData {
   related_posts?: string[]
 }
 
-export const saveBlogPost = withAdmin(async (values: BlogPostFormData) => {
+export const saveBlogPost = withAdmin(async (values: BlogPostFormData): Promise<Record<string, unknown> & { warning?: string }> => {
   const { id, related_posts, ...data } = values
   const relationships = related_posts !== undefined ? { related_posts } : undefined
 
@@ -32,12 +32,11 @@ export const saveBlogPost = withAdmin(async (values: BlogPostFormData) => {
   }
 
   if (result.error) throw new Error(result.error)
-  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
 
   // Revalidate homepage because it shows featured blog posts
   revalidatePath('/')
 
-  return result.data
+  return { ...result.data, warning: result.warning }
 })
 
 export const publishBlogPost = withAdmin(async (id: string): Promise<void> => {

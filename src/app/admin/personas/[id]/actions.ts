@@ -14,21 +14,19 @@ interface PersonaFormData {
   industry?: string[]  // relationship IDs sent from admin form
 }
 
-export const savePersona = withAdmin(async (values: PersonaFormData) => {
+export const savePersona = withAdmin(async (values: PersonaFormData): Promise<Record<string, unknown> & { warning?: string }> => {
   const { id, industry, ...data } = values
   const relationships = industry ? { industries: industry } : undefined
 
   if (id) {
     const result = await updateContent('personas', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-    return result.data
+    return { ...result.data, warning: result.warning }
   }
 
   const result = await createContent('personas', data, relationships)
   if (result.error) throw new Error(result.error)
-  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-  return result.data
+  return { ...result.data, warning: result.warning }
 })
 
 export const publishPersona = withAdmin(async (id: string): Promise<void> => {

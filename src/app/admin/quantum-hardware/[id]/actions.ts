@@ -37,7 +37,7 @@ interface QuantumHardwareFormData {
   related_case_studies?: string[]
 }
 
-export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<Tables<'quantum_hardware'>> => {
+export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<Tables<'quantum_hardware'> & { warning?: string }> => {
   const { id, related_case_studies, ...data } = values
 
   // Relationship keys match the relationship names in src/cms/types/<type>.ts.
@@ -48,13 +48,11 @@ export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormD
   if (id) {
     const result = await updateContent('quantum-hardware', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-    return result.data as Tables<'quantum_hardware'>
+    return { ...(result.data as Tables<'quantum_hardware'>), warning: result.warning }
   }
   const result = await createContent('quantum-hardware', data, relationships)
   if (result.error) throw new Error(result.error)
-  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-  return result.data as Tables<'quantum_hardware'>
+  return { ...(result.data as Tables<'quantum_hardware'>), warning: result.warning }
 })
 
 export const publishQuantumHardware = withAdmin(async (id: string): Promise<void> => {

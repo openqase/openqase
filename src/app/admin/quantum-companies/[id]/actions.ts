@@ -22,7 +22,7 @@ interface QuantumCompanyFormData {
   related_case_studies?: string[]
 }
 
-export const saveQuantumCompany = withAdmin(async (values: QuantumCompanyFormData): Promise<Tables<'quantum_companies'>> => {
+export const saveQuantumCompany = withAdmin(async (values: QuantumCompanyFormData): Promise<Tables<'quantum_companies'> & { warning?: string }> => {
   const { id, related_case_studies, ...data } = values
 
   // Relationship keys match the relationship names in src/cms/types/<type>.ts.
@@ -32,13 +32,11 @@ export const saveQuantumCompany = withAdmin(async (values: QuantumCompanyFormDat
   if (id) {
     const result = await updateContent('quantum-companies', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-    return result.data as Tables<'quantum_companies'>
+    return { ...(result.data as Tables<'quantum_companies'>), warning: result.warning }
   }
   const result = await createContent('quantum-companies', data, relationships)
   if (result.error) throw new Error(result.error)
-  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-  return result.data as Tables<'quantum_companies'>
+  return { ...(result.data as Tables<'quantum_companies'>), warning: result.warning }
 })
 
 export const publishQuantumCompany = withAdmin(async (id: string): Promise<void> => {

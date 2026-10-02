@@ -267,6 +267,15 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           description: 'Case study is now published and visible to users',
           duration: 3000,
         });
+
+        if (saveResult?.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: saveResult.warning,
+            duration: 8000,
+          });
+        }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while publishing';
         

@@ -20,7 +20,7 @@ interface AlgorithmFormData {
   related_personas?: string[]
 }
 
-export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promise<TablesInsert<'algorithms'>> => {
+export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promise<TablesInsert<'algorithms'> & { warning?: string }> => {
   const { id, related_case_studies, related_industries, related_personas, ...data } = values
 
   const relationships = {
@@ -32,14 +32,12 @@ export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promis
   if (id) {
     const result = await updateContent('algorithms', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-    return result.data as TablesInsert<'algorithms'>
+    return { ...(result.data as TablesInsert<'algorithms'>), warning: result.warning }
   }
 
   const result = await createContent('algorithms', data, relationships)
   if (result.error) throw new Error(result.error)
-  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-  return result.data as TablesInsert<'algorithms'>
+  return { ...(result.data as TablesInsert<'algorithms'>), warning: result.warning }
 })
 
 export const publishAlgorithm = withAdmin(async (id: string): Promise<void> => {

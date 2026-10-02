@@ -22,7 +22,7 @@ interface PartnerCompanyFormData {
   related_case_studies?: string[]
 }
 
-export const savePartnerCompany = withAdmin(async (values: PartnerCompanyFormData): Promise<Tables<'partner_companies'>> => {
+export const savePartnerCompany = withAdmin(async (values: PartnerCompanyFormData): Promise<Tables<'partner_companies'> & { warning?: string }> => {
   const { id, related_case_studies, ...data } = values
 
   // Relationship keys match the relationship names in src/cms/types/<type>.ts.
@@ -32,13 +32,11 @@ export const savePartnerCompany = withAdmin(async (values: PartnerCompanyFormDat
   if (id) {
     const result = await updateContent('partner-companies', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-    return result.data as Tables<'partner_companies'>
+    return { ...(result.data as Tables<'partner_companies'>), warning: result.warning }
   }
   const result = await createContent('partner-companies', data, relationships)
   if (result.error) throw new Error(result.error)
-  if (result.warning) console.error('[cms] relationship save warning:', result.warning)
-  return result.data as Tables<'partner_companies'>
+  return { ...(result.data as Tables<'partner_companies'>), warning: result.warning }
 })
 
 export const publishPartnerCompany = withAdmin(async (id: string): Promise<void> => {
