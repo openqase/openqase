@@ -1,5 +1,7 @@
 # API and Relationships Architecture
 
+> **Partially outdated (2026-10-01).** The "Standardized API Pattern" section below is current. Sections that mention `RELATIONSHIP_CONFIGS`, `fetchContentItems`, `saveContentItem`, `deleteContentItem` or `recoverContentItem` describe `src/utils/content-management.ts`, which was removed; the live equivalents are `src/cms/operations/*` (single-item fetch, create/update with diffed `saveRelationships()`, soft delete/restore) and `relationshipConfigs` in `src/lib/relationship-queries.ts` (batch joins). See CLAUDE.md "Two Relationship-Fetching Patterns".
+
 ## Overview
 
 OpenQase uses a sophisticated content relationship system that powers the interconnected nature of quantum computing case studies, algorithms, industries, personas, and other content types. This document explains how the APIs work and how relationships enable rich content discovery.
@@ -226,26 +228,13 @@ const { data: caseStudies } = await fetchContentItems({
 
 ## Best Practices
 
-### 1. Always Use Content Management Utilities
+### 1. Always Use the CMS Operations Layer
 
-Don't write direct Supabase queries for standard operations:
-
-```typescript
-// ❌ Bad - Direct query
-const { data } = await supabase.from('algorithms').select('*');
-
-// ✅ Good - Use utilities
-const { data } = await fetchContentItems({ 
-  contentType: 'algorithms' 
-});
-```
+Use `listContent` / `fetchContentBySlug` from `@/cms/operations` for reads and `createContent` / `updateContent` / `deleteContent` for writes. They apply the published and soft-delete filters and revalidate the right pages.
 
 ### 2. Handle Relationships Atomically
 
-When updating relationships, the system:
-1. Deletes ALL existing relationships for that content
-2. Inserts the new set of relationships
-3. This ensures data consistency
+`saveRelationships()` (called by `createContent` / `updateContent`) diffs the submitted ids against the current junction rows: it deletes only removed links, inserts only added ones, and returns any errors instead of swallowing them. Pass `[]` to clear a relationship; omit the key to leave it untouched.
 
 ### 3. Respect Published States
 

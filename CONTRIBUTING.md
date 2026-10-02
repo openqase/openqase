@@ -6,7 +6,7 @@ Thank you for your interest in contributing to OpenQase! This guide will help yo
 
 ### Prerequisites
 
-- **Node.js** 18+ and npm
+- **Node.js** 20.9+ and npm
 - **Git** for version control
 - **Supabase CLI** for database management
 - **Code Editor** (VS Code recommended)
@@ -36,6 +36,8 @@ Thank you for your interest in contributing to OpenQase! This guide will help yo
    ```bash
    npx supabase start
    npx supabase db reset
+   psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+     --single-transaction --variable ON_ERROR_STOP=1 --file supabase/seed.sql
    ```
 
 5. **Run Development Server**

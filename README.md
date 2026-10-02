@@ -5,8 +5,9 @@ OpenQase is a curated collection of quantum computing business cases, cross-refe
 ## Quick Start
 
 ### Prerequisites
-- Node.js 20+ (CI uses 20)
+- Node.js 20.9+ (Next 16 minimum; CI uses 20)
 - [Supabase CLI](https://supabase.com/docs/guides/local-development) + Docker
+- `psql` (PostgreSQL client, for seeding — on macOS: `brew install libpq`)
 
 ### Setup
 
