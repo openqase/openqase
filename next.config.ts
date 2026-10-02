@@ -21,7 +21,6 @@ const connectSrc = [
   'https://*.supabase.co',
   'https://*.supabase.com',
   'https://*.ingest.us.sentry.io',
-  'https://*.ingest.sentry.io',
   'wss://*.supabase.co',
   'https://vitals.vercel-insights.com',
 ].join(' ');
