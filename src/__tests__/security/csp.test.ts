@@ -17,6 +17,7 @@ describe('Content-Security-Policy source guard', () => {
 
   it('never allows unsafe-eval in script-src', () => {
     const scriptSrc = src.match(/"script-src[^"]*"/)?.[0] ?? ''
+    expect(scriptSrc).toContain('script-src')
     expect(scriptSrc).not.toContain('unsafe-eval')
   })
 

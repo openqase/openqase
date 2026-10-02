@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
-- **Sentry server config**: The server and edge Sentry configuration files are now actually loaded by the instrumentation hook, so error filtering, HTTP integration and profiling settings take effect; the duplicate inline configuration was removed.
-- **Sentry environment**: Events are tagged with the Vercel deployment environment (production / preview / development) instead of reporting every preview as production.
+- **Sentry server config**: The server and edge Sentry configuration files are now actually loaded by the instrumentation hook, so their settings apply: browser-only noise (`ChunkLoadError`, ResizeObserver) is filtered and server transactions under 50 ms are dropped. The duplicate inline configuration in `src/instrumentation.ts` was removed.
+- **Sentry environment**: Events are tagged with the Vercel deployment environment (production / preview / development) instead of reporting every preview as production (client events need the Vercel project setting "Automatically expose System Environment Variables", which provides NEXT_PUBLIC_VERCEL_ENV).
 - **Rate limiting**: Client identification now prefers the platform-set IP header, and requests with no IP headers are no longer pooled into one shared limit.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
