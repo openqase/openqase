@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Admin trash**: Soft-deleted items no longer appear in the main admin lists for algorithms, blog posts, industries, personas, partner companies, quantum companies, hardware and software (they were already hidden for case studies).
-- **CMS create**: When a new item saves but one of its relationship links fails, the editor is now taken to the saved item with a warning instead of being told the save failed (which led to duplicate-slug errors on retry).
-- **Bulk publish**: Bulk publish/unpublish of case studies now goes through the same publish path as single items, so trashed rows are refused and `published_at` is stamped consistently.
+- **CMS create**: When an item saves but one of its relationship links fails, every content type's editor now shows a "Saved, but some links were not updated" warning instead of a failed save (which led to duplicate-slug errors on retry); on create the editor is taken to the new item.
+- **Bulk publish**: Bulk publish/unpublish of case studies now goes through the same publish path as single items, so trashed rows are refused and `published_at` is stamped consistently, and the editor is told which items were refused.
 - **Detail pages**: Related case studies without a publish date no longer show 01/01/1970 on hardware, software and company pages.
 - **Static generation**: Trashed rows are excluded from build-time slug lists.
 - **Slug rename**: Renaming an item's slug now also refreshes the page at the old slug.
