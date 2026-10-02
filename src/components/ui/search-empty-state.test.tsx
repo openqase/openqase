@@ -59,12 +59,10 @@ describe('SearchEmptyState', () => {
     expect(html).toContain('Clear search');
   });
 
-  it('includes accessible role and aria attributes', () => {
-    const html = renderToStaticMarkup(
-      <SearchEmptyState query="test" resourceName="items" />
-    );
+  it('is not a second live region (the result counter already announces changes)', () => {
+    const html = renderToStaticMarkup(<SearchEmptyState query="x" resourceName="items" />);
 
-    expect(html).toContain('role="status"');
-    expect(html).toContain('aria-live="polite"');
+    expect(html).not.toContain('role="status"');
+    expect(html).not.toContain('aria-live');
   });
 });

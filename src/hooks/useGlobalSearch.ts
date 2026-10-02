@@ -25,6 +25,11 @@ export interface GroupedSearchResults {
  * Custom hook for global search functionality
  * Provides client-side search with debouncing and relevance scoring
  */
+/** Whether a raw input value should open the results dropdown. */
+export function shouldOpenResults(value: string): boolean {
+  return value.trim().length >= 2;
+}
+
 export function useGlobalSearch(searchData: SearchableItem[]) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -133,7 +138,7 @@ export function useGlobalSearch(searchData: SearchableItem[]) {
   // Handle search query change with debouncing logic
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-    setIsOpen(query.length >= 2);
+    setIsOpen(shouldOpenResults(query));
   }, []);
 
   // Close search results
