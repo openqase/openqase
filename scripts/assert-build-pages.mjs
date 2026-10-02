@@ -18,8 +18,21 @@ export function countPrerenderedRoutes(manifest) {
   return Object.keys(manifest?.routes ?? {}).length
 }
 
+export function evaluate(count, { strict, floor }) {
+  if (count < floor) {
+    return {
+      ok: false,
+      fatal: strict,
+      message: `static page count ${count} is below the floor ${floor}. If this follows a content query failure, check the build log above. If you removed content on purpose, raise/lower EXPECTED_MIN in scripts/assert-build-pages.mjs or set MIN_STATIC_PAGES for this deploy.`,
+    }
+  }
+  return { ok: true, fatal: false, message: `Static page count OK: ${count} >= ${floor}` }
+}
+
 function main() {
   const strict = process.env.VERCEL_ENV === 'production'
+  let floor = Number(process.env.MIN_STATIC_PAGES ?? EXPECTED_MIN)
+  if (Number.isNaN(floor)) floor = EXPECTED_MIN
   let manifest
   try {
     manifest = JSON.parse(readFileSync('.next/prerender-manifest.json', 'utf8'))
@@ -29,14 +42,15 @@ function main() {
     console.warn(`WARN: ${msg}; page-count check skipped.`)
     process.exit(0)
   }
-  const count = countPrerenderedRoutes(manifest)
-  if (count < EXPECTED_MIN) {
-    const msg = `static page count ${count} is below the floor ${EXPECTED_MIN} — likely a content query failure during the build`
-    if (strict) { console.error(`ERROR: ${msg}`); process.exit(1) }
-    console.warn(`WARN: ${msg} (not failing outside Vercel production)`)
-    process.exit(0)
+  const result = evaluate(countPrerenderedRoutes(manifest), { strict, floor })
+  if (result.ok) {
+    console.log(result.message)
+  } else if (result.fatal) {
+    console.error(`ERROR: ${result.message}`)
+    process.exit(1)
+  } else {
+    console.warn(`WARN: ${result.message} (not failing outside Vercel production)`)
   }
-  console.log(`Static page count OK: ${count} >= ${EXPECTED_MIN}`)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
