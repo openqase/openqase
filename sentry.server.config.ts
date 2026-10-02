@@ -6,13 +6,13 @@ import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+  // SENTRY_ENVIRONMENT is the SDK's own override. Otherwise Vercel sets VERCEL_ENV to
+  // production | preview | development; NODE_ENV is 'production' for preview
+  // builds too, so it cannot distinguish them.
+  environment: process.env.SENTRY_ENVIRONMENT || process.env.VERCEL_ENV || process.env.NODE_ENV,
   
   // Performance monitoring
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
-  
-  // Profiling (helps identify slow functions)
-  profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,
   
   // Only enable in production or when dev testing is explicitly enabled
   enabled: process.env.NODE_ENV === 'production' || process.env.SENTRY_DEV === 'true',
@@ -40,9 +40,4 @@ Sentry.init({
   },
   
   debug: process.env.SENTRY_DEBUG === 'true',
-  
-  // Integrations
-  integrations: [
-    Sentry.httpIntegration(), // Monitors Supabase API calls and external HTTP requests
-  ],
 });

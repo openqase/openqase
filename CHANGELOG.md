@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Sentry server config**: The server and edge Sentry configuration files are now actually loaded by the instrumentation hook, so their settings apply: browser-only noise (`ChunkLoadError`, ResizeObserver) is filtered and server transactions under 50 ms are dropped. The duplicate inline configuration in `src/instrumentation.ts` was removed.
+- **Sentry environment**: Events are tagged with the Vercel deployment environment (production / preview / development) instead of reporting every preview as production (client events need the Vercel project setting "Automatically expose System Environment Variables", which provides NEXT_PUBLIC_VERCEL_ENV).
+- **Rate limiting**: Client identification now prefers the platform-set IP header, and requests with no IP headers are no longer pooled into one shared limit.
 - **Admin trash**: Soft-deleted items no longer appear in the main admin lists for algorithms, blog posts, industries, personas, partner companies, quantum companies, hardware and software (they were already hidden for case studies).
 - **CMS create**: When an item saves but one of its relationship links fails, every content type's editor now shows a "Saved, but some links were not updated" warning instead of a failed save (which led to duplicate-slug errors on retry); on create the editor is taken to the new item.
 - **Bulk publish**: Bulk publish/unpublish of case studies now goes through the same publish path as single items, so trashed rows are refused and `published_at` is stamped consistently, and the editor is told which items were refused.
@@ -47,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
 - **`user_preferences` read leak closed**: Signed-in users could read every admin's preference row. Policies now use a new `is_admin()` helper to check the *caller*, non-admins cannot promote themselves, and `anon` SELECT is revoked.
 - **Safe defaults for new database objects**: The baseline gave `anon`/`authenticated` full rights on every future table, sequence and function in `public`. The same migration now makes new tables read-only for those roles (RLS still applies) and new functions/sequences unavailable to them unless explicitly granted.
