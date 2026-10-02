@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ExternalLink, HandHeart, Users, MapPin, FileText, Building2, Cpu } from 'lucide-react';
 import { getRelatedQuantumSoftware, getRelatedQuantumHardware, getRelatedQuantumCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
+import { formatPublishedDate } from '@/lib/format-date';
 type EnrichedPartnerCompany = Database['public']['Tables']['partner_companies']['Row'] & {
   case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
@@ -319,11 +320,7 @@ export default async function PartnerCompanyDetailPage({ params }: PartnerCompan
                   {caseStudy.description}
                 </p>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(caseStudy.published_at).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit', 
-                    year: 'numeric'
-                  })}
+                  {formatPublishedDate(caseStudy.published_at)}
                 </div>
               </Link>
             ))}

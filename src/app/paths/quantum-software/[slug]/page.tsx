@@ -8,6 +8,7 @@ import { ExternalLink, Github, FileText, Building2, Cpu, Briefcase } from 'lucid
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRelatedQuantumHardware, getRelatedQuantumCompanies, getRelatedPartnerCompanies } from '@/lib/relationship-queries';
 import { AutoSchema } from '@/components/AutoSchema';
+import { formatPublishedDate } from '@/lib/format-date';
 
 type EnrichedQuantumSoftware = Database['public']['Tables']['quantum_software']['Row'] & {
   case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
@@ -324,11 +325,7 @@ export default async function QuantumSoftwareDetailPage({ params }: QuantumSoftw
                   {caseStudy.description}
                 </p>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(caseStudy.published_at).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit', 
-                    year: 'numeric'
-                  })}
+                  {formatPublishedDate(caseStudy.published_at)}
                 </div>
               </Link>
             ))}
