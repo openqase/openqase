@@ -31,7 +31,7 @@ The CMS has recently undergone refactoring (as detailed in `cms-refactor-plan.md
 
 ### Authentication
 
-*   **Mechanism:** Next.js Middleware (`src/middleware.ts`) protects the `/admin` routes, ensuring only authenticated users can access the CMS. It likely uses Supabase Auth helpers.
+*   **Mechanism:** the Next.js proxy (formerly middleware) (`src/proxy.ts`) protects the `/admin` routes, ensuring only authenticated users can access the CMS. It likely uses Supabase Auth helpers.
 
 ## Content Management Workflow
 
@@ -267,7 +267,7 @@ The validation system ensures content quality and consistency across the platfor
     *   Add relationship handling logic for junction tables.
     *   Include `revalidatePath` / `revalidateTag` calls for relevant paths (admin and public).
     *   Handle redirects.
-7.  **Middleware:** Ensure `src/middleware.ts` correctly protects the new `/admin/products/**` routes.
+7.  **Middleware:** Ensure `src/proxy.ts` correctly protects the new `/admin/products/**` routes.
 8.  **Types:** Add relevant TypeScript types for the new content type.
 
 ## Best Practices & Gotchas

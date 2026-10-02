@@ -129,3 +129,6 @@ src/.cursor/
 # Git worktrees
 .worktrees/
 .superpowers/
+
+# Local-only handover material (unpublished content analysis); never commit
+.local-handover/

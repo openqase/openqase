@@ -4,7 +4,7 @@ Authentication and authorization are handled using a combination of Next.js Midd
 
 ## Core Mechanism: Next.js Middleware
 
-*   **File:** `src/middleware.ts`
+*   **File:** `src/proxy.ts`
 *   **Functionality:** This middleware intercepts requests to specific routes defined in its `config.matcher` array before they reach the page or API handler.
 *   **Session Management:** It utilizes the `updateSession` helper (imported from `@/lib/supabase-middleware`) which likely uses the `@supabase/ssr` package to manage user sessions securely across Server Components, Client Components, and Route Handlers by handling cookies.
 
@@ -79,7 +79,7 @@ OpenQase implements a **dual security approach** that separates admin operations
 
 Admin routes (`/admin/*`) are protected by:
 
-1. **Middleware authentication check** (`src/middleware.ts`)
+1. **Middleware authentication check** (`src/proxy.ts`)
 2. **Admin role verification** in `user_preferences` table
 3. **Development mode bypass** via `DEV_MODE_AUTH_BYPASS=true`
 
@@ -360,8 +360,8 @@ export async function adminAction() {
 The middleware handles session refresh and route protection:
 
 ```typescript
-// src/middleware.ts
-export async function middleware(req: NextRequest) {
+// src/proxy.ts
+export async function proxy(req: NextRequest) {
   // Update session (refresh tokens if needed)
   const res = await updateSession(req);
 
@@ -526,7 +526,7 @@ CREATE POLICY "Users can update own preferences"
 
 2. **Check middleware is running**:
    - Middleware should refresh tokens automatically
-   - Verify `src/middleware.ts` includes your route in matcher
+   - Verify `src/proxy.ts` includes your route in matcher
 
 3. **Manual token refresh**:
    ```typescript

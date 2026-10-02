@@ -5,8 +5,9 @@ OpenQase is a curated collection of quantum computing business cases, cross-refe
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20.9+ (Next 16 minimum; CI uses 20)
 - [Supabase CLI](https://supabase.com/docs/guides/local-development) + Docker
+- `psql` (PostgreSQL client, for seeding — on macOS: `brew install libpq`)
 
 ### Setup
 
@@ -17,13 +18,16 @@ npm install
 cp .env.example .env.local   # then add your Supabase credentials
 ```
 
-Start local Supabase and pull the schema:
+Start a local Supabase and build the schema from the tracked migrations:
 
 ```bash
-supabase start
-supabase link --project-ref <your-project-ref>
-supabase db pull
+npx supabase start
+npx supabase db reset
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+  --single-transaction --variable ON_ERROR_STOP=1 --file supabase/seed.sql
 ```
+
+See [docs/database-workflow.md](./docs/database-workflow.md) for how schema changes reach dev and prod.
 
 Run the dev server:
 
@@ -57,7 +61,7 @@ OpenQase uses a **hybrid static/dynamic architecture**:
 | Email | Beehiiv (newsletter) + Resend (transactional) |
 | Caching | Redis (Upstash) with in-memory fallback |
 | Deployment | Vercel |
-| Testing | Vitest (235+ tests) |
+| Testing | Vitest (550+ tests) |
 
 ## Content Types
 
