@@ -18,16 +18,21 @@ interface ResourceLink {
   order?: number;
 }
 
-export function formatResourceLink(link: ResourceLink): string {
-  // 1. If descriptive title exists and is not a raw URL, prefer it
-  if (link.title && !link.title.startsWith('http://') && !link.title.startsWith('https://')) {
-    return link.title.trim();
-  }
+/** A trimmed, human-readable string, or null if the value is empty, not a string, or itself a URL. */
+function descriptiveText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || /^https?:\/\//i.test(trimmed)) return null;
+  return trimmed;
+}
 
-  // 2. If descriptive label exists and is not a raw URL, use it
-  if (link.label && !link.label.startsWith('http://') && !link.label.startsWith('https://')) {
-    return link.label.trim();
-  }
+export function formatResourceLink(link: ResourceLink): string {
+  // 1-2. Prefer a descriptive title, then a descriptive label. resource_links
+  // is free-form JSON from the CMS, so never assume field types.
+  const text = descriptiveText(link.title) ?? descriptiveText(link.label);
+  if (text) return text;
+
+  if (typeof link.url !== 'string' || !link.url) return 'Resource Link';
 
   // 3. Otherwise extract domain and filename/last path segment from URL
   try {
@@ -41,7 +46,7 @@ export function formatResourceLink(link: ResourceLink): string {
     }
     return domain;
   } catch {
-    return link.url || 'Resource Link';
+    return link.url;
   }
 }
 

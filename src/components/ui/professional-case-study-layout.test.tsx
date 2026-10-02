@@ -45,6 +45,27 @@ describe('formatResourceLink', () => {
     });
     expect(text).toBe('Qrypt Resources - Quantum Security Solutions');
   });
+
+  it('ignores a whitespace-only title and falls through to the label', () => {
+    expect(formatResourceLink({ url: 'https://example.com/x', title: '   ', label: 'Example' })).toBe('Example');
+  });
+
+  it('treats an upper-case scheme as a raw URL, not a title', () => {
+    expect(formatResourceLink({ url: 'https://example.com/report.pdf', title: 'HTTPS://example.com/report.pdf' })).toBe('example.com — report.pdf');
+  });
+
+  it('does not throw when title or label is not a string', () => {
+    const link = { url: 'https://example.com/report.pdf', title: 42, label: { bad: true } } as unknown as Parameters<typeof formatResourceLink>[0];
+    expect(formatResourceLink(link)).toBe('example.com — report.pdf');
+  });
+
+  it('returns a placeholder when url is missing', () => {
+    expect(formatResourceLink({} as Parameters<typeof formatResourceLink>[0])).toBe('Resource Link');
+  });
+
+  it('keeps the raw URL when the last path segment has a malformed percent-escape', () => {
+    expect(formatResourceLink({ url: 'https://example.com/%E0%A4%A' })).toBe('https://example.com/%E0%A4%A');
+  });
 });
 
 describe('Professional Layout Sidebars', () => {
