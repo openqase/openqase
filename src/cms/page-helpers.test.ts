@@ -45,6 +45,13 @@ beforeEach(() => {
 })
 
 describe('generateStaticParamsFor', () => {
+  const ORIGINAL_ENV = process.env.VERCEL_ENV
+  afterEach(() => {
+    if (ORIGINAL_ENV === undefined) delete process.env.VERCEL_ENV
+    else process.env.VERCEL_ENV = ORIGINAL_ENV
+    vi.restoreAllMocks()
+  })
+
   it('returns a function that produces slug params', async () => {
     const mockData = [{ slug: 'finance' }, { slug: 'healthcare' }]
     mockIs.mockReturnValueOnce({ data: mockData })
@@ -82,7 +89,6 @@ describe('generateStaticParamsFor', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     mockIs.mockReturnValueOnce({ data: null, error: { message: 'db down' } })
     await expect(generateStaticParamsFor('industries')()).rejects.toThrow(/industries/)
-    delete process.env.VERCEL_ENV
   })
 })
 
@@ -105,12 +111,15 @@ describe('reportContentQueryError', () => {
     expect(() => reportContentQueryError('industries slugs', { message: 'boom' })).not.toThrow()
     expect(log).toHaveBeenCalled()
     expect(captureException).toHaveBeenCalledTimes(1)
+    expect(captureException).toHaveBeenCalledWith(expect.objectContaining({ message: 'industries slugs: boom' }))
   })
 
   it('throws in Vercel production so a build or ISR regeneration fails instead of shipping empty', () => {
     process.env.VERCEL_ENV = 'production'
     vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => reportContentQueryError('industries slugs', { message: 'boom' })).toThrow(/industries slugs: boom/)
+    // The thrown error reaches Sentry via onRequestError / the build log; no double event.
+    expect(captureException).not.toHaveBeenCalled()
   })
 })
 

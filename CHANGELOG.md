@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
-- **Silent empty builds**: A database error while listing content for static generation, the sitemap or a public list now fails the Vercel production build (or keeps the previous page during ISR regeneration) and reports to Sentry, instead of producing a green build with no pages. Local and CI builds keep the empty fallback.
+- **Silent empty builds**: A database error while listing content for static generation, the sitemap or a public list now fails the Vercel production build (or, during ISR regeneration, keeps the previous page) instead of producing a green build with no pages. Errors are also reported to Sentry on a best-effort basis. Local and CI builds keep the empty fallback.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
@@ -52,7 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Public GET API no longer leaks unpublished/soft-deleted content.** `fetchContentBySlug` now applies `published=true` and `deleted_at IS NULL` filters via an RLS-respecting Supabase client. Anonymous requests for draft slugs return 404. The function was also split into a separate `fetchPreviewContentBySlug` variant used by the 5 preview-aware detail pages so the static-rendered detail pages stay SSG-friendly.
 
 ### Removed
-- Unused build helpers `getAllSlugsForBuild` and `getByIdForBuild` from `src/cms/page-helpers.ts`.
 - **Orphaned Supabase Utilities**: Removed unused `/utils/supabase/` legacy boilerplate directory (`client.ts`, `middleware.ts`, `server.ts`).
 - **`publicQuery()` invariant introduced** as the single sanctioned chokepoint for anonymous content reads. Module-boundary enforced via ESLint `no-restricted-imports` on `src/lib/internal-queries.ts`.
 - **All 9 admin server-action files wrapped in `withAdmin()`** as defense-in-depth beyond middleware. Enforced by ESLint `no-restricted-syntax`.
