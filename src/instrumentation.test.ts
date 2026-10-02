@@ -1,0 +1,68 @@
+// src/instrumentation.test.ts
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+const init = vi.fn()
+vi.mock('@sentry/nextjs', () => ({
+  init: (...args: unknown[]) => init(...args),
+  httpIntegration: () => ({ name: 'Http' }),
+  captureRequestError: vi.fn(),
+}))
+
+const ORIGINAL_RUNTIME = process.env.NEXT_RUNTIME
+
+describe('instrumentation.register', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    init.mockClear()
+  })
+  afterEach(() => {
+    if (ORIGINAL_RUNTIME === undefined) delete process.env.NEXT_RUNTIME
+    else process.env.NEXT_RUNTIME = ORIGINAL_RUNTIME
+  })
+
+  it('loads the full server config (with the beforeSend filter) for the nodejs runtime', async () => {
+    process.env.NEXT_RUNTIME = 'nodejs'
+    const { register } = await import('./instrumentation')
+    await register()
+    expect(init).toHaveBeenCalledTimes(1)
+    const options = init.mock.calls[0][0] as Record<string, unknown>
+    expect(typeof options.beforeSend).toBe('function')
+    expect(typeof options.beforeSendTransaction).toBe('function')
+    // The SDK's Next-specific HTTP integration must not be overridden
+    expect(options.integrations).toBeUndefined()
+  })
+
+  it('loads the edge config (no beforeSend) for the edge runtime', async () => {
+    process.env.NEXT_RUNTIME = 'edge'
+    const { register } = await import('./instrumentation')
+    await register()
+    expect(init).toHaveBeenCalledTimes(1)
+    const options = init.mock.calls[0][0] as Record<string, unknown>
+    expect(options.beforeSend).toBeUndefined()
+  })
+
+  it('does nothing for an unknown runtime', async () => {
+    delete process.env.NEXT_RUNTIME
+    const { register } = await import('./instrumentation')
+    await register()
+    expect(init).not.toHaveBeenCalled()
+  })
+
+  it('tags events with VERCEL_ENV when set, so previews are not reported as production', async () => {
+    process.env.NEXT_RUNTIME = 'nodejs'
+    const original = process.env.VERCEL_ENV
+    const originalSentryEnv = process.env.SENTRY_ENVIRONMENT
+    process.env.VERCEL_ENV = 'preview'
+    delete process.env.SENTRY_ENVIRONMENT
+    try {
+      const { register } = await import('./instrumentation')
+      await register()
+      const options = init.mock.calls[0][0] as Record<string, unknown>
+      expect(options.environment).toBe('preview')
+    } finally {
+      if (original === undefined) delete process.env.VERCEL_ENV
+      else process.env.VERCEL_ENV = original
+      if (originalSentryEnv !== undefined) process.env.SENTRY_ENVIRONMENT = originalSentryEnv
+    }
+  })
+})

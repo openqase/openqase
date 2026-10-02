@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { getAllContentTypes } from '@/cms/registry'
+import { reportContentQueryError } from '@/cms/page-helpers'
 import type { ContentTable } from '@/lib/public-query'
 
 const BASE_URL = 'https://openqase.com'
@@ -52,11 +53,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // must be enforced explicitly here.
   const results = await Promise.all(
     contentTypes.map(async (ct) => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from(ct.tableName as ContentTable)
         .select('slug, updated_at')
         .eq('published', true)
         .is('deleted_at', null)
+      reportContentQueryError(`${ct.slug} sitemap rows`, error)
       return { ct, rows: (data ?? []) as Array<{ slug: string | null; updated_at: string | null }> }
     })
   )

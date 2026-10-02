@@ -18,6 +18,7 @@ export default async function QuantumCompaniesPage() {
   const { data: quantumCompanies, error } = await supabase
     .from('quantum_companies')
     .select('*')
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {

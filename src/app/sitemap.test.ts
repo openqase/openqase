@@ -9,6 +9,7 @@ import path from 'path'
 // ---------------------------------------------------------------------------
 type Row = { slug: string; updated_at: string | null; published: boolean; deleted_at: string | null }
 
+let failingTable: string | null = null
 const tables: Record<string, Row[]> = {}
 const calls: Array<{ table: string; filters: Array<[string, string, unknown]> }> = []
 
@@ -25,7 +26,10 @@ function makeBuilder(table: string) {
       filters.push(['is', col, val])
       return builder
     },
-    then: (resolve: (v: { data: Row[]; error: null }) => unknown) => {
+    then: (resolve: (v: { data: Row[] | null; error: { message: string } | null }) => unknown) => {
+      if (table === failingTable) {
+        return Promise.resolve({ data: null, error: { message: 'db down' } }).then(resolve)
+      }
       const data = (tables[table] ?? []).filter((row) =>
         filters.every(([, col, val]) => (row as Record<string, unknown>)[col] === val)
       )
@@ -38,6 +42,8 @@ function makeBuilder(table: string) {
 vi.mock('@/lib/supabase-server', () => ({
   createServiceRoleSupabaseClient: () => ({ from: (table: string) => makeBuilder(table) }),
 }))
+
+vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }))
 
 import sitemap from './sitemap'
 import { getAllContentTypes } from '@/cms/registry'
@@ -113,5 +119,31 @@ describe('sitemap', () => {
   it('has no duplicate URLs', async () => {
     const urls = (await sitemap()).map((e) => e.url)
     expect(new Set(urls).size).toBe(urls.length)
+  })
+
+  it('throws in Vercel production when any content table query fails', async () => {
+    process.env.VERCEL_ENV = 'production'
+    failingTable = 'industries'
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      await expect(sitemap()).rejects.toThrow(/industries/)
+    } finally {
+      delete process.env.VERCEL_ENV
+      failingTable = null
+      vi.restoreAllMocks()
+    }
+  })
+
+  it('omits the failing type but still returns the rest outside production', async () => {
+    failingTable = 'industries'
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const entries = await sitemap()
+      expect(entries.some((e) => e.url.includes('/paths/industry/'))).toBe(false)
+      expect(entries.some((e) => e.url.endsWith('/paths/industry'))).toBe(true)
+    } finally {
+      failingTable = null
+      vi.restoreAllMocks()
+    }
   })
 })

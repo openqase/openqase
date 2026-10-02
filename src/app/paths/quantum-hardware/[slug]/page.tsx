@@ -9,6 +9,7 @@ import { getRelatedQuantumSoftware, getRelatedQuantumCompanies, getRelatedPartne
 import { AutoSchema } from '@/components/AutoSchema';
 import { formatHardwareModality } from '@/lib/hardware-modality';
 import { loadHardwareSpecsForDisplay } from '@/lib/hardware-specs-display';
+import { formatPublishedDate } from '@/lib/format-date';
 type EnrichedQuantumHardware = Database['public']['Tables']['quantum_hardware']['Row'] & {
   case_studies?: { id: string; title: string; slug: string; description: string; published_at: string }[];
 };
@@ -347,11 +348,7 @@ export default async function QuantumHardwareDetailPage({ params }: QuantumHardw
                   {caseStudy.description}
                 </p>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(caseStudy.published_at).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit', 
-                    year: 'numeric'
-                  })}
+                  {formatPublishedDate(caseStudy.published_at)}
                 </div>
               </Link>
             ))}

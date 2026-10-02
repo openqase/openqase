@@ -21,6 +21,11 @@ export interface GroupedSearchResults {
   partner_companies: SearchResult[];
 }
 
+/** Whether a raw input value should open the results dropdown. */
+export function shouldOpenResults(value: string): boolean {
+  return value.trim().length >= 2;
+}
+
 /**
  * Custom hook for global search functionality
  * Provides client-side search with debouncing and relevance scoring
@@ -76,7 +81,8 @@ export function useGlobalSearch(searchData: SearchableItem[]) {
 
   // Perform client-side search with relevance scoring
   const searchResults = useMemo(() => {
-    if (!debouncedSearchQuery || debouncedSearchQuery.length < 2) {
+    const trimmedQuery = debouncedSearchQuery.trim();
+    if (!trimmedQuery || trimmedQuery.length < 2) {
       return {
         case_studies: [],
         algorithms: [],
@@ -94,7 +100,7 @@ export function useGlobalSearch(searchData: SearchableItem[]) {
 
     // Filter and score all items
     searchData.forEach(item => {
-      const relevanceScore = calculateRelevance(item, debouncedSearchQuery);
+      const relevanceScore = calculateRelevance(item, trimmedQuery);
       if (relevanceScore > 0) {
         results.push({ item, relevanceScore });
       }
@@ -133,7 +139,7 @@ export function useGlobalSearch(searchData: SearchableItem[]) {
   // Handle search query change with debouncing logic
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-    setIsOpen(query.length >= 2);
+    setIsOpen(shouldOpenResults(query));
   }, []);
 
   // Close search results

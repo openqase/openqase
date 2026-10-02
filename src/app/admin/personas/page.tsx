@@ -16,6 +16,7 @@ export default async function PersonasPage() {
   const { data: personas, error } = await supabase
     .from('personas')
     .select('*')
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {
