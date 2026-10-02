@@ -28,7 +28,8 @@ describe('instrumentation.register', () => {
     const options = init.mock.calls[0][0] as Record<string, unknown>
     expect(typeof options.beforeSend).toBe('function')
     expect(typeof options.beforeSendTransaction).toBe('function')
-    expect(Array.isArray(options.integrations)).toBe(true)
+    // The SDK's Next-specific HTTP integration must not be overridden
+    expect(options.integrations).toBeUndefined()
   })
 
   it('loads the edge config (no beforeSend) for the edge runtime', async () => {
@@ -50,7 +51,9 @@ describe('instrumentation.register', () => {
   it('tags events with VERCEL_ENV when set, so previews are not reported as production', async () => {
     process.env.NEXT_RUNTIME = 'nodejs'
     const original = process.env.VERCEL_ENV
+    const originalSentryEnv = process.env.SENTRY_ENVIRONMENT
     process.env.VERCEL_ENV = 'preview'
+    delete process.env.SENTRY_ENVIRONMENT
     try {
       const { register } = await import('./instrumentation')
       await register()
@@ -59,6 +62,7 @@ describe('instrumentation.register', () => {
     } finally {
       if (original === undefined) delete process.env.VERCEL_ENV
       else process.env.VERCEL_ENV = original
+      if (originalSentryEnv !== undefined) process.env.SENTRY_ENVIRONMENT = originalSentryEnv
     }
   })
 })
