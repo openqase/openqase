@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Sentry server config**: The server and edge Sentry configuration files are now actually loaded by the instrumentation hook, so error filtering, HTTP integration and profiling settings take effect; the duplicate inline configuration was removed.
+- **Sentry environment**: Events are tagged with the Vercel deployment environment (production / preview / development) instead of reporting every preview as production.
+- **Rate limiting**: Client identification now prefers the platform-set IP header, and requests with no IP headers are no longer pooled into one shared limit.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
@@ -38,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
 - **`user_preferences` read leak closed**: Signed-in users could read every admin's preference row. Policies now use a new `is_admin()` helper to check the *caller*, non-admins cannot promote themselves, and `anon` SELECT is revoked.
 - **Safe defaults for new database objects**: The baseline gave `anon`/`authenticated` full rights on every future table, sequence and function in `public`. The same migration now makes new tables read-only for those roles (RLS still applies) and new functions/sequences unavailable to them unless explicitly granted.
