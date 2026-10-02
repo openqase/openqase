@@ -7,7 +7,10 @@ import { revalidateContentType } from './revalidate'
 
 interface CreateResult {
   data?: Record<string, unknown>
+  /** Set only when the row itself was not written. */
   error?: string
+  /** Set when the row was written but one or more relationship links failed. */
+  warning?: string
 }
 
 export async function createContent(
@@ -40,7 +43,8 @@ export async function createContent(
   }
 
   revalidateContentType(typeSlug, record.slug as string | undefined)
-  // The row itself was created, so return it alongside any relationship
-  // error — callers check `error` first and surface it to the editor.
-  return relError ? { data: record, error: relError } : { data: record }
+  // The row exists regardless of the relationship outcome, so never report
+  // a relationship failure as `error`: callers treat `error` as "nothing was
+  // saved" and would make the editor retry, creating a duplicate row.
+  return relError ? { data: record, warning: relError } : { data: record }
 }

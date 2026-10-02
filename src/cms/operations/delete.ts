@@ -8,8 +8,8 @@ import { revalidateContentType } from './revalidate'
 // ---------------------------------------------------------------------------
 // Single soft-delete / restore / permanent-delete path for ALL CMS content
 // types. Every delete route (`/api/<type>/delete`, `DELETE /api/<type>`,
-// bulk delete, the `deleteAction` server action and the legacy
-// `deleteContentItem` helper) funnels through here so that:
+// bulk delete and the trash restore/permanent-delete routes) funnels through here
+// so that:
 //
 //   1. soft delete always sets deleted_at, deleted_by and published = false
 //      (public listings filter on `published`, detail pages on `deleted_at`),

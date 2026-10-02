@@ -25,7 +25,7 @@ interface CaseStudyFormData {
   partner_companies?: string[]
 }
 
-export const saveCaseStudy = withAdmin(async (values: CaseStudyFormData): Promise<{ caseStudy?: TablesInsert<'case_studies'>; success: boolean; error?: string }> => {
+export const saveCaseStudy = withAdmin(async (values: CaseStudyFormData): Promise<{ caseStudy?: TablesInsert<'case_studies'>; success: boolean; error?: string; warning?: string }> => {
   try {
     const { id, industries, algorithms, personas, quantum_software, quantum_hardware, quantum_companies, partner_companies, ...data } = values
 
@@ -44,12 +44,12 @@ export const saveCaseStudy = withAdmin(async (values: CaseStudyFormData): Promis
     if (id) {
       const result = await updateContent('case-studies', id, data, relationships)
       if (result.error) return { success: false, error: result.error }
-      return { caseStudy: result.data as TablesInsert<'case_studies'>, success: true }
+      return { caseStudy: result.data as TablesInsert<'case_studies'>, success: true, warning: result.warning }
     }
 
     const result = await createContent('case-studies', data, relationships)
     if (result.error) return { success: false, error: result.error }
-    return { caseStudy: result.data as TablesInsert<'case_studies'>, success: true }
+    return { caseStudy: result.data as TablesInsert<'case_studies'>, success: true, warning: result.warning }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to save case study'
     return { success: false, error: message }

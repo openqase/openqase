@@ -28,7 +28,7 @@ This is where the primary application logic resides.
 *   `src/hooks/`: Custom React hooks.
 *   `src/contexts/`: React Context providers.
 *   `src/types/`: Application-specific TypeScript type definitions (though some might also be in `src/lib/types.ts`).
-*   `src/middleware.ts`: Next.js middleware, primarily handling authentication and route protection.
+*   `src/proxy.ts`: Next.js proxy (the middleware convention in Next 16), handling authentication and route protection for `/admin`, `/auth`, `/profile` and `/api`.
 *   `src/config/`: Application-level configuration constants or settings.
 
 ## `src/app/` Directory

@@ -9,6 +9,7 @@ export default async function BlogPostsPage() {
   const { data: blogPosts } = await supabase
     .from('blog_posts')
     .select('*')
+    .is('deleted_at', null)
     .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
   

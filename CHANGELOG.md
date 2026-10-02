@@ -9,16 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Static page-count guard**: Vercel production builds run `npm run verify:build`, which fails the deploy if the prerendered route count drops below a floor.
+- **Search loading and empty states** on the homepage search palette and every listing page (#251).
 - **Trash for every content type**: Algorithms, industries, personas, blog posts, quantum hardware, software, companies and partner companies now have an admin trash page (`/admin/<type>/trash`, linked from each admin list) to restore or permanently delete soft-deleted items, like case studies already had. Each type gets `POST /api/<type>/restore` and `POST /api/<type>/permanent-delete` (admin-only).
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
 
 ### Changed
+- **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
+- **Middleware migrated to the Next.js 16 proxy convention** (`src/middleware.ts` → `src/proxy.ts`); matcher and auth checks unchanged (#241).
+- **Next.js and eslint-config-next bumped to 16.3.6** (#245).
+- **Lint cleanup across the codebase**: unused variables and imports removed, JSX entities escaped, explicit `any` replaced with typed or `unknown` signatures; no behaviour changes intended (#242, #244).
+- **Case study structured data** now includes persona names in JSON-LD `keywords` (side effect of the CVE/cleanup PR, #240).
 - **Migration history squashed to a single baseline.** The 15 legacy migration files were moved to `supabase/migrations_archive/` (reference only, never applied) and replaced by one baseline, `20260905023326_remote_schema.sql`, captured with `supabase db pull` from the new OpenQase-owned Supabase projects. The migration ledger on `openqase-prod` and `openqase-dev` now contains exactly that one entry. Every schema change from here on is a new numbered migration applied to dev first, then promoted to prod.
 - **Hardware spec preset vocabulary moved to `supabase/seed.sql`.** The 28 `hardware_spec_definitions` rows were previously inserted by a migration; fresh local databases now get them from the seed.
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
 - **Silent empty builds**: A database error while listing content for static generation, the sitemap or a public list now fails the Vercel production build (or, during ISR regeneration, keeps the previous page) instead of producing a green build with no pages. Errors are also reported to Sentry on a best-effort basis. Local and CI builds keep the empty fallback.
+- **Detail page sidebars** share one structure and show explicit "None specified" placeholders instead of disappearing sections (#246).
+- **Grid cards** no longer reserve empty space below short descriptions (#247).
+- **/paths hub** has an eighth "All Case Studies" card and a 1/2/4-column responsive grid (#249).
+- **Reference links** in the case study sidebar show a readable title or `domain — filename` instead of the raw URL (#250).
+- **Sentry in development**: Sentry is disabled outside production unless `SENTRY_DEV` / `NEXT_PUBLIC_SENTRY_DEV=true`; debug logging and traces are off in dev; the server DSN falls back to `NEXT_PUBLIC_SENTRY_DSN`; the CSP `connect-src` was widened to `*.ingest.us.sentry.io` / `*.ingest.sentry.io` (#252).
+- **Sentry server config**: The server and edge Sentry configuration files are now actually loaded by the instrumentation hook, so their settings apply: browser-only noise (`ChunkLoadError`, ResizeObserver) is filtered and server transactions under 50 ms are dropped. The duplicate inline configuration in `src/instrumentation.ts` was removed.
+- **Sentry environment**: Events are tagged with the Vercel deployment environment (production / preview / development) instead of reporting every preview as production (client events need the Vercel project setting "Automatically expose System Environment Variables", which provides NEXT_PUBLIC_VERCEL_ENV).
+- **Rate limiting**: Client identification now prefers the platform-set IP header, and requests with no IP headers are no longer pooled into one shared limit.
+- **Admin trash**: Soft-deleted items no longer appear in the main admin lists for algorithms, blog posts, industries, personas, partner companies, quantum companies, hardware and software (they were already hidden for case studies).
+- **CMS create**: When an item saves but one of its relationship links fails, every content type's editor now shows a "Saved, but some links were not updated" warning instead of a failed save (which led to duplicate-slug errors on retry); on create the editor is taken to the new item.
+- **Bulk publish**: Bulk publish/unpublish of case studies now goes through the same publish path as single items, so trashed rows are refused and `published_at` is stamped consistently, and the editor is told which items were refused.
+- **Detail pages**: Related case studies without a publish date no longer show 01/01/1970 on hardware, software and company pages.
+- **Static generation**: Trashed rows are excluded from build-time slug lists.
+- **Slug rename**: Renaming an item's slug now also refreshes the page at the old slug.
+- **Hardware specs**: Saving hardware specs now refreshes the public hardware page immediately.
+- **Preview**: A malformed preview secret returns 401 instead of a server error.
+- **Reference links**: Case study reference links no longer crash the page when the stored link JSON has a non-string title.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
@@ -40,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
 - **`user_preferences` read leak closed**: Signed-in users could read every admin's preference row. Policies now use a new `is_admin()` helper to check the *caller*, non-admins cannot promote themselves, and `anon` SELECT is revoked.
 - **Safe defaults for new database objects**: The baseline gave `anon`/`authenticated` full rights on every future table, sequence and function in `public`. The same migration now makes new tables read-only for those roles (RLS still applies) and new functions/sequences unavailable to them unless explicitly granted.
@@ -52,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Public GET API no longer leaks unpublished/soft-deleted content.** `fetchContentBySlug` now applies `published=true` and `deleted_at IS NULL` filters via an RLS-respecting Supabase client. Anonymous requests for draft slugs return 404. The function was also split into a separate `fetchPreviewContentBySlug` variant used by the 5 preview-aware detail pages so the static-rendered detail pages stay SSG-friendly.
 
 ### Removed
+- **Superseded CMS modules** `src/utils/content-management.ts` and `src/cms/actions.ts`, neither of which had an importer. `content-management.ts` still carried a relationship-save path (delete all links, then re-insert) and a publish toggle that bypassed `src/cms/operations`; `cms/actions.ts` was an unused duplicate of the per-type admin actions. The ESLint `withAdmin` rule and the security regression test now cover only the nine live admin action files.
 - **Orphaned Supabase Utilities**: Removed unused `/utils/supabase/` legacy boilerplate directory (`client.ts`, `middleware.ts`, `server.ts`).
 - **`publicQuery()` invariant introduced** as the single sanctioned chokepoint for anonymous content reads. Module-boundary enforced via ESLint `no-restricted-imports` on `src/lib/internal-queries.ts`.
 - **All 9 admin server-action files wrapped in `withAdmin()`** as defense-in-depth beyond middleware. Enforced by ESLint `no-restricted-syntax`.

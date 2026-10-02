@@ -43,6 +43,8 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
+          # Pinned: 2.118.0 broke the `db start` / `db reset` steps of this job. Keep in sync with devDependencies.supabase (enforced by
+          # src/__tests__/ci-config.test.ts); bump both together after testing locally.
           version: 2.117.0
 
       - name: Start local Postgres

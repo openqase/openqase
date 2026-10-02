@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServerSupabaseClient, newsletterSubscriptionsTable } from '@/lib/supabase-server'
-import { rateLimiter, RATE_LIMITS } from '@/lib/rate-limiter'
+import { rateLimiter, RATE_LIMITS, getClientIdentifier } from '@/lib/rate-limiter'
 import { createDualNewsletterService } from '@/lib/dual-newsletter-service'
 // import { trackNewsletterSignup } from '@/lib/analytics' // TODO: Add after database types are updated
 
@@ -22,9 +22,7 @@ const unsubscribeSchema = z.object({
 export async function POST(request: Request) {
   try {
     // Apply rate limiting
-    const clientIP = request.headers.get('x-forwarded-for') ||
-                     request.headers.get('x-real-ip') ||
-                     'unknown'
+    const clientIP = getClientIdentifier(request)
 
     const rateLimitResult = await rateLimiter.checkLimit(
       `newsletter:${clientIP}`,

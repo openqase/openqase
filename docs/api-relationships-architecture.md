@@ -1,5 +1,7 @@
 # API and Relationships Architecture
 
+> **Partially outdated (2026-10-01).** The "Standardized API Pattern" section below is current. Sections that mention `RELATIONSHIP_CONFIGS`, `fetchContentItems`, `saveContentItem`, `deleteContentItem` or `recoverContentItem` describe `src/utils/content-management.ts`, which was removed; the live equivalents are `src/cms/operations/*` (single-item fetch, create/update with diffed `saveRelationships()`, soft delete/restore) and `relationshipConfigs` in `src/lib/relationship-queries.ts` (batch joins). See CLAUDE.md "Two Relationship-Fetching Patterns".
+
 ## Overview
 
 OpenQase uses a sophisticated content relationship system that powers the interconnected nature of quantum computing case studies, algorithms, industries, personas, and other content types. This document explains how the APIs work and how relationships enable rich content discovery.
@@ -29,18 +31,17 @@ Relationships work both ways - if a case study relates to an algorithm, that alg
 
 ### Standardized API Pattern
 
-All content APIs follow the same pattern using the `content-management` utilities:
+All content APIs use the CMS operations layer, driven by the content-type registry:
 
 ```typescript
-// Standard imports for any content API
-import { 
-  fetchContentItems,    // List content with filtering
-  fetchContentItem,     // Get single item
-  saveContentItem,      // Create/update item
-  updatePublishedStatus,// Toggle published state
-  deleteContentItem,    // Soft delete
-  RELATIONSHIP_CONFIGS  // Relationship definitions
-} from '@/utils/content-management';
+import {
+  listContent,          // List content with pagination (published only for public reads)
+  fetchContentBySlug,   // Get a single published item by slug
+  deleteContent,        // Soft delete (sets deleted_at, unpublishes, revalidates)
+  deleteContentMany,    // Bulk soft delete
+  publishContent,       // Publish (refuses trashed rows, stamps published_at)
+  unpublishContent,
+} from '@/cms/operations'
 ```
 
 ### API Methods
@@ -227,26 +228,13 @@ const { data: caseStudies } = await fetchContentItems({
 
 ## Best Practices
 
-### 1. Always Use Content Management Utilities
+### 1. Always Use the CMS Operations Layer
 
-Don't write direct Supabase queries for standard operations:
-
-```typescript
-// ❌ Bad - Direct query
-const { data } = await supabase.from('algorithms').select('*');
-
-// ✅ Good - Use utilities
-const { data } = await fetchContentItems({ 
-  contentType: 'algorithms' 
-});
-```
+Use `listContent` / `fetchContentBySlug` from `@/cms/operations` for reads and `createContent` / `updateContent` / `deleteContent` for writes. They apply the published and soft-delete filters and revalidate the right pages.
 
 ### 2. Handle Relationships Atomically
 
-When updating relationships, the system:
-1. Deletes ALL existing relationships for that content
-2. Inserts the new set of relationships
-3. This ensures data consistency
+`saveRelationships()` (called by `createContent` / `updateContent`) diffs the submitted ids against the current junction rows: it deletes only removed links, inserts only added ones, and returns any errors instead of swallowing them. Pass `[]` to clear a relationship; omit the key to leave it untouched.
 
 ### 3. Respect Published States
 

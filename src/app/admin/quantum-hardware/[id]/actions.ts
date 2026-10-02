@@ -1,6 +1,6 @@
 'use server'
 
-import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { createContent, updateContent, revalidateContentType, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import type { Database, Tables } from '@/types/supabase'
@@ -37,7 +37,7 @@ interface QuantumHardwareFormData {
   related_case_studies?: string[]
 }
 
-export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<Tables<'quantum_hardware'>> => {
+export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<Tables<'quantum_hardware'> & { warning?: string }> => {
   const { id, related_case_studies, ...data } = values
 
   // Relationship keys match the relationship names in src/cms/types/<type>.ts.
@@ -48,11 +48,11 @@ export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormD
   if (id) {
     const result = await updateContent('quantum-hardware', id, data, relationships)
     if (result.error) throw new Error(result.error)
-    return result.data as Tables<'quantum_hardware'>
+    return { ...(result.data as Tables<'quantum_hardware'>), warning: result.warning }
   }
   const result = await createContent('quantum-hardware', data, relationships)
   if (result.error) throw new Error(result.error)
-  return result.data as Tables<'quantum_hardware'>
+  return { ...(result.data as Tables<'quantum_hardware'>), warning: result.warning }
 })
 
 export const publishQuantumHardware = withAdmin(async (id: string): Promise<void> => {
@@ -101,6 +101,12 @@ function normalizeSpecKey(key: string): string {
     .slice(0, 64)
 }
 
+async function revalidateHardwarePages(supabase: ReturnType<typeof createServiceRoleSupabaseClient>, hardwareId: string) {
+  // The read's error is intentionally ignored: on failure we still revalidate the admin and public lists, and the 24h ISR backstop covers the detail page.
+  const { data } = await supabase.from('quantum_hardware').select('slug').eq('id', hardwareId).maybeSingle()
+  revalidateContentType('quantum-hardware', data?.slug ?? undefined)
+}
+
 export const saveHardwareSpecs = withAdmin(
   async (hardwareId: string, rows: HardwareSpecInput[]): Promise<void> => {
     const supabase = createServiceRoleSupabaseClient()
@@ -127,6 +133,7 @@ export const saveHardwareSpecs = withAdmin(
         .delete()
         .eq('hardware_id', hardwareId)
       if (deleteAllError) throw new Error(deleteAllError.message)
+      await revalidateHardwarePages(supabase, hardwareId)
       return
     }
 
@@ -165,5 +172,6 @@ export const saveHardwareSpecs = withAdmin(
     )
 
     if (upsertError) throw new Error(upsertError.message)
+    await revalidateHardwarePages(supabase, hardwareId)
   }
 )

@@ -203,11 +203,20 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
         
         setIsDirty(false);
         
-        toast({
-          title: 'Saved',
-          description: 'Case study saved successfully',
-          duration: 3000,
-        });
+        if (result.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: result.warning,
+            duration: 8000,
+          });
+        } else {
+          toast({
+            title: 'Saved',
+            description: 'Case study saved successfully',
+            duration: 3000,
+          });
+        }
       } catch (error: unknown) {
         // Show specific error message if available
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while saving';
@@ -258,6 +267,15 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           description: 'Case study is now published and visible to users',
           duration: 3000,
         });
+
+        if (saveResult?.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: saveResult.warning,
+            duration: 8000,
+          });
+        }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while publishing';
         

@@ -67,7 +67,7 @@ describe('generateStaticParamsFor', () => {
     expect(params).toEqual([])
   })
 
-  it('queries only published items', async () => {
+  it('queries only published, non-deleted items', async () => {
     mockIs.mockReturnValueOnce({ data: [] })
 
     const fn = generateStaticParamsFor('industries')

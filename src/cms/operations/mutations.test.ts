@@ -4,7 +4,11 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
+import { revalidatePath } from 'next/cache'
+
 const mockSingle = vi.fn()
+const mockSlugMaybeSingle = vi.fn()
+const mockSlugSelect = vi.fn(() => ({ eq: () => ({ maybeSingle: mockSlugMaybeSingle }) }))
 const mockSelect = vi.fn(() => ({ single: mockSingle }))
 const mockInsert = vi.fn(() => ({ select: mockSelect }))
 const mockEqAfterUpdate = vi.fn(() => ({ select: mockSelect }))
@@ -23,6 +27,7 @@ const mockFrom = vi.fn((table: string) =>
         insert: mockJunctionInsert,
       }
     : {
+        select: mockSlugSelect,
         insert: mockInsert,
         update: mockUpdate,
         delete: mockDelete,
@@ -38,6 +43,7 @@ const { updateContent } = await import('./update')
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockSlugMaybeSingle.mockResolvedValue({ data: null, error: null })
   mockJunctionSelectEq.mockResolvedValue({ data: [], error: null })
   mockJunctionDeleteIn.mockResolvedValue({ error: null })
   mockJunctionInsert.mockResolvedValue({ error: null })
@@ -95,20 +101,37 @@ describe('relationship saving', () => {
     expect(mockJunctionDeleteIn).toHaveBeenCalledWith('industry_id', ['ind-1'])
   })
 
-  it('surfaces junction insert errors from updateContent', async () => {
+  it('reports junction insert errors from updateContent as a warning, not an error', async () => {
     mockSingle.mockResolvedValue({ data: personaRow, error: null })
     mockJunctionInsert.mockResolvedValue({ error: { message: 'insert failed' } })
     const result = await updateContent('personas', 'p1', { name: 'Dev', slug: 'dev' }, { industries: ['ind-9'] })
-    expect(result.error).toContain('insert failed')
-    // Row itself was saved, so data is still returned alongside the error
+    expect(result.error).toBeUndefined()
+    expect(result.warning).toContain('insert failed')
     expect(result.data?.id).toBe('p1')
   })
 
-  it('surfaces junction errors from createContent', async () => {
+  it('reports junction errors from createContent as a warning and still returns the new row', async () => {
     mockSingle.mockResolvedValue({ data: personaRow, error: null })
     mockJunctionSelectEq.mockResolvedValue({ data: null, error: { message: 'read failed' } })
     const result = await createContent('personas', { name: 'Dev', slug: 'dev' }, { industries: ['ind-1'] })
-    expect(result.error).toContain('read failed')
+    expect(result.error).toBeUndefined()
+    expect(result.warning).toContain('read failed')
     expect(result.data?.id).toBe('p1')
+  })
+
+  it('returns error and no data when the row insert itself fails', async () => {
+    mockSingle.mockResolvedValue({ data: null, error: { message: 'duplicate key' } })
+    const result = await createContent('personas', { name: 'Dev', slug: 'dev' })
+    expect(result.error).toContain('duplicate key')
+    expect(result.data).toBeUndefined()
+    expect(result.warning).toBeUndefined()
+  })
+
+  it('revalidates both the old and the new slug page when the slug changes', async () => {
+    mockSlugMaybeSingle.mockResolvedValue({ data: { slug: 'old-slug' }, error: null })
+    mockSingle.mockResolvedValue({ data: { id: '1', name: 'Finance', slug: 'new-slug' }, error: null })
+    await updateContent('industries', '1', { name: 'Finance', slug: 'new-slug' })
+    expect(revalidatePath).toHaveBeenCalledWith('/paths/industry/old-slug')
+    expect(revalidatePath).toHaveBeenCalledWith('/paths/industry/new-slug')
   })
 })
