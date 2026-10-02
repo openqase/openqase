@@ -51,9 +51,8 @@ export function SearchEmptyState({
   );
 
   return (
+    // Not a live region: the list's result counter (always mounted) announces "0 … found".
     <div
-      role="status"
-      aria-live="polite"
       className={cn(
         'text-center py-12 px-4 rounded-xl border border-dashed border-border bg-card/40 my-6 flex flex-col items-center justify-center max-w-2xl mx-auto',
         className
