@@ -10,7 +10,7 @@ import { algorithms } from './types/algorithms'
 import { caseStudies } from './types/case-studies'
 
 // Add content types here as they are migrated
-const contentTypes: ContentTypeDefinition[] = [
+export const contentTypes: ContentTypeDefinition[] = [
   industries,
   personas,
   blogPosts,

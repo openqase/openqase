@@ -67,11 +67,20 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
           setValues(prev => ({ ...prev, id: result.id }))
         }
         
-        toast({
-          title: 'Saved',
-          description: 'Quantum software has been saved successfully',
-          duration: 3000,
-        })
+        if (result.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: result.warning,
+            duration: 8000,
+          })
+        } else {
+          toast({
+            title: 'Saved',
+            description: 'Quantum software has been saved successfully',
+            duration: 3000,
+          })
+        }
       } catch (error) {
         console.error("Error in handleSave:", error)
         
@@ -98,7 +107,7 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
     
     startTransition(async () => {
       try {
-        await saveQuantumSoftware(values)
+        const saveResult = await saveQuantumSoftware(values)
         await publishQuantumSoftware(values.id!)
         
         setValues(prev => ({ ...prev, published: true }))
@@ -108,6 +117,15 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
           description: 'Quantum software is now published and visible to users',
           duration: 3000,
         })
+
+        if (saveResult.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: saveResult.warning,
+            duration: 8000,
+          })
+        }
       } catch (error) {
         console.error("Error in handlePublish:", error)
         

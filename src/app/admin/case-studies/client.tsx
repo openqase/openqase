@@ -203,7 +203,12 @@ export function CaseStudiesClient({ data }: CaseStudiesClientProps) {
         })
         
         if (response.ok) {
-          alert(`Successfully ${operation}ed ${selectedItems.size} case studies`)
+          const body = await response.json().catch(() => null)
+          if (body?.failed?.length > 0) {
+            alert(body.message)
+          } else {
+            alert(`Successfully ${operation}ed ${selectedItems.size} case studies`)
+          }
           setSelectedItems(new Set())
           window.location.reload()
         } else {
