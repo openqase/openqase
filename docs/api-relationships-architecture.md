@@ -29,18 +29,17 @@ Relationships work both ways - if a case study relates to an algorithm, that alg
 
 ### Standardized API Pattern
 
-All content APIs follow the same pattern using the `content-management` utilities:
+All content APIs use the CMS operations layer, driven by the content-type registry:
 
 ```typescript
-// Standard imports for any content API
-import { 
-  fetchContentItems,    // List content with filtering
-  fetchContentItem,     // Get single item
-  saveContentItem,      // Create/update item
-  updatePublishedStatus,// Toggle published state
-  deleteContentItem,    // Soft delete
-  RELATIONSHIP_CONFIGS  // Relationship definitions
-} from '@/utils/content-management';
+import {
+  listContent,          // List content with pagination (published only for public reads)
+  fetchContentBySlug,   // Get a single published item by slug
+  deleteContent,        // Soft delete (sets deleted_at, unpublishes, revalidates)
+  deleteContentMany,    // Bulk soft delete
+  publishContent,       // Publish (refuses trashed rows, stamps published_at)
+  unpublishContent,
+} from '@/cms/operations'
 ```
 
 ### API Methods
