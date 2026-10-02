@@ -56,6 +56,11 @@ Rules for the SQL itself:
   `INSERT`, `UPDATE`, `DELETE`, or `TRUNCATE` to `anon` or `authenticated`.
   The security tests in `src/__tests__/security/findings.test.ts` check the
   baseline; keep new migrations to the same standard.
+- **Triggers must be re-runnable.** Precede every `CREATE TRIGGER` with
+  `DROP TRIGGER IF EXISTS <name> ON <table>;` (or use `CREATE OR REPLACE
+  TRIGGER`). Trigger functions that run on INSERT must branch on `TG_OP`
+  before touching `OLD`. `src/__tests__/security/migrations-idempotent.test.ts`
+  enforces the first rule for every migration from October 2026 onward.
 
 ### 2. Test locally
 
