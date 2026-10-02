@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
+- **Static page-count guard**: Vercel production builds run `npm run verify:build`, which fails the deploy if the prerendered route count drops below a floor.
 - **Search loading and empty states** on the homepage search palette and every listing page (#251).
 - **Trash for every content type**: Algorithms, industries, personas, blog posts, quantum hardware, software, companies and partner companies now have an admin trash page (`/admin/<type>/trash`, linked from each admin list) to restore or permanently delete soft-deleted items, like case studies already had. Each type gets `POST /api/<type>/restore` and `POST /api/<type>/permanent-delete` (admin-only).
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
@@ -23,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Publish date triggers (migration `20261002025045_published_at_triggers_insert_and_idempotent.sql`)**: the triggers now also fire on INSERT, so a row created already published gets a `published_at`, and the migration can be re-applied safely (every trigger is dropped-if-exists first). Supersedes the September trigger migration; apply to dev, then prod, after the three September migrations. If `db push` fails on the September migration with `trigger ... already exists`, mark it applied with `supabase migration repair --status applied 20260923161000` and push again.
+- **Header search** no longer opens an empty dropdown for whitespace-only input.
+- **Silent empty builds**: A database error while listing content for static generation, the sitemap or a public list now fails the Vercel production build (or, during ISR regeneration, keeps the previous page) instead of producing a green build with no pages. Errors are also reported to Sentry on a best-effort basis. Local and CI builds keep the empty fallback.
 - **Detail page sidebars** share one structure and show explicit "None specified" placeholders instead of disappearing sections (#246).
 - **Grid cards** no longer reserve empty space below short descriptions (#247).
 - **/paths hub** has an eighth "All Case Studies" card and a 1/2/4-column responsive grid (#249).

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock React.cache as pass-through
 vi.mock('react', async () => {
@@ -15,6 +15,9 @@ vi.mock('next/headers', () => ({
   cookies: vi.fn().mockResolvedValue({}),
 }))
 
+const captureException = vi.fn()
+vi.mock('@sentry/nextjs', () => ({ captureException: (...args: unknown[]) => captureException(...args) }))
+
 // Mock Supabase
 const mockMaybeSingle = vi.fn()
 const mockSingle = vi.fn()
@@ -30,7 +33,7 @@ vi.mock('@/lib/supabase-server', () => ({
   createServerSupabaseClient: async () => ({ from: mockFrom }),
 }))
 
-const { generateStaticParamsFor, generateMetadataFor } = await import('./page-helpers')
+const { generateStaticParamsFor, generateMetadataFor, reportContentQueryError } = await import('./page-helpers')
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -42,6 +45,13 @@ beforeEach(() => {
 })
 
 describe('generateStaticParamsFor', () => {
+  const ORIGINAL_ENV = process.env.VERCEL_ENV
+  afterEach(() => {
+    if (ORIGINAL_ENV === undefined) delete process.env.VERCEL_ENV
+    else process.env.VERCEL_ENV = ORIGINAL_ENV
+    vi.restoreAllMocks()
+  })
+
   it('returns a function that produces slug params', async () => {
     const mockData = [{ slug: 'finance' }, { slug: 'healthcare' }]
     mockIs.mockReturnValueOnce({ data: mockData })
@@ -64,6 +74,52 @@ describe('generateStaticParamsFor', () => {
     await fn()
     expect(mockEq).toHaveBeenCalledWith('published', true)
     expect(mockIs).toHaveBeenCalledWith('deleted_at', null)
+  })
+
+  it('returns [] on a query error outside production', async () => {
+    delete process.env.VERCEL_ENV
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockIs.mockReturnValueOnce({ data: null, error: { message: 'db down' } })
+    const params = await generateStaticParamsFor('industries')()
+    expect(params).toEqual([])
+  })
+
+  it('throws on a query error in Vercel production', async () => {
+    process.env.VERCEL_ENV = 'production'
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockIs.mockReturnValueOnce({ data: null, error: { message: 'db down' } })
+    await expect(generateStaticParamsFor('industries')()).rejects.toThrow(/industries/)
+  })
+})
+
+describe('reportContentQueryError', () => {
+  const ORIGINAL = process.env.VERCEL_ENV
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.VERCEL_ENV
+    else process.env.VERCEL_ENV = ORIGINAL
+    vi.restoreAllMocks()
+  })
+
+  it('does nothing when there is no error', () => {
+    expect(() => reportContentQueryError('x', null)).not.toThrow()
+    expect(captureException).not.toHaveBeenCalled()
+  })
+
+  it('logs and reports but does not throw outside production', () => {
+    delete process.env.VERCEL_ENV
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => reportContentQueryError('industries slugs', { message: 'boom' })).not.toThrow()
+    expect(log).toHaveBeenCalled()
+    expect(captureException).toHaveBeenCalledTimes(1)
+    expect(captureException).toHaveBeenCalledWith(expect.objectContaining({ message: 'industries slugs: boom' }))
+  })
+
+  it('throws in Vercel production so a build or ISR regeneration fails instead of shipping empty', () => {
+    process.env.VERCEL_ENV = 'production'
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => reportContentQueryError('industries slugs', { message: 'boom' })).toThrow(/industries slugs: boom/)
+    // The thrown error reaches Sentry via onRequestError / the build log; no double event.
+    expect(captureException).not.toHaveBeenCalled()
   })
 })
 
