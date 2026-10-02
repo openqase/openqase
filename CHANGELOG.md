@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Admin trash**: Soft-deleted items no longer appear in the main admin lists for algorithms, blog posts, industries, personas, partner companies, quantum companies, hardware and software (they were already hidden for case studies).
+- **CMS create**: When an item saves but one of its relationship links fails, every content type's editor now shows a "Saved, but some links were not updated" warning instead of a failed save (which led to duplicate-slug errors on retry); on create the editor is taken to the new item.
+- **Bulk publish**: Bulk publish/unpublish of case studies now goes through the same publish path as single items, so trashed rows are refused and `published_at` is stamped consistently, and the editor is told which items were refused.
+- **Detail pages**: Related case studies without a publish date no longer show 01/01/1970 on hardware, software and company pages.
+- **Static generation**: Trashed rows are excluded from build-time slug lists.
+- **Slug rename**: Renaming an item's slug now also refreshes the page at the old slug.
+- **Hardware specs**: Saving hardware specs now refreshes the public hardware page immediately.
+- **Preview**: A malformed preview secret returns 401 instead of a server error.
+- **Reference links**: Case study reference links no longer crash the page when the stored link JSON has a non-string title.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.

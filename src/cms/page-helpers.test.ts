@@ -44,7 +44,7 @@ beforeEach(() => {
 describe('generateStaticParamsFor', () => {
   it('returns a function that produces slug params', async () => {
     const mockData = [{ slug: 'finance' }, { slug: 'healthcare' }]
-    mockEq.mockReturnValueOnce({ data: mockData })
+    mockIs.mockReturnValueOnce({ data: mockData })
 
     const fn = generateStaticParamsFor('industries')
     const params = await fn()
@@ -57,12 +57,13 @@ describe('generateStaticParamsFor', () => {
     expect(params).toEqual([])
   })
 
-  it('queries only published items', async () => {
-    mockEq.mockReturnValueOnce({ data: [] })
+  it('queries only published, non-deleted items', async () => {
+    mockIs.mockReturnValueOnce({ data: [] })
 
     const fn = generateStaticParamsFor('industries')
     await fn()
     expect(mockEq).toHaveBeenCalledWith('published', true)
+    expect(mockIs).toHaveBeenCalledWith('deleted_at', null)
   })
 })
 

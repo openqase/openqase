@@ -13,6 +13,7 @@ export function generateStaticParamsFor(typeSlug: string) {
     const { data } = await fromTable(supabase, ct.tableName)
       .select('slug')
       .eq('published', true)
+      .is('deleted_at', null)
 
     return (data ?? []).map((item: { slug: string }) => ({ slug: item.slug }))
   }
