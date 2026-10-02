@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { existsSync } from 'node:fs'
 
 /**
- * Modules that were superseded by src/cms/operations and must not come back:
- * each carried its own delete / relationship-save path that bypassed the
- * single soft-delete and diffing implementation (see CLAUDE.md "Deletion System").
+ * Modules superseded by src/cms/operations that must not come back.
+ * content-management.ts carried a delete-all-then-insert relationship save and
+ * a publish toggle that bypassed the single implementation (CLAUDE.md
+ * "Deletion System"); cms/actions.ts was an unused duplicate of the admin actions.
  */
 const REMOVED = ['src/utils/content-management.ts', 'src/cms/actions.ts']
 

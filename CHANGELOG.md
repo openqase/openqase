@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
 
 ### Changed
+- **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
 - **Middleware migrated to the Next.js 16 proxy convention** (`src/middleware.ts` → `src/proxy.ts`); matcher and auth checks unchanged (#241).
 - **Next.js and eslint-config-next bumped to 16.3.6** (#245).
-- **Lint cleanup across the codebase**: unused variables and imports removed, JSX entities escaped, explicit `any` replaced with typed or `unknown` signatures; no behaviour changes intended (#242, #244). One intentional side effect: case study structured data now includes persona names in `keywords`.
+- **Lint cleanup across the codebase**: unused variables and imports removed, JSX entities escaped, explicit `any` replaced with typed or `unknown` signatures; no behaviour changes intended (#242, #244).
+- **Case study structured data** now includes persona names in JSON-LD `keywords` (side effect of the CVE/cleanup PR, #240).
 - **Migration history squashed to a single baseline.** The 15 legacy migration files were moved to `supabase/migrations_archive/` (reference only, never applied) and replaced by one baseline, `20260905023326_remote_schema.sql`, captured with `supabase db pull` from the new OpenQase-owned Supabase projects. The migration ledger on `openqase-prod` and `openqase-dev` now contains exactly that one entry. Every schema change from here on is a new numbered migration applied to dev first, then promoted to prod.
 - **Hardware spec preset vocabulary moved to `supabase/seed.sql`.** The 28 `hardware_spec_definitions` rows were previously inserted by a migration; fresh local databases now get them from the seed.
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Grid cards** no longer reserve empty space below short descriptions (#247).
 - **/paths hub** has an eighth "All Case Studies" card and a 1/2/4-column responsive grid (#249).
 - **Reference links** in the case study sidebar show a readable title or `domain — filename` instead of the raw URL (#250).
-- **Sentry in development** no longer floods the console: debug off, traces off, CSP allows the project's ingest host (#252).
+- **Sentry in development**: Sentry is disabled outside production unless `SENTRY_DEV` / `NEXT_PUBLIC_SENTRY_DEV=true`; debug logging and traces are off in dev; the server DSN falls back to `NEXT_PUBLIC_SENTRY_DSN`; the CSP `connect-src` was widened to `*.ingest.us.sentry.io` / `*.ingest.sentry.io` (#252).
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
@@ -57,10 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependency Audit Zero-Vulnerability Clean-up**: Applied `npm audit fix` and updated `vitest` / `@vitest/coverage-v8` to `^4.1.11` to patch `@vitest/mocker` path traversal (GHSA-82fw-gwwq-j7x9), bringing npm audit vulnerabilities from 22 down to 0.
 - **CMS Server Action Authentication**: Wrapped all exported actions in `src/cms/actions.ts` (`saveContentAction`, `publishAction`, `unpublishAction`, `deleteAction`) with `withAdmin()`, preventing unauthorized bypass of Supabase RLS. Extended ESLint rule and regression tests to enforce `withAdmin()` across all CMS actions.
 - **Public GET API no longer leaks unpublished/soft-deleted content.** `fetchContentBySlug` now applies `published=true` and `deleted_at IS NULL` filters via an RLS-respecting Supabase client. Anonymous requests for draft slugs return 404. The function was also split into a separate `fetchPreviewContentBySlug` variant used by the 5 preview-aware detail pages so the static-rendered detail pages stay SSG-friendly.
-- **Pinned Supabase CLI** to one exact version in CI and `package.json` so generated types cannot drift between the two; `.local-handover/` is now git-ignored from a fresh clone.
 
 ### Removed
-- **Superseded CMS modules** `src/utils/content-management.ts` and `src/cms/actions.ts` (no importers; each carried a delete/relationship path that bypassed `src/cms/operations`). The ESLint `withAdmin` rule and the security regression test now cover only the nine live admin action files.
+- **Superseded CMS modules** `src/utils/content-management.ts` and `src/cms/actions.ts`, neither of which had an importer. `content-management.ts` still carried a relationship-save path (delete all links, then re-insert) and a publish toggle that bypassed `src/cms/operations`; `cms/actions.ts` was an unused duplicate of the per-type admin actions. The ESLint `withAdmin` rule and the security regression test now cover only the nine live admin action files.
 - **Orphaned Supabase Utilities**: Removed unused `/utils/supabase/` legacy boilerplate directory (`client.ts`, `middleware.ts`, `server.ts`).
 - **`publicQuery()` invariant introduced** as the single sanctioned chokepoint for anonymous content reads. Module-boundary enforced via ESLint `no-restricted-imports` on `src/lib/internal-queries.ts`.
 - **All 9 admin server-action files wrapped in `withAdmin()`** as defense-in-depth beyond middleware. Enforced by ESLint `no-restricted-syntax`.
