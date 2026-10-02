@@ -29,6 +29,18 @@ export async function updateContent(
   }
 
   const supabase = createServiceRoleSupabaseClient()
+
+  // If the slug is changing, the page at the old slug must be revalidated
+  // too, otherwise it keeps serving the renamed content for up to 24h (ISR).
+  let previousSlug: string | undefined
+  if (typeof (parsed.data as Record<string, unknown>).slug === 'string') {
+    const { data: current } = await fromTable(supabase, ct.tableName)
+      .select('slug')
+      .eq('id', id)
+      .maybeSingle()
+    previousSlug = (current as { slug?: string } | null)?.slug
+  }
+
   const { data: result, error } = await fromTable(supabase, ct.tableName)
     .update(parsed.data)
     .eq('id', id)
@@ -44,7 +56,12 @@ export async function updateContent(
     relError = (await saveRelationships(ct, id, relationships)).error
   }
 
-  revalidateContentType(typeSlug, record.slug as string | undefined)
+  const newSlug = record.slug as string | undefined
+  const slugs =
+    previousSlug && previousSlug !== newSlug
+      ? [newSlug, previousSlug].filter((s): s is string => typeof s === 'string')
+      : newSlug
+  revalidateContentType(typeSlug, slugs)
   // The row exists regardless of the relationship outcome, so never report
   // a relationship failure as `error`: callers treat `error` as "nothing was
   // saved" and would make the editor retry, creating a duplicate row.

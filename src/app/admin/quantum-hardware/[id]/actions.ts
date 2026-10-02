@@ -1,6 +1,6 @@
 'use server'
 
-import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
+import { createContent, updateContent, revalidateContentType, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import type { Database, Tables } from '@/types/supabase'
@@ -103,6 +103,11 @@ function normalizeSpecKey(key: string): string {
     .slice(0, 64)
 }
 
+async function revalidateHardwarePages(supabase: ReturnType<typeof createServiceRoleSupabaseClient>, hardwareId: string) {
+  const { data } = await supabase.from('quantum_hardware').select('slug').eq('id', hardwareId).maybeSingle()
+  revalidateContentType('quantum-hardware', data?.slug ?? undefined)
+}
+
 export const saveHardwareSpecs = withAdmin(
   async (hardwareId: string, rows: HardwareSpecInput[]): Promise<void> => {
     const supabase = createServiceRoleSupabaseClient()
@@ -129,6 +134,7 @@ export const saveHardwareSpecs = withAdmin(
         .delete()
         .eq('hardware_id', hardwareId)
       if (deleteAllError) throw new Error(deleteAllError.message)
+      await revalidateHardwarePages(supabase, hardwareId)
       return
     }
 
@@ -167,5 +173,6 @@ export const saveHardwareSpecs = withAdmin(
     )
 
     if (upsertError) throw new Error(upsertError.message)
+    await revalidateHardwarePages(supabase, hardwareId)
   }
 )

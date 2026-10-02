@@ -4,7 +4,11 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
+import { revalidatePath } from 'next/cache'
+
 const mockSingle = vi.fn()
+const mockSlugMaybeSingle = vi.fn()
+const mockSlugSelect = vi.fn(() => ({ eq: () => ({ maybeSingle: mockSlugMaybeSingle }) }))
 const mockSelect = vi.fn(() => ({ single: mockSingle }))
 const mockInsert = vi.fn(() => ({ select: mockSelect }))
 const mockEqAfterUpdate = vi.fn(() => ({ select: mockSelect }))
@@ -23,6 +27,7 @@ const mockFrom = vi.fn((table: string) =>
         insert: mockJunctionInsert,
       }
     : {
+        select: mockSlugSelect,
         insert: mockInsert,
         update: mockUpdate,
         delete: mockDelete,
@@ -38,6 +43,7 @@ const { updateContent } = await import('./update')
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockSlugMaybeSingle.mockResolvedValue({ data: null, error: null })
   mockJunctionSelectEq.mockResolvedValue({ data: [], error: null })
   mockJunctionDeleteIn.mockResolvedValue({ error: null })
   mockJunctionInsert.mockResolvedValue({ error: null })
@@ -119,5 +125,13 @@ describe('relationship saving', () => {
     expect(result.error).toContain('duplicate key')
     expect(result.data).toBeUndefined()
     expect(result.warning).toBeUndefined()
+  })
+
+  it('revalidates both the old and the new slug page when the slug changes', async () => {
+    mockSlugMaybeSingle.mockResolvedValue({ data: { slug: 'old-slug' }, error: null })
+    mockSingle.mockResolvedValue({ data: { id: '1', name: 'Finance', slug: 'new-slug' }, error: null })
+    await updateContent('industries', '1', { name: 'Finance', slug: 'new-slug' })
+    expect(revalidatePath).toHaveBeenCalledWith('/paths/industry/old-slug')
+    expect(revalidatePath).toHaveBeenCalledWith('/paths/industry/new-slug')
   })
 })
