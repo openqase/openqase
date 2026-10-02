@@ -42,6 +42,14 @@ describe('GET /api/preview', () => {
     expect(enable).not.toHaveBeenCalled()
   })
 
+  it('returns 401 (not 500) for a secret with equal character length but different byte length', async () => {
+    process.env.PREVIEW_SECRET = 'ab'          // 2 chars, 2 bytes
+    requireAdmin.mockResolvedValue({ user: null, error: new Response(null, { status: 401 }) })
+    const res = await GET(req('secret=%C3%A9a&slug=foo'))   // 'éa': 2 chars, 3 bytes
+    expect(res.status).toBe(401)
+    expect(enable).not.toHaveBeenCalled()
+  })
+
   it('rejects a non-admin with no secret even when PREVIEW_SECRET is unset', async () => {
     delete process.env.PREVIEW_SECRET
     requireAdmin.mockResolvedValue({ user: null, error: new Response(null, { status: 401 }) })

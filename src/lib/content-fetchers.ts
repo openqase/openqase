@@ -1,4 +1,5 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
+import { reportContentQueryError } from '@/cms/page-helpers';
 import { fromTable } from '@/lib/supabase-untyped';
 
 // Define content types
@@ -55,10 +56,10 @@ export async function getStaticContentList<T>(
 
   const { data, error } = await query;
 
-  if (error) {
-    console.error(`Failed to fetch ${contentType} list:`, error);
-    return [];
-  }
+  // Logs + Sentry everywhere; throws only in Vercel production so an ISR
+  // regeneration keeps the previous page rather than replacing it with [].
+  reportContentQueryError(`${contentType} list`, error);
+  if (error) return [];
 
   return (data as T[]) || [];
 }

@@ -142,6 +142,13 @@ These are **required** for the application to function.
 - **Security**: Public
 - **Usage**: Browser error tracking, performance monitoring
 
+#### `NEXT_PUBLIC_VERCEL_ENV`
+- **Required**: No
+- **Type**: String (`production` | `preview` | `development`)
+- **Default**: None
+- **Description**: Provided automatically by Vercel when "Automatically expose System Environment Variables" is enabled on the project (on by default). Leave blank locally; never set it by hand. Used to tag client-side Sentry events as production / preview / development.
+- **Security**: Public
+
 #### `NEXT_PUBLIC_SENTRY_PROJECT_ID`
 - **Required**: No
 - **Type**: String

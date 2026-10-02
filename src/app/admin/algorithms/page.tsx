@@ -18,6 +18,7 @@ export default async function AlgorithmsPage() {
   const { data: algorithms, error } = await supabase
     .from('algorithms')
     .select('*')
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {

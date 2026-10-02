@@ -6,7 +6,10 @@ import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+  // NEXT_PUBLIC_SENTRY_ENVIRONMENT is the override; otherwise Vercel's VERCEL_ENV
+  // (production | preview | development) since NODE_ENV is 'production' for previews.
+  // Only NEXT_PUBLIC_* vars are inlined into the browser bundle.
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.NODE_ENV,
   
   // Performance monitoring: sample 10% in production, disabled in development to prevent console noise
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0,

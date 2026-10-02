@@ -102,7 +102,7 @@ All dynamic `[slug]/page.tsx` files export `revalidate = 86400` (24 hours). This
 #### When Adding New Content Types
 1. Create admin server actions with proper `revalidatePath()` calls for save/publish/unpublish
 2. Add `export const revalidate = 86400` to the public `[slug]/page.tsx`
-3. Use `generateStaticParams()` with `generateStaticParamsForContentType()` for build-time generation
+3. Export `generateStaticParams = generateStaticParamsFor('<type-slug>')` from `src/cms/page-helpers.ts` for build-time generation
 
 #### Request-Scoped Deduplication
 `fetchContentBySlug()` / `fetchPreviewContentBySlug()` are wrapped with `React.cache()` so that `generateMetadata()` and the page component share a single database call per request, not two.

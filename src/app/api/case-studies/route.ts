@@ -8,9 +8,7 @@ import {
   deleteContentMany,
   publishContent,
   unpublishContent,
-  revalidateContentType,
 } from '@/cms/operations'
-import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { MAX_BULK_IDS } from '@/lib/validation/constants'
 import { requireAdmin } from '@/lib/auth'
 
@@ -112,38 +110,30 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+/**
+ * Bulk publish/unpublish goes through the single publish path so every row
+ * gets the same guards (never publish a trashed row), the same published_at
+ * stamping, and the same per-slug revalidation as the single-item action.
+ */
 async function handleBulkPublish(ids: string[], published: boolean) {
-  try {
-    const supabase = createServiceRoleSupabaseClient()
-    let query = supabase
-      .from('case_studies')
-      .update({ published, updated_at: new Date().toISOString() })
-      .in('id', ids)
-
-    // Never publish soft-deleted (trashed) case studies.
-    if (published) {
-      query = query.is('deleted_at', null)
-    }
-
-    const { data, error } = await query.select()
-
-    if (error) {
-      return NextResponse.json({ error: `Failed to ${published ? 'publish' : 'unpublish'} case studies` }, { status: 500 })
-    }
-
-    revalidateContentType(
-      'case-studies',
-      (data ?? []).map(row => row.slug).filter((s): s is string => !!s)
-    )
-
-    return NextResponse.json({
-      success: true,
-      updated: data?.length || 0,
-      message: `Successfully ${published ? 'published' : 'unpublished'} ${data?.length || 0} case studies`,
-    })
-  } catch {
-    return NextResponse.json({ error: 'Failed to process bulk operation' }, { status: 500 })
+  const failed: string[] = []
+  for (const id of ids) {
+    const result = published
+      ? await publishContent('case-studies', id)
+      : await unpublishContent('case-studies', id)
+    if (!result.success) failed.push(id)
   }
+
+  const updated = ids.length - failed.length
+  const verb = published ? 'published' : 'unpublished'
+  return NextResponse.json({
+    success: true,
+    updated,
+    failed,
+    message: failed.length === 0
+      ? `Successfully ${verb} ${updated} case studies`
+      : `${verb} ${updated} case studies; ${failed.length} could not be ${verb}`,
+  })
 }
 
 /**

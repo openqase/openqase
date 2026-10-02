@@ -18,6 +18,7 @@ export default async function PartnerCompaniesPage() {
   const { data: partnerCompanies, error } = await supabase
     .from('partner_companies')
     .select('*')
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {
