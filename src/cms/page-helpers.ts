@@ -1,8 +1,29 @@
+import * as Sentry from '@sentry/nextjs'
 import { getContentType } from './registry'
 import { fetchContentBySlug } from './operations'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
-import type { ContentTable } from '@/lib/public-query'
+
+/**
+ * Single policy for content queries that feed static generation, ISR
+ * regeneration and the sitemap. Outside Vercel production (local, CI with a
+ * stub database, preview) a failure is logged and the caller falls back to an
+ * empty result, as before. In Vercel production the error is thrown so that a
+ * build fails instead of shipping a site with zero pages, and an ISR
+ * regeneration keeps serving the previous page instead of replacing it with
+ * an empty list. Every path also reports to Sentry.
+ */
+export function reportContentQueryError(
+  context: string,
+  error: { message: string } | null | undefined
+): void {
+  if (!error) return
+  console.error(`[content] ${context}: ${error.message}`)
+  Sentry.captureException(new Error(`${context}: ${error.message}`))
+  if (process.env.VERCEL_ENV === 'production') {
+    throw new Error(`${context}: ${error.message}`)
+  }
+}
 
 export function generateStaticParamsFor(typeSlug: string) {
   return async function generateStaticParams() {
@@ -10,41 +31,14 @@ export function generateStaticParamsFor(typeSlug: string) {
     if (!ct) return []
 
     const supabase = createServiceRoleSupabaseClient()
-    const { data } = await fromTable(supabase, ct.tableName)
+    const { data, error } = await fromTable(supabase, ct.tableName)
       .select('slug')
       .eq('published', true)
+      .is('deleted_at', null)
 
+    reportContentQueryError(`${typeSlug} slugs for static generation`, error)
     return (data ?? []).map((item: { slug: string }) => ({ slug: item.slug }))
   }
-}
-
-/**
- * Build-time fetcher: get every slug for a content type, including drafts.
- * Used by `generateStaticParams`. Pre-builds pages for everything; the
- * runtime render path applies the published filter at request time.
- */
-export async function getAllSlugsForBuild(
-  table: ContentTable
-): Promise<{ slug: string }[]> {
-  const client = createServiceRoleSupabaseClient();
-  const { data } = await fromTable(client, table)
-    .select('slug')
-    .is('deleted_at', null);
-  return ((data ?? []) as { slug: string }[]).filter(r => Boolean(r.slug));
-}
-
-/**
- * Build-time fetcher: get a record by id, ignoring `published` status.
- * For build-time rendering only. Runtime page renders use
- * `getPublishedBySlug` from `@/lib/public-query`.
- */
-export async function getByIdForBuild(table: ContentTable, id: string) {
-  const client = createServiceRoleSupabaseClient();
-  return fromTable(client, table)
-    .select('*')
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle();
 }
 
 export function generateMetadataFor(typeSlug: string) {
