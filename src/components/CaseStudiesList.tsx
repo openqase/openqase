@@ -181,7 +181,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  }, []);
+  }, [setSearchQuery]);
 
   if (!caseStudies || caseStudies.length === 0) {
     return <div>No case studies found.</div>;

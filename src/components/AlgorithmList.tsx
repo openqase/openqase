@@ -68,7 +68,7 @@ export default function AlgorithmList({ algorithms }: AlgorithmListProps) {
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  }, []);
+  }, [setSearchQuery]);
 
   return (
     <div className="space-y-6">

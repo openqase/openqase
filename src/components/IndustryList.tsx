@@ -77,7 +77,7 @@ export default function IndustryList({ industries }: IndustryListProps) {
   // Memoize event handlers to prevent child re-renders
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  }, []);
+  }, [setSearchQuery]);
 
   const handleSectorFilterChange = useCallback((value: string) => {
     setSectorFilter(value);
