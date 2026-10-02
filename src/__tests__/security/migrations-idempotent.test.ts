@@ -22,9 +22,11 @@ const TRIGGERS_EXPECTED = [
   ['set_partner_companies_published_at', 'partner_companies'],
 ] as const
 
+const stripLineComments = (sql: string) => sql.replace(/^\s*--.*$/gm, '')
+
 function createTriggers(sql: string): Array<{ name: string; table: string; index: number }> {
   const out: Array<{ name: string; table: string; index: number }> = []
-  const re = /CREATE\s+TRIGGER\s+"?(\w+)"?\s+[\s\S]*?ON\s+"?(?:public"?\."?)?(\w+)"?/gi
+  const re = /CREATE\s+TRIGGER\s+"?(\w+)"?\s+[^;]*?ON\s+"?(?:public"?\."?)?(\w+)"?/gi
   for (const m of sql.matchAll(re)) out.push({ name: m[1], table: m[2], index: m.index ?? 0 })
   return out
 }
@@ -44,7 +46,7 @@ describe('published_at trigger migrations are idempotent', () => {
   })
 
   it('re-creates all 9 triggers with DROP TRIGGER IF EXISTS before each CREATE, as BEFORE INSERT OR UPDATE', () => {
-    const sql = readFileSync(superseder!, 'utf8')
+    const sql = stripLineComments(readFileSync(superseder!, 'utf8'))
     const created = createTriggers(sql)
     for (const [name, table] of TRIGGERS_EXPECTED) {
       const t = created.find((c) => c.name === name && c.table === table)
@@ -58,7 +60,7 @@ describe('published_at trigger migrations are idempotent', () => {
   it('every migration from the superseder onward guards each CREATE TRIGGER', () => {
     const start = files.indexOf(superseder!)
     for (const file of files.slice(start)) {
-      const sql = readFileSync(file, 'utf8')
+      const sql = stripLineComments(readFileSync(file, 'utf8'))
       for (const t of createTriggers(sql)) {
         const orReplace = /CREATE\s+OR\s+REPLACE\s+TRIGGER/i.test(sql.slice(Math.max(0, t.index - 20), t.index + 30))
         expect(orReplace || hasDropBefore(sql, t.name, t.table, t.index), `${file}: ${t.name} is not re-runnable`).toBe(true)
