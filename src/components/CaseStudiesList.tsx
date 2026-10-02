@@ -16,10 +16,10 @@ import { FacetedFilters } from '@/components/FacetedFilters';
 import type { FilterGroup } from '@/components/FacetedFilters';
 import type { CaseStudyRelationships } from '@/lib/relationship-queries';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { SlidersHorizontal, Loader2 } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { SlidersHorizontal } from 'lucide-react';
+import { useSearchQuery } from '@/hooks/useSearchQuery';
+import { cn } from '@/lib/utils';
 import { SearchEmptyState } from '@/components/ui/search-empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type CaseStudy = Database['public']['Tables']['case_studies']['Row'];
 
@@ -37,9 +37,7 @@ const FILTER_GROUP_LABELS: Record<string, string> = {
 };
 
 export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudiesListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 250);
-  const isSearching = searchQuery !== debouncedSearchQuery;
+  const { query: searchQuery, deferredQuery, isPending, setQuery: setSearchQuery } = useSearchQuery();
 
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({
     industries: [],
@@ -55,8 +53,8 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
     return caseStudies
       .filter(cs => {
         // Search filter
-        if (debouncedSearchQuery) {
-          const query = debouncedSearchQuery.toLowerCase();
+        if (deferredQuery) {
+          const query = deferredQuery.toLowerCase();
           const matchesSearch =
             cs.title.toLowerCase().includes(query) ||
             (cs.description?.toLowerCase().includes(query) || false) ||
@@ -99,7 +97,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           default: return a.title.localeCompare(b.title);
         }
       });
-  }, [caseStudies, debouncedSearchQuery, activeFilters, sortBy, relationshipMap]);
+  }, [caseStudies, deferredQuery, activeFilters, sortBy, relationshipMap]);
 
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredCaseStudies });
 
@@ -112,8 +110,8 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
     ): FilterGroup => {
       // Apply all filters EXCEPT the current group
       const otherFilteredStudies = caseStudies.filter(cs => {
-        if (debouncedSearchQuery) {
-          const query = debouncedSearchQuery.toLowerCase();
+        if (deferredQuery) {
+          const query = deferredQuery.toLowerCase();
           if (!cs.title.toLowerCase().includes(query) &&
               !(cs.description?.toLowerCase().includes(query)) &&
               !(cs.year?.toString().includes(query))) return false;
@@ -166,7 +164,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
         (rels, id) => rels.personas.find(p => p.id === id)?.name
       ),
     ];
-  }, [caseStudies, debouncedSearchQuery, activeFilters, relationshipMap]);
+  }, [caseStudies, deferredQuery, activeFilters, relationshipMap]);
 
   const handleFilterChange = useCallback((groupKey: string, optionId: string, checked: boolean) => {
     setActiveFilters(prev => ({
@@ -246,11 +244,6 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
                   onChange={handleSearchChange}
                   className="w-full pr-9"
                 />
-                {isSearching && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                  </div>
-                )}
               </div>
             </div>
 
@@ -278,14 +271,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-                {isSearching ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                    Searching case studies...
-                  </span>
-                ) : (
-                  `${filteredCaseStudies.length} case stud${filteredCaseStudies.length !== 1 ? 'ies' : 'y'} found`
-                )}
+                {`${filteredCaseStudies.length} case stud${filteredCaseStudies.length !== 1 ? 'ies' : 'y'} found`}
               </div>
               {hasActiveFilters && (
                 <>
@@ -312,61 +298,42 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           </div>
         </div>
 
-        {/* Results Grid/List / Skeletons */}
-        {isSearching ? (
-          <div className={viewMode === 'grid'
-            ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-            : "space-y-4"
-          }>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-56 rounded-xl border border-border bg-card/60 p-6 flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className={viewMode === 'grid'
-            ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-            : "space-y-4"
-          }>
-            {paginatedItems.map((caseStudy) => {
-              const metadata = getContentMetadata('case-studies', caseStudy, viewMode);
-              const rels = relationshipMap[caseStudy.id];
-              const badges = rels
-                ? [...rels.industries.map(i => i.name), ...rels.algorithms.map(a => a.name)].slice(0, 3)
-                : [];
+        {/* Results Grid/List */}
+        <div
+          aria-busy={isPending}
+          className={cn(
+            viewMode === 'grid'
+              ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              : "space-y-4",
+            isPending && 'opacity-70 transition-opacity'
+          )}
+        >
+          {paginatedItems.map((caseStudy) => {
+            const metadata = getContentMetadata('case-studies', caseStudy, viewMode);
+            const rels = relationshipMap[caseStudy.id];
+            const badges = rels
+              ? [...rels.industries.map(i => i.name), ...rels.algorithms.map(a => a.name)].slice(0, 3)
+              : [];
 
-              return (
-                <ContentCard
-                  key={caseStudy.id}
-                  variant={viewMode}
-                  title={caseStudy.title}
-                  description={caseStudy.description || ''}
-                  badges={badges}
-                  href={`/case-study/${caseStudy.slug}`}
-                  metadata={{
-                    lastUpdated: metadata.join(' • ') || undefined
-                  }}
-                />
-              );
-            })}
-          </div>
-        )}
+            return (
+              <ContentCard
+                key={caseStudy.id}
+                variant={viewMode}
+                title={caseStudy.title}
+                description={caseStudy.description || ''}
+                badges={badges}
+                href={`/case-study/${caseStudy.slug}`}
+                metadata={{
+                  lastUpdated: metadata.join(' • ') || undefined
+                }}
+              />
+            );
+          })}
+        </div>
 
-        {!isSearching && filteredCaseStudies.length === 0 && (
+        {filteredCaseStudies.length === 0 && (
           <SearchEmptyState
-            query={debouncedSearchQuery}
+            query={deferredQuery}
             hasFilters={hasActiveFilters}
             resourceName="case studies"
             onClearSearch={() => setSearchQuery('')}
@@ -379,7 +346,7 @@ export function CaseStudiesList({ caseStudies, relationshipMap = {} }: CaseStudi
           />
         )}
 
-        {!isSearching && filteredCaseStudies.length > 0 && (
+        {filteredCaseStudies.length > 0 && (
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}

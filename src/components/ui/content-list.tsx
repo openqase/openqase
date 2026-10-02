@@ -8,10 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { BaseContent } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useSearchQuery } from '@/hooks/useSearchQuery';
 import { SearchEmptyState } from '@/components/ui/search-empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface SortOption {
   value: string;
@@ -38,18 +36,16 @@ export default function ContentList<T extends BaseContent>({
     { value: 'lastUpdated', label: 'Last Updated' }
   ]
 }: ContentListProps<T>) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const { query: searchQuery, deferredQuery, isPending, setQuery: setSearchQuery } = useSearchQuery();
   const [sortBy, setSortBy] = useState(sortOptions[0].value);
-  const debouncedSearchQuery = useDebounce(searchQuery, 250);
-  const isSearching = searchQuery !== debouncedSearchQuery;
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
     let filtered = [...items];
 
     // Apply search filter
-    if (debouncedSearchQuery) {
-      const query = debouncedSearchQuery.toLowerCase();
+    if (deferredQuery) {
+      const query = deferredQuery.toLowerCase();
       filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(query) ||
         (item.description?.toLowerCase().includes(query) || false)
@@ -71,7 +67,7 @@ export default function ContentList<T extends BaseContent>({
     });
 
     return filtered;
-  }, [items, debouncedSearchQuery, sortBy]);
+  }, [items, deferredQuery, sortBy]);
 
   return (
     <div className="space-y-6">
@@ -90,11 +86,6 @@ export default function ContentList<T extends BaseContent>({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-9"
             />
-            {isSearching && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
           </div>
         </div>
 
@@ -121,68 +112,46 @@ export default function ContentList<T extends BaseContent>({
 
       {/* Results count */}
       <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-        {isSearching ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-            Searching {type}s...
-          </span>
-        ) : (
-          `${filteredItems.length} ${type}${filteredItems.length !== 1 ? 's' : ''} found`
-        )}
+        {`${filteredItems.length} ${type}${filteredItems.length !== 1 ? 's' : ''} found`}
       </div>
 
-      {/* Content Grid / Skeletons */}
-      {isSearching ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-56 rounded-xl border border-border bg-card/60 p-6 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-20 rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <Link key={item.slug} href={`${basePath}/${item.slug}`}>
-              <Card className={cn(
-                "h-full transition-all duration-200 hover:border-border-hover",
-                "hover:shadow-sm hover:bg-accent/5"
-              )}>
-                <CardHeader className="h-full flex flex-col">
-                  <div className="flex-grow">
-                    <CardTitle className="text-lg sm:text-xl mb-2 line-clamp-2">
-                      {item.title}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-3 mb-4">
-                      {item.description || ''}
-                    </CardDescription>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mt-auto pt-2">
-                    {renderBadges?.(item)}
-                  </div>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* Content Grid */}
+      <div
+        aria-busy={isPending}
+        className={cn(
+          "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+          isPending && 'opacity-70 transition-opacity'
+        )}
+      >
+        {filteredItems.map((item) => (
+          <Link key={item.slug} href={`${basePath}/${item.slug}`}>
+            <Card className={cn(
+              "h-full transition-all duration-200 hover:border-border-hover",
+              "hover:shadow-sm hover:bg-accent/5"
+            )}>
+              <CardHeader className="h-full flex flex-col">
+                <div className="flex-grow">
+                  <CardTitle className="text-lg sm:text-xl mb-2 line-clamp-2">
+                    {item.title}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-3 mb-4">
+                    {item.description || ''}
+                  </CardDescription>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mt-auto pt-2">
+                  {renderBadges?.(item)}
+                </div>
+              </CardHeader>
+            </Card>
+          </Link>
+        ))}
+      </div>
 
       {/* Empty State */}
-      {!isSearching && filteredItems.length === 0 && (
+      {filteredItems.length === 0 && (
         <SearchEmptyState
-          query={debouncedSearchQuery}
+          query={deferredQuery}
           resourceName={`${type}s`}
           onClearSearch={() => setSearchQuery('')}
         />

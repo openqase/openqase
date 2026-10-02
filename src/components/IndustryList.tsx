@@ -12,10 +12,9 @@ import { useSortPersistence } from '@/hooks/useSortPersistence';
 import { usePagination } from '@/hooks/use-pagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
-import { Loader2 } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useSearchQuery } from '@/hooks/useSearchQuery';
+import { cn } from '@/lib/utils';
 import { SearchEmptyState } from '@/components/ui/search-empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Use the exact Industry type from Database
 type Industry = Database['public']['Tables']['industries']['Row'];
@@ -27,10 +26,8 @@ interface IndustryListProps {
 const INDUSTRIES_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'updated-desc'] as const;
 
 export default function IndustryList({ industries }: IndustryListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const { query: searchQuery, deferredQuery, isPending, setQuery: setSearchQuery } = useSearchQuery();
   const [sectorFilter, setSectorFilter] = useState('all');
-  const debouncedSearchQuery = useDebounce(searchQuery, 250);
-  const isSearching = searchQuery !== debouncedSearchQuery;
   
   // Use hooks for persistence
   const { viewMode, handleViewModeChange } = useViewSwitcher('industries-view-mode');
@@ -47,9 +44,9 @@ export default function IndustryList({ industries }: IndustryListProps) {
     .filter(industry => {
       // Skip sector filtering as industries don't have sectors
       if (sectorFilter !== 'all') return false;
-      if (!debouncedSearchQuery) return true;
+      if (!deferredQuery) return true;
       
-      const query = debouncedSearchQuery.toLowerCase();
+      const query = deferredQuery.toLowerCase();
       return (
         industry.name.toLowerCase().includes(query) ||
         industry.description?.toLowerCase().includes(query)
@@ -73,7 +70,7 @@ export default function IndustryList({ industries }: IndustryListProps) {
           return a.name.localeCompare(b.name);
       }
     });
-  }, [industries, sectorFilter, debouncedSearchQuery, sortBy]);
+  }, [industries, sectorFilter, deferredQuery, sortBy]);
 
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredIndustries });
 
@@ -104,11 +101,6 @@ export default function IndustryList({ industries }: IndustryListProps) {
                 onChange={handleSearchChange}
                 className="w-full pr-9"
               />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
             </div>
           </div>
           
@@ -152,72 +144,46 @@ export default function IndustryList({ industries }: IndustryListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {isSearching ? (
-              <span className="inline-flex items-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                Searching industries...
-              </span>
-            ) : (
-              `${filteredIndustries.length} industr${filteredIndustries.length !== 1 ? 'ies' : 'y'} found`
-            )}
+            {`${filteredIndustries.length} industr${filteredIndustries.length !== 1 ? 'ies' : 'y'} found`}
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
       </div>
 
-      {/* Industry Grid/List / Skeletons */}
-      {isSearching ? (
-        <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-4"
-        }>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-56 rounded-xl border border-border bg-card/60 p-6 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-20 rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-4"
-        }>
-          {paginatedItems.map((industry) => {
-            // Get metadata using the new system
-            const metadata = getContentMetadata('industries', industry, viewMode);
-            
-            return (
-              <ContentCard
-                key={industry.slug}
-                variant={viewMode}
-                title={industry.name}
-                description={industry.description || ''}
-                badges={[]}
-                href={`/paths/industry/${industry.slug}`}
-                metadata={{
-                  lastUpdated: metadata.join(' • ') || undefined
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
+      {/* Industry Grid/List */}
+      <div
+        aria-busy={isPending}
+        className={cn(
+          viewMode === 'grid'
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "space-y-4",
+          isPending && 'opacity-70 transition-opacity'
+        )}
+      >
+        {paginatedItems.map((industry) => {
+          // Get metadata using the new system
+          const metadata = getContentMetadata('industries', industry, viewMode);
+          
+          return (
+            <ContentCard
+              key={industry.slug}
+              variant={viewMode}
+              title={industry.name}
+              description={industry.description || ''}
+              badges={[]}
+              href={`/paths/industry/${industry.slug}`}
+              metadata={{
+                lastUpdated: metadata.join(' • ') || undefined
+              }}
+            />
+          );
+        })}
+      </div>
 
       {/* Empty State */}
-      {!isSearching && filteredIndustries.length === 0 && (
+      {filteredIndustries.length === 0 && (
         <SearchEmptyState
-          query={debouncedSearchQuery}
+          query={deferredQuery}
           hasFilters={sectorFilter !== 'all'}
           resourceName="industries"
           onClearSearch={() => setSearchQuery('')}
@@ -230,7 +196,7 @@ export default function IndustryList({ industries }: IndustryListProps) {
         />
       )}
 
-      {!isSearching && filteredIndustries.length > 0 && (
+      {filteredIndustries.length > 0 && (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

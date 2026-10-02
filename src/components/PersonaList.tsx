@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -12,10 +12,9 @@ import { useSortPersistence } from '@/hooks/useSortPersistence';
 import { usePagination } from '@/hooks/use-pagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getContentMetadata } from '@/lib/content-metadata';
-import { Loader2 } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useSearchQuery } from '@/hooks/useSearchQuery';
+import { cn } from '@/lib/utils';
 import { SearchEmptyState } from '@/components/ui/search-empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Explicitly import the Row type
 type Persona = Database['public']['Tables']['personas']['Row'];
@@ -27,9 +26,7 @@ interface PersonaListProps {
 const PERSONAS_SORT_OPTIONS = ['name-asc', 'name-desc', 'updated-asc', 'updated-desc'] as const;
 
 export default function PersonaList({ personas }: PersonaListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 250);
-  const isSearching = searchQuery !== debouncedSearchQuery;
+  const { query: searchQuery, deferredQuery, isPending, setQuery: setSearchQuery } = useSearchQuery();
   
   // Use hooks for persistence
   const { viewMode, handleViewModeChange } = useViewSwitcher('personas-view-mode');
@@ -39,9 +36,9 @@ export default function PersonaList({ personas }: PersonaListProps) {
   const filteredPersonas = useMemo(() => {
     return personas
     .filter(persona => {
-      if (!debouncedSearchQuery) return true;
+      if (!deferredQuery) return true;
       
-      const query = debouncedSearchQuery.toLowerCase();
+      const query = deferredQuery.toLowerCase();
       return (
         (persona.name?.toLowerCase().includes(query) ?? false) ||
         (persona.description?.toLowerCase().includes(query) ?? false) ||
@@ -66,7 +63,7 @@ export default function PersonaList({ personas }: PersonaListProps) {
           return (a.name || '').localeCompare(b.name || '');
       }
     });
-  }, [personas, debouncedSearchQuery, sortBy]);
+  }, [personas, deferredQuery, sortBy]);
 
   const { currentPage, totalPages, paginatedItems, goToPage } = usePagination({ items: filteredPersonas });
 
@@ -93,11 +90,6 @@ export default function PersonaList({ personas }: PersonaListProps) {
                 onChange={handleSearchChange}
                 className="w-full pr-9"
               />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
             </div>
           </div>
 
@@ -122,72 +114,46 @@ export default function PersonaList({ personas }: PersonaListProps) {
         {/* View Switcher and Results Count Row */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {isSearching ? (
-              <span className="inline-flex items-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                Searching personas...
-              </span>
-            ) : (
-              `${filteredPersonas.length} persona${filteredPersonas.length !== 1 ? 's' : ''} found`
-            )}
+            {`${filteredPersonas.length} persona${filteredPersonas.length !== 1 ? 's' : ''} found`}
           </div>
           <ViewSwitcher value={viewMode} onValueChange={handleViewModeChange} />
         </div>
       </div>
 
-      {/* Persona Grid/List / Skeletons */}
-      {isSearching ? (
-        <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-4"
-        }>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-56 rounded-xl border border-border bg-card/60 p-6 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-20 rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={viewMode === 'grid' 
-          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          : "space-y-4"
-        }>
-          {paginatedItems.map((persona) => {
-            // Get metadata using the new system
-            const metadata = getContentMetadata('personas', persona, viewMode);
-            
-            return (
-              <ContentCard
-                key={persona.slug}
-                variant={viewMode}
-                title={persona.name || 'Untitled Persona'}
-                description={persona.description || ''}
-                badges={persona.expertise || []}
-                href={`/paths/persona/${persona.slug}`}
-                metadata={{
-                  lastUpdated: metadata.join(' • ') || undefined
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
+      {/* Persona Grid/List */}
+      <div
+        aria-busy={isPending}
+        className={cn(
+          viewMode === 'grid'
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            : "space-y-4",
+          isPending && 'opacity-70 transition-opacity'
+        )}
+      >
+        {paginatedItems.map((persona) => {
+          // Get metadata using the new system
+          const metadata = getContentMetadata('personas', persona, viewMode);
+          
+          return (
+            <ContentCard
+              key={persona.slug}
+              variant={viewMode}
+              title={persona.name || 'Untitled Persona'}
+              description={persona.description || ''}
+              badges={persona.expertise || []}
+              href={`/paths/persona/${persona.slug}`}
+              metadata={{
+                lastUpdated: metadata.join(' • ') || undefined
+              }}
+            />
+          );
+        })}
+      </div>
 
       {/* Empty State */}
-      {!isSearching && filteredPersonas.length === 0 && (
+      {filteredPersonas.length === 0 && (
         <SearchEmptyState
-          query={debouncedSearchQuery}
+          query={deferredQuery}
           resourceName="personas"
           onClearSearch={() => setSearchQuery('')}
           suggestions={['Executive', 'Researcher', 'Developer', 'Engineer']}
@@ -195,7 +161,7 @@ export default function PersonaList({ personas }: PersonaListProps) {
         />
       )}
 
-      {!isSearching && filteredPersonas.length > 0 && (
+      {filteredPersonas.length > 0 && (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

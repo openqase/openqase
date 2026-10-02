@@ -38,4 +38,29 @@ describe('CaseStudiesList', () => {
     expect(html).toContain('Quantum Risk Analysis');
     expect(html).toContain('1 case study found');
   });
+
+  it('renders results in a grid that is never replaced by skeletons and exposes aria-busy', () => {
+    const mockCaseStudies = [
+      {
+        id: '1',
+        title: 'Quantum Risk Analysis',
+        slug: 'quantum-risk-analysis',
+        description: 'Analyzing financial risk with quantum Monte Carlo methods.',
+        year: 2023,
+        created_at: '2023-01-01',
+        updated_at: '2023-01-01',
+        published: true,
+        featured: false,
+      },
+    ] as unknown as CaseStudy[];
+
+    const html = renderToStaticMarkup(
+      <CaseStudiesList caseStudies={mockCaseStudies} />
+    );
+
+    expect(html).toContain('aria-busy="false"');
+    expect(html).not.toContain('animate-pulse');
+    expect(html).toContain('1 case study found');
+    expect(html).not.toContain('Searching case studies');
+  });
 });
