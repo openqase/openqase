@@ -8,17 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
 - **Trash for every content type**: Algorithms, industries, personas, blog posts, quantum hardware, software, companies and partner companies now have an admin trash page (`/admin/<type>/trash`, linked from each admin list) to restore or permanently delete soft-deleted items, like case studies already had. Each type gets `POST /api/<type>/restore` and `POST /api/<type>/permanent-delete` (admin-only).
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
 
 ### Changed
-- **Listing page search** no longer waits 250 ms or swaps the results for skeleton cards while you type; results stay visible and update as you type (the filter is instant). The empty state and result count from the previous release are kept.
 - **Migration history squashed to a single baseline.** The 15 legacy migration files were moved to `supabase/migrations_archive/` (reference only, never applied) and replaced by one baseline, `20260905023326_remote_schema.sql`, captured with `supabase db pull` from the new OpenQase-owned Supabase projects. The migration ledger on `openqase-prod` and `openqase-dev` now contains exactly that one entry. Every schema change from here on is a new numbered migration applied to dev first, then promoted to prod.
 - **Hardware spec preset vocabulary moved to `supabase/seed.sql`.** The 28 `hardware_spec_definitions` rows were previously inserted by a migration; fresh local databases now get them from the seed.
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
-- **Search accessibility**: the empty-state panel is no longer a second live region (the result counter already announces changes), and the header search no longer opens an empty dropdown for whitespace-only input.
+- **Header search** no longer opens an empty dropdown for whitespace-only input.
 - **CMS saves failing validation**: Case study (resource links), algorithm (use cases), quantum hardware/software/company, partner company and blog saves no longer fail. The CMS schema gained `json` and `tags` field types, blank optional fields save as empty instead of failing URL/number/date checks, and numbers typed into text inputs are accepted.
 - **Edits that silently never saved**: Persona expertise, blog tags, quantum company funding stage and partner company "Quantum Initiatives" (previously bound to a non-existent column) now persist.
 - **Removing the last link on a case study** (industry, algorithm, persona, company) now clears it instead of leaving the old link in place.
