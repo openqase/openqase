@@ -50,16 +50,19 @@ export default async function EditAlgorithmPage({ params }: AlgorithmPageProps) 
   const { data: caseStudies } = await supabase
     .from('case_studies')
     .select('id, title, slug')
+    .is('deleted_at', null)
     .order('title') as { data: CaseStudyListItem[] | null };
 
   const { data: industries } = await supabase
     .from('industries')
     .select('id, name, slug')
+    .is('deleted_at', null)
     .order('name') as { data: IndustryListItem[] | null };
 
   const { data: personas } = await supabase
     .from('personas')
     .select('id, name, slug')
+    .is('deleted_at', null)
     .order('name') as { data: PersonaListItem[] | null };
 
   let relatedCaseStudyIds: string[] = [];
