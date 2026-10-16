@@ -23,7 +23,6 @@ export const contentTypes: ContentTypeDefinition[] = [
 ]
 
 const bySlug = new Map(contentTypes.map(ct => [ct.slug, ct]))
-const byTable = new Map(contentTypes.map(ct => [ct.tableName, ct]))
 
 export function getContentType(slug: string): ContentTypeDefinition | undefined {
   return bySlug.get(slug)
@@ -31,8 +30,4 @@ export function getContentType(slug: string): ContentTypeDefinition | undefined 
 
 export function getAllContentTypes(): ContentTypeDefinition[] {
   return contentTypes
-}
-
-export function getContentTypeByTableName(tableName: string): ContentTypeDefinition | undefined {
-  return byTable.get(tableName)
 }

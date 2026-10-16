@@ -41,9 +41,14 @@ export async function publishContent(typeSlug: string, id: string): Promise<Publ
   // set must be restored first. The `.is('deleted_at', null)` guard on the
   // update itself makes this race-free; the pre-check gives a clear error.
   //
-  // The same read fetches published_at: only blog_posts and personas have a
-  // DB trigger that sets it, so the CMS stamps it here for every type. An
-  // existing value is kept so republishing never moves the original date.
+  // The same read fetches published_at so the CMS can stamp it when missing.
+  // Since migration 20261002025045 every content table has a
+  // set_published_at_column() trigger that does this too, so on a migrated
+  // database this is mostly belt-and-braces. It still matters in two cases:
+  // a database where that migration hasn't been applied, and re-publishing a
+  // row that is already published but has no published_at (the trigger only
+  // stamps on INSERT or a not-published -> published transition). An existing
+  // value is kept so republishing never moves the original date.
   const hasPublishedAt = TABLES_WITH_PUBLISHED_AT.has(ct.tableName)
   const { data: existing, error: fetchError } = await fromTable(supabase, ct.tableName)
     .select(hasPublishedAt ? 'id, deleted_at, published_at' : 'id, deleted_at')

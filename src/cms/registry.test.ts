@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getContentType, getAllContentTypes, getContentTypeByTableName } from './registry'
+import { getContentType, getAllContentTypes } from './registry'
 
 describe('registry', () => {
   it('looks up content type by slug', () => {
@@ -10,12 +10,6 @@ describe('registry', () => {
 
   it('returns undefined for unknown slug', () => {
     expect(getContentType('nonexistent')).toBeUndefined()
-  })
-
-  it('looks up by table name', () => {
-    const ct = getContentTypeByTableName('industries')
-    expect(ct).toBeDefined()
-    expect(ct!.slug).toBe('industries')
   })
 
   it('returns all registered content types', () => {
