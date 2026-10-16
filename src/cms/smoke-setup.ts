@@ -1,6 +1,6 @@
-import { config } from 'dotenv'
-import { resolve } from 'path'
+import { assertLocalSupabaseEnv } from './integration-env'
 
-// Load .env from project root for integration tests
-config({ path: resolve(__dirname, '../../.env') })
-config({ path: resolve(__dirname, '../../.env.local'), override: true })
+// Integration tests run only against a local Supabase, with credentials passed
+// explicitly in the environment. No .env / .env.local loading: .env.local
+// points at the shared dev project. Throws (failing the run) otherwise.
+assertLocalSupabaseEnv(process.env)

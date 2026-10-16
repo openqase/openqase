@@ -79,6 +79,15 @@ something in this repo's SQL). Seed auto-run is disabled in
 `supabase/config.toml` (`[db.seed] enabled = false`) for this reason. Run the
 app against local and exercise the affected feature.
 
+Then run the integration tests (`src/**/*.integration.test.ts`) against the
+seeded local stack. They read credentials only from the environment, never
+from `.env.local`, and refuse any URL that is not 127.0.0.1/localhost:
+
+```bash
+eval "$(npx supabase status -o env --override-name api.url=NEXT_PUBLIC_SUPABASE_URL,auth.publishable_key=NEXT_PUBLIC_SUPABASE_ANON_KEY,auth.secret_key=SUPABASE_SERVICE_ROLE_KEY)"
+npm run test:integration
+```
+
 ### 3. Apply to dev
 
 ```bash
@@ -106,8 +115,8 @@ match the schema produced by the migrations.
 
 The PR includes the migration file, the regenerated types, and any app code.
 A reviewer checks the SQL against the rules above. CI builds a throwaway
-database from the baseline plus your migration, runs the seed, and diffs the
-generated types.
+database from the baseline plus your migration, runs the seed, diffs the
+generated types, and runs the integration tests against it.
 
 ### 6. Promote to prod
 
