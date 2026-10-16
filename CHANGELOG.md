@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
 
 ### Changed
+- **Relationship architecture doc rewritten**: `docs/api-relationships-architecture.md` now describes the current registry, the two relationship-fetching patterns, draft/deleted filtering and the API routes that actually exist (down from 439 to 131 lines). Removed the unused `src/cms/parse-form-data.ts` and `getContentTypeByTableName`, and corrected the `published_at` comment in `publishContent` (#267).
 - **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
 - **Middleware migrated to the Next.js 16 proxy convention** (`src/middleware.ts` → `src/proxy.ts`); matcher and auth checks unchanged (#241).
 - **Next.js and eslint-config-next bumped to 16.3.6** (#245).

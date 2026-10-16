@@ -1,42 +1,112 @@
 # API and Relationships Architecture
 
-> **Partially outdated (2026-10-01).** The "Standardized API Pattern" section below is current. Sections that mention `RELATIONSHIP_CONFIGS`, `fetchContentItems`, `saveContentItem`, `deleteContentItem` or `recoverContentItem` describe `src/utils/content-management.ts`, which was removed; the live equivalents are `src/cms/operations/*` (single-item fetch, create/update with diffed `saveRelationships()`, soft delete/restore) and `relationshipConfigs` in `src/lib/relationship-queries.ts` (batch joins). See CLAUDE.md "Two Relationship-Fetching Patterns".
+How OpenQase content types link to each other, how those links are read and written, and what the public content API looks like. Verified against the code on 2026-10-15.
 
-## Overview
+## Content types and the registry
 
-OpenQase uses a sophisticated content relationship system that powers the interconnected nature of quantum computing case studies, algorithms, industries, personas, and other content types. This document explains how the APIs work and how relationships enable rich content discovery.
+The nine content types (case studies, algorithms, industries, personas, blog posts, quantum software, quantum hardware, quantum companies, partner companies) are declared with `defineContentType()` in `src/cms/types/<type>.ts` and collected in `src/cms/registry.ts` (`getContentType(slug)`, `getAllContentTypes()`).
 
-## Table of Contents
-- [Core Concepts](#core-concepts)
-- [API Architecture](#api-architecture)
-- [Relationship System](#relationship-system)
-- [Content Types](#content-types)
-- [Implementation Examples](#implementation-examples)
-- [Best Practices](#best-practices)
+Each definition's `relationships` array (type `RelationshipDefinition` in `src/cms/define.ts`) describes one link to another type:
 
-## Core Concepts
+| Field | Meaning |
+|-------|---------|
+| `name` | Key the related items appear under after flattening, and the key `saveRelationships()` reads (e.g. `industries`) |
+| `targetType` | Registry slug of the related type (e.g. `case-studies`) |
+| `junction` | Junction table name |
+| `foreignKey` / `targetKey` | Junction column pointing at this item / at the related item |
+| `selectFields` | Columns to select on the related item (default `id`, `title` or `name`, `slug`) |
+| `junctionForeignKeyHint` / `targetForeignKeyHint` | PostgREST `!fk` hints, needed only for the self-referential `blog_post_relations` |
+| `extraJunctionFields` | Extra columns written on insert (blog posts set `relation_type: 'related'`) |
 
-### Content-First Architecture
-Every piece of content in OpenQase is a first-class entity with:
-- Unique identifier (UUID)
-- Human-readable slug
-- Rich metadata fields
-- Published/draft states
-- Relationship connections
+## Bidirectional junction tables
 
-### Bidirectional Relationships
-Relationships work both ways - if a case study relates to an algorithm, that algorithm also relates back to the case study. This enables discovery from any starting point.
+A link is one row in one junction table. Both sides declare the same table with `foreignKey` and `targetKey` swapped, so a link saved from either side shows up on both pages:
 
-## API Architecture
+```typescript
+// src/cms/types/case-studies.ts
+{ name: 'algorithms', targetType: 'algorithms', junction: 'algorithm_case_study_relations',
+  foreignKey: 'case_study_id', targetKey: 'algorithm_id' }
 
-### Standardized API Pattern
+// src/cms/types/algorithms.ts
+{ name: 'case_studies', targetType: 'case-studies', junction: 'algorithm_case_study_relations',
+  foreignKey: 'algorithm_id', targetKey: 'case_study_id' }
+```
 
-All content APIs use the CMS operations layer, driven by the content-type registry:
+Junction tables used by the registry:
+
+| Junction table | Links |
+|----------------|-------|
+| `algorithm_case_study_relations` | algorithms ↔ case studies |
+| `algorithm_industry_relations` | algorithms ↔ industries |
+| `case_study_industry_relations` | case studies ↔ industries |
+| `case_study_persona_relations` | case studies ↔ personas |
+| `persona_algorithm_relations` | personas ↔ algorithms |
+| `persona_industry_relations` | personas ↔ industries |
+| `case_study_quantum_software_relations` | case studies ↔ quantum software |
+| `case_study_quantum_hardware_relations` | case studies ↔ quantum hardware |
+| `case_study_quantum_company_relations` | case studies ↔ quantum companies |
+| `case_study_partner_company_relations` | case studies ↔ partner companies |
+| `blog_post_relations` | blog posts → related blog posts (self-referential) |
+
+The schema also has `case_study_relations`, `quantum_company_hardware_relations` and `quantum_company_software_relations`. They are not in the registry, so nothing reads or writes links through them. The only exception is cleanup: permanently deleting a case study also removes its `case_study_relations` rows (`src/app/api/case-studies/permanent-delete/route.ts`).
+
+## Reading relationships: two patterns
+
+There are two ways to fetch relationships. They serve different query shapes and are intentionally kept separate (GitHub issue #141).
+
+### 1. Single item with nested joins
+
+Used by every `[slug]` detail page and by `GET /api/<type>?slug=…`.
+
+- `buildRelationshipSelect()` (`src/cms/operations/relationships.ts`) turns the type's `relationships` config into one PostgREST select with a nested join per relationship, e.g. `*, case_study_industry_relations(industries(id, name, slug, published, deleted_at)), …`. It always adds `published` and `deleted_at` on the related side.
+- `fetchContentBySlug()` (`src/cms/operations/fetch.ts`) runs that select for one published, non-deleted row. `fetchPreviewContentBySlug()` does the same but includes drafts when Next.js draft mode is on. Both are wrapped in `React.cache()`.
+- `flattenRelationships()` replaces the nested junction data with flat arrays keyed by relationship `name`:
+
+```typescript
+// raw:       { title, case_study_industry_relations: [{ industries: { id, name, slug, … } }] }
+// flattened: { title, industries: [{ id, name, slug, … }] }
+```
+
+### 2. Batch junction queries for lists
+
+Used where relationships are needed for many items at once. Lives in `src/lib/relationship-queries.ts`; the junction table and columns are passed inline to an internal `getRelatedEntities()` helper (there is no shared config object).
+
+- `getCaseStudyRelationshipMap(caseStudyIds)` returns `{ [caseStudyId]: { industries, algorithms, personas } }`. Used by the homepage (`src/app/page.tsx`) and `/case-study` for filters and tag pills.
+- `getRelatedQuantumSoftware()`, `getRelatedQuantumHardware()`, `getRelatedQuantumCompanies()`, `getRelatedPartnerCompanies()`, `getRelatedIndustries()`, `getRelatedAlgorithms()`, `getRelatedPersonas()` take a list of case study ids and return a de-duplicated flat array of `RelatedEntity` (`id`, `name`, `slug`, `description`, plus a type-specific column for companies). The quantum software, hardware, company and partner company pages use them to show the rest of the ecosystem reached through their case studies.
+
+Each query is `.in('case_study_id', ids)` on the junction table followed by `.in('id', …)` on the target table, so the cost is a fixed number of queries regardless of list length.
+
+## Hiding drafts and deleted items
+
+All of these reads use the service-role client, which bypasses RLS, so visibility is enforced in code:
+
+- **The item itself**: `fetchContentBySlug()` and `listContent()` (by default) filter `published = true` and `deleted_at IS NULL`. The preview path drops only the `published` filter.
+- **Related items on single-item reads**: `flattenRelationships(raw, ct, { publishedOnly: true })` drops related rows with `published === false` or `deleted_at` set. `fetchContentBySlug()` passes `publishedOnly: true`; the preview path does not, so editors see draft relations.
+- **Related items on batch reads**: `filterVisibleEntities()` applies the same rule and strips the `published` / `deleted_at` columns from the result.
+
+`published = null` (legacy rows) is kept on purpose rather than risk emptying relationship lists. PostgREST cannot filter a nested join on the related row's columns, so this filtering happens in JS (GitHub issue #143); with 3 to 10 relations per item the cost is negligible.
+
+Visibility is decided by the related item's own columns. Neither read path looks at a junction row's `deleted_at`.
+
+## Writing relationships
+
+Admin forms submit through server actions in `src/app/admin/<type>/[id]/actions.ts`, which call `createContent()` / `updateContent()` from `@/cms/operations` with a `relationships` map of `{ [relationshipName]: string[] }`. Both then call `saveRelationships()`:
+
+- A key that is **omitted** (`undefined`) leaves that relationship untouched.
+- An **empty array** removes all links for that relationship.
+- Otherwise it reads the current target ids, deletes only removed ids and inserts only added ids. There is no moment where all links are gone, and a failed insert does not wipe unchanged links.
+- Errors are collected per relationship and returned. Because the parent row is already saved, `createContent()` / `updateContent()` report them as `warning`, not `error`, so the editor is not prompted to retry and create a duplicate.
+
+Unlinking hard-deletes the junction row. Soft-deleting an item (`deleteContent()`) sets `deleted_at` on its junction rows in the four `case_study_*` company/software/hardware tables that have that column (`JUNCTIONS_WITH_DELETED_AT` in `src/cms/operations/delete.ts`), `restoreContent()` clears it, and `permanentlyDeleteContent()` deletes all of the item's junction rows before deleting the item.
+
+## Standardized API pattern
+
+Each content type has a route at `src/app/api/<type>/route.ts` built on the CMS operations layer:
 
 ```typescript
 import {
-  listContent,          // List content with pagination (published only for public reads)
-  fetchContentBySlug,   // Get a single published item by slug
+  listContent,          // Paginated list (published, non-deleted by default)
+  fetchContentBySlug,   // One published item with flattened relationships
   deleteContent,        // Soft delete (sets deleted_at, unpublishes, revalidates)
   deleteContentMany,    // Bulk soft delete
   publishContent,       // Publish (refuses trashed rows, stamps published_at)
@@ -44,396 +114,18 @@ import {
 } from '@/cms/operations'
 ```
 
-### API Methods
-
-Each content type API supports:
-
-| Method | Endpoint | Purpose | Parameters |
-|--------|----------|---------|------------|
-| GET | `/api/[content-type]` | List all items | `page`, `pageSize`, `preview` |
-| GET | `/api/[content-type]?slug=xxx` | Get single item | `slug`, `preview` |
-| POST | `/api/[content-type]` | Create new item | JSON body |
-| PUT | `/api/[content-type]?id=xxx` | Update item | `id`, JSON body |
-| PATCH | `/api/[content-type]?id=xxx` | Update published status | `id`, `{published: boolean}` |
-| DELETE | `/api/[content-type]?id=xxx` | Soft delete item | `id` |
-
-### Common Parameters
-
-- `preview=true`: Include unpublished content (admin only)
-- `page=1`: Pagination page number
-- `pageSize=10`: Items per page
-- `slug=xxx`: Get specific item by slug
-- `id=xxx`: Target specific item by UUID
-
-## Relationship System
-
-### Junction Tables
-
-Relationships are stored in junction tables that connect two content types:
-
-```sql
--- Example: case_study_algorithm_relations
-CREATE TABLE algorithm_case_study_relations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  algorithm_id UUID REFERENCES algorithms(id),
-  case_study_id UUID REFERENCES case_studies(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ -- For soft delete
-);
-```
-
-### Relationship Configuration
-
-Each content type defines its relationships in `RELATIONSHIP_CONFIGS`:
-
-```typescript
-export const RELATIONSHIP_CONFIGS = {
-  algorithms: {
-    caseStudies: {
-      junctionTable: 'algorithm_case_study_relations',
-      contentIdField: 'algorithm_id',
-      relatedIdField: 'case_study_id',
-      relatedTable: 'case_studies'
-    },
-    industries: {
-      junctionTable: 'algorithm_industry_relations',
-      contentIdField: 'algorithm_id',
-      relatedIdField: 'industry_id',
-      relatedTable: 'industries'
-    }
-  },
-  // ... more content types
-}
-```
-
-### Bidirectional Nature
-
-The same junction table serves both directions:
-
-```typescript
-// On an Algorithm page - shows related case studies
-RELATIONSHIP_CONFIGS.algorithms.caseStudies
-
-// On a Case Study page - shows related algorithms  
-RELATIONSHIP_CONFIGS.caseStudies.algorithms
-// Both use the same junction table: algorithm_case_study_relations
-```
-
-## Content Types
-
-### Primary Content Types
-
-1. **Case Studies** (`case_studies`)
-   - Central content type
-   - Relates to: algorithms, industries, personas, quantum software/hardware, companies
-
-2. **Algorithms** (`algorithms`)
-   - Quantum computing techniques
-   - Relates to: case studies, industries, personas
-
-3. **Industries** (`industries`)
-   - Business sectors
-   - Relates to: case studies, algorithms, personas
-
-4. **Personas** (`personas`)
-   - User roles/stakeholders
-   - Relates to: case studies, algorithms, industries
-
-### Secondary Content Types (Added 2025)
-
-5. **Quantum Software** (`quantum_software`)
-   - Software platforms and frameworks
-   - Relates to: case studies
-
-6. **Quantum Hardware** (`quantum_hardware`)
-   - Hardware systems and processors
-   - Relates to: case studies
-
-7. **Quantum Companies** (`quantum_companies`)
-   - Companies in quantum space
-   - Relates to: case studies
-
-8. **Partner Companies** (`partner_companies`)
-   - Partnership organizations
-   - Relates to: case studies
-
-### Blog System
-
-9. **Blog Posts** (`blog_posts`)
-   - Self-referential relationships for related posts
-
-## Implementation Examples
-
-### Creating Content with Relationships
-
-```typescript
-// POST /api/case-studies
-{
-  "title": "Quantum Optimization for Supply Chain",
-  "slug": "quantum-supply-chain",
-  "description": "...",
-  "published": true,
-  // Direct relationships via IDs
-  "algorithms[]": ["uuid-1", "uuid-2"],
-  "industries[]": ["uuid-3"],
-  "personas[]": ["uuid-4", "uuid-5"]
-}
-```
-
-The API automatically:
-1. Creates the case study
-2. Inserts junction table records
-3. Returns the complete item with relationships
-
-### Fetching Content with Relationships
-
-```typescript
-// GET /api/case-studies?slug=quantum-supply-chain
-// Returns:
-{
-  "id": "uuid-x",
-  "title": "Quantum Optimization for Supply Chain",
-  "related_algorithms": [
-    {"id": "uuid-1", "name": "QAOA", "slug": "qaoa"},
-    {"id": "uuid-2", "name": "VQE", "slug": "vqe"}
-  ],
-  "related_industries": [
-    {"id": "uuid-3", "name": "Logistics", "slug": "logistics"}
-  ],
-  "related_personas": [
-    {"id": "uuid-4", "name": "CTO", "slug": "cto"},
-    {"id": "uuid-5", "name": "Data Scientist", "slug": "data-scientist"}
-  ]
-}
-```
-
-### Querying Related Content
-
-To find all case studies related to a specific algorithm:
-
-```typescript
-// In the API handler
-const { data: relations } = await supabase
-  .from('algorithm_case_study_relations')
-  .select('case_study_id')
-  .eq('algorithm_id', algorithmId);
-
-const caseStudyIds = relations.map(r => r.case_study_id);
-
-const { data: caseStudies } = await fetchContentItems({
-  contentType: 'case_studies',
-  filters: { id: caseStudyIds }
-});
-```
-
-## Best Practices
-
-### 1. Always Use the CMS Operations Layer
-
-Use `listContent` / `fetchContentBySlug` from `@/cms/operations` for reads and `createContent` / `updateContent` / `deleteContent` for writes. They apply the published and soft-delete filters and revalidate the right pages.
-
-### 2. Handle Relationships Atomically
-
-`saveRelationships()` (called by `createContent` / `updateContent`) diffs the submitted ids against the current junction rows: it deletes only removed links, inserts only added ones, and returns any errors instead of swallowing them. Pass `[]` to clear a relationship; omit the key to leave it untouched.
-
-### 3. Respect Published States
-
-- Public APIs should NEVER expose unpublished content
-- Use `includeUnpublished: false` for public queries
-- Only admin interfaces should set `preview=true`
-
-### 4. Maintain Backward Compatibility
-
-During transitions, support both old and new formats:
-
-```typescript
-// Support both relationship data and legacy arrays
-const quantumSoftware = caseStudy.quantum_software_relations?.length > 0
-  ? caseStudy.quantum_software_relations
-  : caseStudy.quantum_software; // Legacy TEXT[] field
-```
-
-### 5. Use Proper Error Handling
-
-All APIs should return consistent error responses:
-
-```typescript
-// 404 - Not Found
-{ error: 'Algorithm not found' }
-
-// 400 - Bad Request  
-{ error: 'ID is required' }
-
-// 500 - Server Error
-{ error: 'Failed to fetch algorithms' }
-```
-
-### 6. Implement Soft Delete
-
-Never hard delete content immediately:
-
-```typescript
-// Soft delete marks deleted_at timestamp
-await deleteContentItem({
-  contentType: 'algorithms',
-  id: itemId,
-  hardDelete: false // Default
-});
-
-// Recovery is possible within 30 days
-await recoverContentItem({
-  contentType: 'algorithms',
-  id: itemId
-});
-```
-
-## Database Schema
-
-### Content Table Pattern
-
-All content tables follow this structure:
-
-```sql
-CREATE TABLE [content_type] (
-  -- Identity
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  slug TEXT UNIQUE NOT NULL,
-  
-  -- Content
-  name TEXT NOT NULL,           -- Display name
-  description TEXT,              -- Short description
-  main_content TEXT,            -- Long form content (Markdown)
-  
-  -- Metadata
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  published BOOLEAN DEFAULT false,
-  published_at TIMESTAMPTZ,
-  
-  -- Soft delete
-  deleted_at TIMESTAMPTZ,
-  deleted_by UUID,
-  
-  -- Content-specific fields
-  [additional_fields...]
-);
-```
-
-### Junction Table Pattern
-
-```sql
-CREATE TABLE [content1]_[content2]_relations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  [content1]_id UUID REFERENCES [content1](id) ON DELETE CASCADE,
-  [content2]_id UUID REFERENCES [content2](id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ,
-  
-  -- Ensure uniqueness
-  UNIQUE([content1]_id, [content2]_id)
-);
-
--- Indexes for performance
-CREATE INDEX idx_[junction]_[content1] ON [junction]([content1]_id);
-CREATE INDEX idx_[junction]_[content2] ON [junction]([content2]_id);
-```
-
-## Frontend Integration
-
-### Displaying Related Content
-
-The `professional-case-study-layout.tsx` component renders relationships:
-
-```typescript
-// Helper function to render entity links
-const renderEntityLinks = (
-  entities: any[], 
-  basePath: string,
-  icon?: React.ComponentType
-) => {
-  return entities.map(entity => (
-    <Link
-      key={entity.id}
-      href={`${basePath}/${entity.slug}`}
-      className="hover:text-primary transition-colors"
-    >
-      {icon && <Icon className="w-4 h-4" />}
-      {entity.name}
-    </Link>
-  ));
-};
-```
-
-### Content Discovery Flow
-
-1. User views a case study
-2. Sees related algorithms, industries, personas as clickable links
-3. Clicks on an algorithm
-4. Algorithm page shows all case studies using that algorithm
-5. User discovers more relevant content
-
-## Performance Considerations
-
-### Query Optimization
-
-- Junction tables have indexes on both foreign keys
-- Complex queries with multiple joins execute in ~1.6ms
-- Use pagination to limit result sets
-- Fetch relationships only when needed
-
-### Caching Strategy
-
-- Static Site Generation caches pages at build time
-- ISR (Incremental Static Regeneration) updates content
-- API responses can be cached at CDN level
-- Relationship data rarely changes, good cache candidate
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Missing Relationships**
-   - Check junction table has records
-   - Verify both content items are published
-   - Ensure relationship config is defined
-
-2. **Slow Queries**
-   - Check indexes exist on junction tables
-   - Limit number of relationships fetched
-   - Use pagination for large result sets
-
-3. **Inconsistent Data**
-   - Run integrity check on junction tables
-   - Verify no orphaned relationships
-   - Check soft delete status
-
-## Future Enhancements
-
-### Planned Improvements
-
-1. **Explicit Content Type Parameters**
-   - Remove field-based type detection
-   - Pass content type explicitly through functions
-
-2. **Bulk Operations**
-   - Batch create/update relationships
-   - Bulk publish/unpublish
-
-3. **Relationship Weights**
-   - Score relationship strength
-   - Sort by relevance
-
-4. **Graph Queries**
-   - Multi-hop relationship traversal
-   - Content recommendation engine
-
-## Summary
-
-The OpenQase relationship system enables:
-- Rich content interconnections
-- Bidirectional discovery paths
-- Consistent API patterns
-- Scalable architecture
-- Maintainable codebase
-
-By following these patterns and best practices, developers can easily add new content types and relationships while maintaining system integrity and performance.
+| Method | Endpoint | Auth | Purpose |
+|--------|----------|------|---------|
+| GET | `/api/<type>?page=1&pageSize=10` | public | Published items, `{ items, pagination }`; `pageSize` is capped at 100 |
+| GET | `/api/<type>?slug=…` | public | One published item with relationships, or 404 |
+| PATCH | `/api/<type>?id=…` with `{ published: boolean }` | admin | Publish or unpublish |
+| DELETE | `/api/<type>?id=…` | admin | Soft delete one item |
+| POST | `/api/<type>/delete` with `{ id }` or `{ ids }` | admin | Soft delete one or many |
+| POST | `/api/<type>/restore` with `{ id }` or `{ ids }` | admin | Restore from trash as a draft |
+| POST | `/api/<type>/permanent-delete` with `{ id }` or `{ ids }` | admin | Hard delete items already in the trash |
+
+`/api/case-studies` PATCH also accepts `{ bulk: true, operation: 'publish' | 'unpublish' | 'delete', ids }`. The restore and permanent-delete routes are one-liners over `createRestoreHandler()` / `createPermanentDeleteHandler()` in `src/lib/trash-route-handlers.ts`. Admin checks use `requireAdmin()` from `src/lib/auth.ts`.
+
+There is no create or update endpoint: content is created and edited only through the admin server actions above. Drafts are viewed through `/api/preview`, which turns on draft mode and redirects to the page, not through a `preview` query parameter.
+
+Errors are returned as `{ error: string }` with status 400 (bad input), 401/403 (not signed in / not an admin), 404 (not found) or 500.
