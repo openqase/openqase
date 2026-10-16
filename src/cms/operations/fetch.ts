@@ -4,6 +4,15 @@ import { getContentType } from '../registry'
 import { buildRelationshipSelect, flattenRelationships, type FlattenOptions } from './relationships'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
+import { reportContentQueryError } from '../content-query-error'
+
+// Error handling (#260): the single-item queries use .maybeSingle(), which
+// resolves { data: null, error: null } when no row matches, so `!data` means
+// "not found" (404) and `error` is always a real query failure. Real failures
+// go through reportContentQueryError (thrown in Vercel production so ISR
+// keeps the previous page instead of caching a 404 / empty list; reported to
+// Sentry and treated as empty elsewhere). Do not switch these to .single():
+// that reports no rows as error PGRST116, which would then be thrown.
 
 // ---------------------------------------------------------------------------
 // Shared helper: run the relationship-flattening logic on a raw DB row.
@@ -49,6 +58,7 @@ async function _fetchContentBySlug(
     .is('deleted_at', null)
     .maybeSingle()
 
+  reportContentQueryError(`${typeSlug} item "${slug}"`, error)
   if (error || !data) return null
 
   return flattenContentRow(data as Record<string, unknown>, ct, { publishedOnly: true })
@@ -97,6 +107,7 @@ async function _fetchPreviewContentBySlug(
     .is('deleted_at', null)
     .maybeSingle()
 
+  reportContentQueryError(`${typeSlug} preview item "${slug}"`, error)
   if (error || !data) return null
 
   return flattenContentRow(data as Record<string, unknown>, ct)
@@ -143,6 +154,7 @@ export async function listContent(
     .order('created_at', { ascending: false })
     .range(from, to)
 
+  reportContentQueryError(`${typeSlug} list (page ${page})`, error)
   if (error) return { items: [], total: 0 }
 
   return { items: (data ?? []) as Record<string, unknown>[], total: count ?? 0 }
