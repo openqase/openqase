@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Keyboard navigation in the header search**: arrow keys move through results (wrapping at either end), Enter opens the highlighted result, and Escape closes the list while keeping focus in the search box. The input and results now follow the WAI-ARIA combobox pattern, so screen readers announce the active result (#265).
 - **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
 - **Static page-count guard**: Vercel production builds run `npm run verify:build`, which fails the deploy if the prerendered route count drops below a floor.
 - **Search loading and empty states** on the homepage search palette and every listing page (#251).
