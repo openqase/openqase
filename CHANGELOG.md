@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Keyboard navigation in the header search**: arrow keys move through results (wrapping at either end), Enter opens the highlighted result, and Escape closes the list while keeping focus in the search box. The input and results now follow the WAI-ARIA combobox pattern, so screen readers announce the active result (#265).
 - **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
 - **Static page-count guard**: Vercel production builds run `npm run verify:build`, which fails the deploy if the prerendered route count drops below a floor.
 - **Search loading and empty states** on the homepage search palette and every listing page (#251).
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Integration tests run in CI**: the `db` job now starts a local Supabase (database, API, PostgREST, auth), seeds it and runs `npm run test:integration`, including a new check that anonymous users cannot call the soft-delete/recover functions. The integration setup no longer reads `.env.local` and refuses any non-local database URL, so it can never touch the shared dev project (#263).
+- **Relationship architecture doc rewritten**: `docs/api-relationships-architecture.md` now describes the current registry, the two relationship-fetching patterns, draft/deleted filtering and the API routes that actually exist (down from 439 to 131 lines). Removed the unused `src/cms/parse-form-data.ts` and `getContentTypeByTableName`, and corrected the `published_at` comment in `publishContent` (#267).
 - **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
 - **Middleware migrated to the Next.js 16 proxy convention** (`src/middleware.ts` → `src/proxy.ts`); matcher and auth checks unchanged (#241).
 - **Next.js and eslint-config-next bumped to 16.3.6** (#245).
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Database errors on detail pages no longer cached as 404s**: a failed query in the single-item and paged CMS fetchers now follows the same policy as the build (#256), instead of being treated as "not found" or an empty list that ISR could cache for 24 hours. In production it throws, so the previous page keeps being served; elsewhere it is reported to Sentry. Admin API routes now return a 500 on a database error instead of a 404 (#260).
+- **Trashed items in the admin dashboard and relationship pickers**: dashboard counts no longer include soft-deleted items, and edit pages no longer offer trashed items to link. Existing links to a trashed item are kept, so it comes back with its relationships if restored (#259).
 - **Publish date triggers (migration `20261002025045_published_at_triggers_insert_and_idempotent.sql`)**: the triggers now also fire on INSERT, so a row created already published gets a `published_at`, and the migration can be re-applied safely (every trigger is dropped-if-exists first). Supersedes the September trigger migration; apply to dev, then prod, after the three September migrations. If `db push` fails on the September migration with `trigger ... already exists`, mark it applied with `supabase migration repair --status applied 20260923161000` and push again.
 - **Header search** no longer opens an empty dropdown for whitespace-only input.
 - **Silent empty builds**: A database error while listing content for static generation, the sitemap or a public list now fails the Vercel production build (or, during ISR regeneration, keeps the previous page) instead of producing a green build with no pages. Errors are also reported to Sentry on a best-effort basis. Local and CI builds keep the empty fallback.
