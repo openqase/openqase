@@ -30,6 +30,7 @@ export default async function EditPersonaPage({ params }: PersonaPageProps) {
   const { data: industries } = await supabase
     .from('industries')
     .select('id, name, slug')
+    .is('deleted_at', null)
     .order('name');
     
   // Fetch industry relationships if editing

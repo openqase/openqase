@@ -37,6 +37,7 @@ export default async function EditQuantumSoftwarePage({ params }: QuantumSoftwar
   const { data: caseStudies } = await supabase
     .from('case_studies')
     .select('id, title, slug')
+    .is('deleted_at', null)
     .order('title') as { data: CaseStudyListItem[] | null };
 
   let relatedCaseStudyIds: string[] = [];
