@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
 
 ### Changed
+- **Integration tests run in CI**: the `db` job now starts a local Supabase (database, API, PostgREST, auth), seeds it and runs `npm run test:integration`, including a new check that anonymous users cannot call the soft-delete/recover functions. The integration setup no longer reads `.env.local` and refuses any non-local database URL, so it can never touch the shared dev project (#263).
 - **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
 - **Middleware migrated to the Next.js 16 proxy convention** (`src/middleware.ts` → `src/proxy.ts`); matcher and auth checks unchanged (#241).
 - **Next.js and eslint-config-next bumped to 16.3.6** (#245).

@@ -1,35 +1,48 @@
 /**
  * CMS Engine Smoke Tests
  *
- * These tests hit real Supabase to verify that:
+ * These tests hit a real, local Supabase to verify that:
  * 1. buildRelationshipSelect() generates valid PostgREST select strings
  * 2. Queries return data with correct relationship shapes
  * 3. flattenRelationships() produces flat arrays (no nested junction objects)
  * 4. listContent-style queries return paginated results
  *
- * Run: npx vitest run --config vitest.integration.config.ts
- * Requires: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars
+ * Run: npm run test:integration (vitest.integration.config.ts)
+ * Requires a local Supabase (supabase start, db reset, supabase/seed.sql) and
+ * NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and
+ * SUPABASE_SERVICE_ROLE_KEY set explicitly. Non-local URLs are refused.
+ * See docs/database-workflow.md.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { getAllContentTypes } from './registry'
 import { buildRelationshipSelect, flattenRelationships } from './operations/relationships'
+import { assertLocalSupabaseEnv } from './integration-env'
 import type { ContentTypeDefinition } from './define'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-const canConnect = !!(supabaseUrl && serviceRoleKey)
-
-// Skip all tests if Supabase credentials are not available
-const describeIf = canConnect ? describe : describe.skip
+// Tables that supabase/seed.sql gives published rows. The per-type tests below
+// skip types with no published rows, so this stops the suite passing vacuously
+// against an unseeded database.
+const SEEDED_TABLES = ['industries', 'algorithms', 'personas', 'quantum_hardware', 'case_studies']
 
 let supabase: SupabaseClient
 
-describeIf('CMS Engine Smoke Tests (real Supabase)', () => {
+describe('CMS Engine Smoke Tests (real Supabase)', () => {
   beforeAll(() => {
-    supabase = createClient(supabaseUrl!, serviceRoleKey!.trim().replace(/\s/g, ''), {
+    const { url, serviceRoleKey } = assertLocalSupabaseEnv(process.env)
+    supabase = createClient(url, serviceRoleKey.replace(/\s/g, ''), {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
+  })
+
+  describe('Seed data is present', () => {
+    it.each(SEEDED_TABLES)('%s has published rows', async (table) => {
+      const { count, error } = await supabase
+        .from(table)
+        .select('id', { count: 'exact', head: true })
+        .eq('published', true)
+      expect(error).toBeNull()
+      expect(count).toBeGreaterThan(0)
     })
   })
 

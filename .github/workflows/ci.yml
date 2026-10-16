@@ -33,8 +33,9 @@ jobs:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           SUPABASE_SERVICE_ROLE_KEY: ci-stub-service-role-key
 
-  # Proves the migration folder builds a database from scratch and that the
-  # committed generated types match it. See docs/database-workflow.md.
+  # Proves the migration folder builds a database from scratch, that the
+  # committed generated types match it, and runs the integration tests
+  # (src/**/*.integration.test.ts) against it. See docs/database-workflow.md.
   db:
     runs-on: ubuntu-latest
 
@@ -47,8 +48,12 @@ jobs:
           # src/__tests__/ci-config.test.ts); bump both together after testing locally.
           version: 2.117.0
 
-      - name: Start local Postgres
-        run: supabase db start
+      # The integration tests use supabase-js, so they need the API gateway
+      # (kong) and PostgREST, not just Postgres. gotrue stays up because
+      # `supabase status` only prints the API keys while auth is running.
+      # Container names below are the ones CLI 2.117.0 accepts for -x.
+      - name: Start local Supabase (db, kong, rest, auth)
+        run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
 
       - name: Apply baseline + migrations from scratch
         run: supabase db reset --local
@@ -71,3 +76,23 @@ jobs:
             diff src/types/supabase.ts /tmp/supabase.ts | head -50
             exit 1
           fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Credentials come only from the local stack; the test setup refuses
+      # anything but a 127.0.0.1/localhost URL. These are the CLI's fixed
+      # local-development keys, not secrets.
+      - name: Integration tests (local Supabase)
+        run: |
+          supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL,auth.publishable_key=NEXT_PUBLIC_SUPABASE_ANON_KEY,auth.secret_key=SUPABASE_SERVICE_ROLE_KEY \
+            > "$RUNNER_TEMP/supabase.env"
+          set -a
+          . "$RUNNER_TEMP/supabase.env"
+          set +a
+          npm run test:integration

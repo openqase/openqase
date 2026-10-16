@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import path from 'path'
 
+// Integration tests run against a local Supabase only. Credentials come from
+// the environment (CI reads them from `supabase status`); no .env file is
+// loaded. The setup file refuses missing values and non-local URLs.
 export default defineConfig({
   resolve: {
     alias: {
@@ -11,9 +14,6 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.integration.test.ts'],
     testTimeout: 30000,
-    env: {
-      // Vitest inherits process.env; .env files are loaded by the setupFile
-    },
     setupFiles: ['./src/cms/smoke-setup.ts'],
   },
 })
