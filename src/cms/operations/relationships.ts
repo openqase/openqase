@@ -1,7 +1,7 @@
 import type { ContentTypeDefinition } from '../define'
 import { getContentType } from '../registry'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/internal-queries'
+import type { Json } from '@/types/supabase'
 
 /**
  * Visibility columns always selected on the related (target) entity so that
@@ -92,89 +92,94 @@ export function flattenRelationships(
   return result
 }
 
+/**
+ * Postgres function that writes a content row and its junction links in one
+ * transaction (migration *_atomic_content_save.sql). Service role only.
+ */
+export const SAVE_CONTENT_RPC = 'save_content_with_relationships'
+
+/** One entry of the `p_relationships` argument of SAVE_CONTENT_RPC. */
+export interface RelationshipPayload {
+  [key: string]: Json
+  name: string
+  junction: string
+  foreign_key: string
+  target_key: string
+  target_ids: string[]
+  extra_fields: { [key: string]: Json }
+}
+
+/**
+ * Turn the `{ relationshipName: ids[] }` map from an admin form into the
+ * `p_relationships` argument for SAVE_CONTENT_RPC.
+ *
+ * - A key that is `undefined` (or absent) is left out, so the function leaves
+ *   that relationship untouched (form didn't edit it).
+ * - An empty array is passed through and clears all links.
+ * - Falsy ids (e.g. '') are dropped, as before.
+ *
+ * The junction/column names come from the content type definition; the SQL
+ * function only accepts tuples on its own allow-list, so a definition that
+ * drifts from the migration fails loudly instead of writing elsewhere.
+ */
+export function buildRelationshipPayload(
+  contentType: ContentTypeDefinition,
+  relationships: Record<string, string[] | undefined> | undefined
+): RelationshipPayload[] {
+  if (!relationships) return []
+
+  const payload: RelationshipPayload[] = []
+  for (const rel of contentType.relationships) {
+    const ids = relationships[rel.name]
+    if (ids === undefined) continue
+
+    payload.push({
+      name: rel.name,
+      junction: rel.junction,
+      foreign_key: rel.foreignKey,
+      target_key: rel.targetKey,
+      target_ids: ids.filter(Boolean),
+      extra_fields: (rel.extraJunctionFields ?? {}) as { [key: string]: Json },
+    })
+  }
+  return payload
+}
+
 export interface SaveRelationshipsResult {
   error?: string
 }
 
 /**
- * Sync junction rows for each relationship present in `relationships`.
+ * Sync junction rows for each relationship present in `relationships`,
+ * without touching the parent row.
  *
  * - A key that is `undefined` is left untouched (form didn't edit it).
  * - An empty array clears all links for that relationship.
  *
- * Uses an insert-diff: reads the current target ids, deletes only removed
- * ids and inserts only added ids. This avoids the window where all links
- * are gone, and a failed insert no longer wipes unchanged links.
- *
- * Errors are collected (other relationships are still attempted) and
- * returned as a single message. The parent row is already saved at this
- * point, so callers should surface the error to the editor.
+ * All relationships are applied in one database transaction via
+ * SAVE_CONTENT_RPC (insert-diff: only removed ids are deleted, only added
+ * ids are inserted). If any link fails (e.g. a target id that doesn't
+ * exist), nothing is changed in any junction table and the error is
+ * returned. createContent / updateContent call the same function with the
+ * row data so the row and its links are saved together.
  */
 export async function saveRelationships(
   contentType: ContentTypeDefinition,
   contentId: string,
   relationships: Record<string, string[]>
 ): Promise<SaveRelationshipsResult> {
+  const payload = buildRelationshipPayload(contentType, relationships)
+  if (payload.length === 0) return {}
+
   const supabase = createServiceRoleSupabaseClient()
-  const errors: string[] = []
+  const { error } = await supabase.rpc(SAVE_CONTENT_RPC, {
+    p_table: contentType.tableName,
+    p_id: contentId,
+    p_relationships: payload,
+  })
 
-  for (const rel of contentType.relationships) {
-    const ids = relationships[rel.name]
-    if (ids === undefined) continue
-
-    const desired = new Set(ids.filter(Boolean))
-
-    // Read current links
-    const { data: existingRows, error: selectError } = await fromTable(supabase, rel.junction)
-      .select(rel.targetKey)
-      .eq(rel.foreignKey, contentId)
-
-    if (selectError) {
-      errors.push(`${rel.name}: failed to read existing links (${selectError.message}); links not changed`)
-      continue
-    }
-
-    const existing = new Set(
-      ((existingRows ?? []) as Record<string, unknown>[])
-        .map(row => row[rel.targetKey])
-        .filter((v): v is string => typeof v === 'string')
-    )
-
-    const toDelete = [...existing].filter(id => !desired.has(id))
-    const toInsert = [...desired].filter(id => !existing.has(id))
-
-    if (toDelete.length > 0) {
-      const { error: deleteError } = await fromTable(supabase, rel.junction)
-        .delete()
-        .eq(rel.foreignKey, contentId)
-        .in(rel.targetKey, toDelete)
-
-      if (deleteError) {
-        errors.push(`${rel.name}: failed to remove links (${deleteError.message}); links not changed`)
-        continue
-      }
-    }
-
-    if (toInsert.length > 0) {
-      const rows = toInsert.map(targetId => ({
-        [rel.foreignKey]: contentId,
-        [rel.targetKey]: targetId,
-        ...(rel.extraJunctionFields ?? {}),
-      }))
-      const { error: insertError } = await fromTable(supabase, rel.junction).insert(rows)
-
-      if (insertError) {
-        errors.push(
-          toDelete.length > 0
-            ? `${rel.name}: removed links were deleted but adding new links failed (${insertError.message})`
-            : `${rel.name}: failed to add links (${insertError.message})`
-        )
-      }
-    }
-  }
-
-  if (errors.length > 0) {
-    return { error: `Saved, but relationship update failed — ${errors.join('; ')}` }
+  if (error) {
+    return { error: `Relationship update failed — ${error.message}` }
   }
   return {}
 }

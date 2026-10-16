@@ -112,9 +112,9 @@ The codebase has two different patterns for fetching entity relationships. **Thi
 
 1. **Single-item nested joins** (`src/cms/operations/fetch.ts` + `relationships.ts`, config: `relationships` in `src/cms/types/*.ts`) — used by static pages to fetch one item with all its relationships in a single Supabase query. Returns nested shapes like `{ case_study_industry_relations: [{ industries: { id, name, slug } }] }`.
 
-2. **Batch junction table queries** (`src/lib/relationship-queries.ts` + API routes, config: `relationshipConfigs`) — used by API routes and admin pages to fetch relationships for a *list* of items efficiently. Uses `.in('case_study_id', ids)` to batch, returns flat arrays like `{ related_industries: [{ id, slug, name }] }`.
+2. **Batch junction table queries** (`src/lib/relationship-queries.ts`) — used by public list and detail pages (homepage, `/case-study`, the quantum software/hardware/company and partner company detail pages) to fetch relationships for a *list* of case studies efficiently. Each `getRelated*()` function passes its junction table and columns inline to an internal `getRelatedEntities()`, which batches with `.in('case_study_id', ids)` and returns flat `RelatedEntity[]` arrays; `getCaseStudyRelationshipMap()` returns `{ [caseStudyId]: { industries, algorithms, personas } }`.
 
-These serve different query patterns (single-item vs. list) with different output shapes (nested vs. flat). The configs are not interchangeable. See GitHub issue #141 for the full analysis.
+These serve different query patterns (single-item vs. list) with different output shapes (nested vs. flat). The junction definitions are not shared between them. See GitHub issue #141 for the full analysis.
 
 ### Bidirectional Junction Tables
 **CRITICAL**: The CMS uses bidirectional junction tables for relationships. These tables are used differently depending on the content type context:
@@ -147,7 +147,8 @@ These serve different query patterns (single-item vs. list) with different outpu
 #### Implementation Notes
 - Each content type's relationships (junction table, foreign keys, nested key) are declared in `src/cms/types/<type>.ts`; `buildRelationshipSelect()` / `flattenRelationships()` in `src/cms/operations/relationships.ts` build the query and flatten the result.
 - **Draft/deleted related items are filtered out on public pages**: `flattenRelationships(..., { publishedOnly: true })` and `filterVisibleEntities()` in `relationship-queries.ts` drop related rows with `published === false` or `deleted_at` set. `published = null` (legacy data) is kept. The preview path keeps drafts.
-- `saveRelationships()` diffs against current links (deletes removed ids, inserts added ids) and returns errors. Pass an array (even `[]`) to replace a relationship; omit the key to leave it untouched.
+- **Saves are all-or-nothing.** `createContent()`, `updateContent()` and `saveRelationships()` call the `save_content_with_relationships()` Postgres function (migration `20261016040311`), which writes the item and diffs every junction (deletes removed ids, inserts added ids) in one transaction. If any link fails, nothing is saved and an `error` is returned. Pass an array (even `[]`) to replace a relationship; omit the key to leave it untouched.
+- **Adding a relationship** to `src/cms/types/*.ts` also needs a migration that adds it to the function's allow-list; `src/cms/operations/relationships.test.ts` fails until the two match.
 - **Relationship filtering happens in JS, not at the DB level.** PostgREST nested joins cannot filter on related entity fields (e.g., `industries.published`). This is a known limitation. The data volumes per item are small (3-10 relations), so the JS filtering cost is negligible. See GitHub issue #143 for the full analysis.
 
 ### Code Quality

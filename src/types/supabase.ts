@@ -1314,6 +1314,15 @@ export type Database = {
         Args: { content_id: string; table_name: string }
         Returns: boolean
       }
+      save_content_with_relationships: {
+        Args: {
+          p_data?: Json
+          p_id?: string
+          p_relationships?: Json
+          p_table: string
+        }
+        Returns: Json
+      }
       setup_admin_role: { Args: { admin_email: string }; Returns: undefined }
       soft_delete_content: {
         Args: {
