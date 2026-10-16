@@ -67,6 +67,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { data: allBlogPosts } = await supabase
     .from('blog_posts')
     .select('id, title, slug')
+    .is('deleted_at', null)
     .order('title', { ascending: true });
   
   return (

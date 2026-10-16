@@ -1,33 +1,12 @@
-import * as Sentry from '@sentry/nextjs'
 import { getContentType } from './registry'
 import { fetchContentBySlug } from './operations'
+import { reportContentQueryError } from './content-query-error'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
 
-/**
- * Single policy for content queries that feed static generation, ISR
- * regeneration and the sitemap. Outside Vercel production (local, CI with a
- * stub database, preview) a failure is logged and the caller falls back to an
- * empty result, as before (and the error is captured to Sentry). In Vercel
- * production the error is thrown so that a build fails instead of shipping a
- * site with zero pages, and a time-based ISR regeneration keeps serving the
- * previous page; a request that triggers a blocking render after
- * `revalidatePath` sees the error page for that one request instead of an
- * empty list. Sentry capture is best-effort (a prerender worker may exit
- * before flushing); the Vercel build log is the primary signal at build time.
- * The thrown path is not captured here: at runtime it reaches Next's
- * `onRequestError`, so capturing too would double-report.
- */
-export function reportContentQueryError(
-  context: string,
-  error: { message: string } | null | undefined
-): void {
-  if (!error) return
-  const err = new Error(`${context}: ${error.message}`)
-  console.error(`[content] ${err.message}`)
-  if (process.env.VERCEL_ENV === 'production') throw err
-  Sentry.captureException(err)
-}
+// Defined in its own module so operations/fetch.ts can use it without an
+// import cycle; re-exported here for existing importers.
+export { reportContentQueryError }
 
 export function generateStaticParamsFor(typeSlug: string) {
   return async function generateStaticParams() {
