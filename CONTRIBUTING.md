@@ -54,8 +54,7 @@ Thank you for your interest in contributing to OpenQase! This guide will help yo
 
 ### Branch Strategy
 
-- **`main`** - Production-ready code
-- **`develop`** - Integration branch for features
+- **`main`** - Production-ready code; every branch below opens a PR straight into `main`
 - **`feature/[name]`** - New features
 - **`fix/[name]`** - Bug fixes
 - **`docs/[name]`** - Documentation updates
