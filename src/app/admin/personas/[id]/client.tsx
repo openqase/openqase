@@ -82,10 +82,11 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
     startTransition(async () => {
       try {
         const result = await savePersona(values);
-        
+        if (!result.success) throw new Error(result.error);
+
         // If this was a new persona and we got an ID back, redirect to edit page
-        if (isNew && result?.id) {
-          router.push(`/admin/personas/${result.id}`);
+        if (isNew && result.data.id) {
+          router.push(`/admin/personas/${result.data.id}`);
         }
         
         setIsDirty(false);
@@ -110,7 +111,7 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save persona',
+          description: error instanceof Error ? error.message : 'Failed to save persona',
           duration: 5000,
         });
       }
@@ -133,9 +134,11 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
       try {
         // First save the content
         const saveResult = await savePersona(values);
-        
+        if (!saveResult.success) throw new Error(`Save failed: ${saveResult.error}`);
+
         // Then publish it
-        await publishPersona(values.id!);
+        const publishResult = await publishPersona(values.id!);
+        if (!publishResult.success) throw new Error(publishResult.error);
         
         setValues(prev => ({ ...prev, published: true }));
         
@@ -159,7 +162,7 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish persona',
+          description: error instanceof Error ? error.message : 'Failed to publish persona',
           duration: 5000,
         });
       }
@@ -172,7 +175,8 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
     
     startTransition(async () => {
       try {
-        await unpublishPersona(values.id!);
+        const result = await unpublishPersona(values.id!);
+        if (!result.success) throw new Error(result.error);
         
         setValues(prev => ({ ...prev, published: false }));
         
@@ -187,7 +191,7 @@ export function PersonaForm({ persona, industries, isNew }: PersonaFormProps) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish persona',
+          description: error instanceof Error ? error.message : 'Failed to unpublish persona',
           duration: 5000,
         });
       }
