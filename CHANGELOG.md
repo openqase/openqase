@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin CMS browser smoke test**: `npm run test:e2e` runs a Playwright test against a local Supabase covering sign-in, a no-op save on all nine editors, linking/unlinking, draft preview, publish, unpublish, delete, restore and permanent delete. It runs in the CI `db` job (#264).
 - **Keyboard navigation in the header search**: arrow keys move through results (wrapping at either end), Enter opens the highlighted result, and Escape closes the list while keeping focus in the search box. The input and results now follow the WAI-ARIA combobox pattern, so screen readers announce the active result (#265).
 - **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
 - **Static page-count guard**: Vercel production builds run `npm run verify:build`, which fails the deploy if the prerendered route count drops below a floor.
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Saving an algorithm deleted its persona links**: the algorithm editor loaded an empty persona list, so every save removed all `persona_algorithm_relations` rows for that algorithm. It now loads the existing links. Found by the new admin smoke test (#264).
 - **Database errors on detail pages no longer cached as 404s**: a failed query in the single-item and paged CMS fetchers now follows the same policy as the build (#256), instead of being treated as "not found" or an empty list that ISR could cache for 24 hours. In production it throws, so the previous page keeps being served; elsewhere it is reported to Sentry. Admin API routes now return a 500 on a database error instead of a 404 (#260).
 - **Trashed items in the admin dashboard and relationship pickers**: dashboard counts no longer include soft-deleted items, and edit pages no longer offer trashed items to link. Existing links to a trashed item are kept, so it comes back with its relationships if restored (#259).
 - **Publish date triggers (migration `20261002025045_published_at_triggers_insert_and_idempotent.sql`)**: the triggers now also fire on INSERT, so a row created already published gets a `published_at`, and the migration can be re-applied safely (every trigger is dropped-if-exists first). Supersedes the September trigger migration; apply to dev, then prod, after the three September migrations. If `db push` fails on the September migration with `trigger ... already exists`, mark it applied with `supabase migration repair --status applied 20260923161000` and push again.
