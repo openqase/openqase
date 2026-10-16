@@ -34,7 +34,7 @@ export default async function QuantumHardwareEditPage({ params }: QuantumHardwar
       { data: caseStudiesData, error: caseStudiesError },
       { data: definitionsData, error: definitionsError },
     ] = await Promise.all([
-      supabase.from('case_studies').select('id, title, slug').eq('published', true).order('title'),
+      supabase.from('case_studies').select('id, title, slug').eq('published', true).is('deleted_at', null).order('title'),
       supabase.from('hardware_spec_definitions').select('*').order('label'),
     ])
 

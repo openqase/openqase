@@ -78,13 +78,13 @@ export default async function EditCaseStudyPage({ params }: CaseStudyPageProps) 
     { data: allQuantumCompanies },
     { data: allPartnerCompanies },
   ] = await Promise.all([
-    supabase.from('industries').select('id, slug, name').order('name'),
-    supabase.from('algorithms').select('id, slug, name').order('name'),
-    supabase.from('personas').select('id, slug, name').order('name'),
-    supabase.from('quantum_software').select('id, slug, name').eq('published', true).order('name'),
-    supabase.from('quantum_hardware').select('id, slug, name').eq('published', true).order('name'),
-    supabase.from('quantum_companies').select('id, slug, name').eq('published', true).order('name'),
-    supabase.from('partner_companies').select('id, slug, name').eq('published', true).order('name'),
+    supabase.from('industries').select('id, slug, name').is('deleted_at', null).order('name'),
+    supabase.from('algorithms').select('id, slug, name').is('deleted_at', null).order('name'),
+    supabase.from('personas').select('id, slug, name').is('deleted_at', null).order('name'),
+    supabase.from('quantum_software').select('id, slug, name').is('deleted_at', null).eq('published', true).order('name'),
+    supabase.from('quantum_hardware').select('id, slug, name').is('deleted_at', null).eq('published', true).order('name'),
+    supabase.from('quantum_companies').select('id, slug, name').is('deleted_at', null).eq('published', true).order('name'),
+    supabase.from('partner_companies').select('id, slug, name').is('deleted_at', null).eq('published', true).order('name'),
   ])
 
   if (!isNew && !caseStudy) {
