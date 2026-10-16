@@ -1,11 +1,32 @@
 'use client';
 
-import { memo, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import Link from 'next/link';
 import { Search, ArrowRight, Loader2, SearchX } from 'lucide-react';
-import { useGlobalSearch, SearchResult } from '@/hooks/useGlobalSearch';
+import { useGlobalSearch, shouldOpenResults, SearchResult, GroupedSearchResults } from '@/hooks/useGlobalSearch';
 import { SearchableItem } from '@/lib/content-fetchers';
 import { cn } from '@/lib/utils';
+
+// Result groups in display order. Keyboard navigation follows the same order.
+const RESULT_GROUPS: { key: keyof GroupedSearchResults; title: string }[] = [
+  { key: 'case_studies', title: 'Case Studies' },
+  { key: 'algorithms', title: 'Algorithms' },
+  { key: 'industries', title: 'Industries' },
+  { key: 'personas', title: 'Professional Roles' },
+  { key: 'quantum_hardware', title: 'Quantum Hardware' },
+  { key: 'quantum_software', title: 'Quantum Software' },
+  { key: 'quantum_companies', title: 'Quantum Companies' },
+  { key: 'partner_companies', title: 'Partner Companies' },
+  { key: 'blog_posts', title: 'Blog' },
+];
+
+const MAX_RESULTS_PER_GROUP = 3;
+
+// Stable DOM id for a result option, used by aria-activedescendant.
+function getOptionId(listboxId: string, item: SearchableItem) {
+  return `${listboxId}-${item.type}-${item.id}`;
+}
 
 interface GlobalSearchProps {
   searchData: SearchableItem[];
@@ -17,19 +38,24 @@ export interface GlobalSearchRef {
 }
 
 interface SearchResultItemProps {
+  id: string;
   result: SearchResult;
+  isActive: boolean;
   onSelect: () => void;
 }
 
 interface SearchResultGroupProps {
+  id: string;
+  listboxId: string;
   title: string;
   results: SearchResult[];
   maxResults?: number;
+  activeOptionId?: string;
   onSelect: () => void;
 }
 
 // Individual search result item component
-const SearchResultItem = memo(function SearchResultItem({ result, onSelect }: SearchResultItemProps) {
+const SearchResultItem = memo(function SearchResultItem({ id, result, isActive, onSelect }: SearchResultItemProps) {
   const { item } = result;
   
   // Determine the link path based on content type
@@ -75,9 +101,17 @@ const SearchResultItem = memo(function SearchResultItem({ result, onSelect }: Se
 
   return (
     <Link
+      id={id}
       href={getHref()}
       onClick={onSelect}
-      className="block p-3 hover:bg-muted/50 transition-colors rounded-lg"
+      role="option"
+      aria-selected={isActive}
+      // Focus stays on the combobox input; options are reached with the arrow keys.
+      tabIndex={-1}
+      className={cn(
+        "block p-3 hover:bg-muted/50 transition-colors rounded-lg",
+        isActive && "bg-muted/50 ring-1 ring-inset ring-primary/40"
+      )}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -109,16 +143,25 @@ const SearchResultItem = memo(function SearchResultItem({ result, onSelect }: Se
 });
 
 // Search result group component
-const SearchResultGroup = memo(function SearchResultGroup({ title, results, maxResults = 3, onSelect }: SearchResultGroupProps) {
+const SearchResultGroup = memo(function SearchResultGroup({
+  id,
+  listboxId,
+  title,
+  results,
+  maxResults = MAX_RESULTS_PER_GROUP,
+  activeOptionId,
+  onSelect,
+}: SearchResultGroupProps) {
   if (results.length === 0) return null;
 
   const displayResults = results.slice(0, maxResults);
   const hasMore = results.length > maxResults;
+  const labelId = `${id}-label`;
 
   return (
-    <div className="py-2">
-      <div className="flex items-center justify-between px-3 py-1">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="py-2" role="group" aria-labelledby={labelId}>
+      <div className="flex items-center justify-between px-3 py-1" role="presentation">
+        <h3 id={labelId} role="presentation" className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           {title} ({results.length})
         </h3>
         {hasMore && (
@@ -128,13 +171,18 @@ const SearchResultGroup = memo(function SearchResultGroup({ title, results, maxR
         )}
       </div>
       <div className="space-y-1">
-        {displayResults.map((result) => (
-          <SearchResultItem
-            key={result.item.id}
-            result={result}
-            onSelect={onSelect}
-          />
-        ))}
+        {displayResults.map((result) => {
+          const optionId = getOptionId(listboxId, result.item);
+          return (
+            <SearchResultItem
+              key={result.item.id}
+              id={optionId}
+              result={result}
+              isActive={optionId === activeOptionId}
+              onSelect={onSelect}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -157,6 +205,20 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
 
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = useId();
+
+  // Index into visibleResults of the keyboard-active option (-1 = none).
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  // The options actually rendered, flattened in display order.
+  const visibleResults = useMemo(
+    () => RESULT_GROUPS.flatMap(({ key }) => searchResults[key].slice(0, MAX_RESULTS_PER_GROUP)),
+    [searchResults]
+  );
+
+  const showListbox = isOpen && !isSearching && totalResults > 0;
+  const activeResult = showListbox ? visibleResults[activeIndex] : undefined;
+  const activeOptionId = activeResult ? getOptionId(listboxId, activeResult.item) : undefined;
 
   // Expose focus method through ref
   useImperativeHandle(ref, () => ({
@@ -169,6 +231,7 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setActiveIndex(-1);
         closeSearch();
       }
     }
@@ -179,18 +242,67 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
     }
   }, [isOpen, closeSearch]);
 
-  // Handle keyboard navigation
+  // Handle Escape: close results but keep focus on the input (WAI-ARIA combobox)
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape' && isOpen) {
+        setActiveIndex(-1);
         closeSearch();
-        inputRef.current?.blur();
       }
     }
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeSearch]);
+
+  // Keep the keyboard-active option visible inside the scrollable dropdown
+  useEffect(() => {
+    if (activeOptionId) {
+      document.getElementById(activeOptionId)?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activeOptionId]);
+
+  const selectResult = useCallback(() => {
+    setActiveIndex(-1);
+    closeSearch();
+  }, [closeSearch]);
+
+  // WAI-ARIA combobox keyboard handling. Focus stays on the input; the active
+  // option is conveyed with aria-activedescendant. ArrowDown/ArrowUp wrap
+  // around at either end. Home/End are left to the text field (caret movement).
+  const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    switch (event.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        if (!isOpen) {
+          // ArrowDown reopens results for the current query (e.g. after Escape)
+          if (event.key === 'ArrowDown' && shouldOpenResults(searchQuery)) {
+            event.preventDefault();
+            handleSearchChange(searchQuery);
+            setActiveIndex(0);
+          }
+          return;
+        }
+        if (!showListbox) return;
+
+        event.preventDefault();
+        const count = visibleResults.length;
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        setActiveIndex((index) => {
+          if (index < 0) return step === 1 ? 0 : count - 1;
+          return (index + step + count) % count;
+        });
+        return;
+      }
+      case 'Enter': {
+        if (!activeOptionId) return;
+        // Click the option so Enter follows exactly the same path as a mouse click
+        event.preventDefault();
+        document.getElementById(activeOptionId)?.click();
+        return;
+      }
+    }
+  };
 
   return (
     <div ref={searchRef} className={cn("relative w-full max-w-2xl", className)}>
@@ -202,7 +314,16 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
           type="text"
           placeholder="Search case studies, algorithms, companies..."
           value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          onChange={(e) => {
+            setActiveIndex(-1);
+            handleSearchChange(e.target.value);
+          }}
+          onKeyDown={handleInputKeyDown}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={showListbox}
+          aria-controls={listboxId}
+          aria-activedescendant={activeOptionId}
           aria-label="Search case studies, algorithms, and companies"
           className="w-full pl-10 pr-10 py-3 bg-background border border-border focus:outline-none focus:border-primary focus:ring-0 transition-colors duration-200 placeholder:text-muted-foreground text-foreground"
         />
@@ -240,51 +361,19 @@ const GlobalSearch = forwardRef<GlobalSearchRef, GlobalSearchProps>(
             </div>
           ) : totalResults > 0 ? (
             <div className="py-2">
-              <SearchResultGroup
-                title="Case Studies"
-                results={searchResults.case_studies}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Algorithms"
-                results={searchResults.algorithms}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Industries"
-                results={searchResults.industries}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Professional Roles"
-                results={searchResults.personas}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Quantum Hardware"
-                results={searchResults.quantum_hardware}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Quantum Software"
-                results={searchResults.quantum_software}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Quantum Companies"
-                results={searchResults.quantum_companies}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Partner Companies"
-                results={searchResults.partner_companies}
-                onSelect={closeSearch}
-              />
-              <SearchResultGroup
-                title="Blog"
-                results={searchResults.blog_posts}
-                onSelect={closeSearch}
-              />
+              <div role="listbox" id={listboxId} aria-label="Search results">
+                {RESULT_GROUPS.map(({ key, title }) => (
+                  <SearchResultGroup
+                    key={key}
+                    id={`${listboxId}-${key}`}
+                    listboxId={listboxId}
+                    title={title}
+                    results={searchResults[key]}
+                    activeOptionId={activeOptionId}
+                    onSelect={selectResult}
+                  />
+                ))}
+              </div>
 
               {/* View All Results Footer */}
               {totalResults > 9 && (
