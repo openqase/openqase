@@ -2,7 +2,8 @@
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
-import type { TablesInsert } from '@/types/supabase'
+import { runAction, toActionResult, toSaveResult, type ActionResult, type SaveActionResult } from '@/lib/admin-action-result'
+import type { Tables } from '@/types/supabase'
 
 interface AlgorithmFormData {
   id?: string
@@ -20,32 +21,27 @@ interface AlgorithmFormData {
   related_personas?: string[]
 }
 
-export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promise<TablesInsert<'algorithms'> & { warning?: string }> => {
-  const { id, related_case_studies, related_industries, related_personas, ...data } = values
+export const saveAlgorithm = withAdmin(async (values: AlgorithmFormData): Promise<SaveActionResult<Tables<'algorithms'>>> =>
+  runAction('Failed to save algorithm', async () => {
+    const { id, related_case_studies, related_industries, related_personas, ...data } = values
 
-  const relationships = {
-    ...(related_industries ? { industries: related_industries } : {}),
-    ...(related_case_studies ? { case_studies: related_case_studies } : {}),
-    ...(related_personas ? { personas: related_personas } : {}),
-  }
+    const relationships = {
+      ...(related_industries ? { industries: related_industries } : {}),
+      ...(related_case_studies ? { case_studies: related_case_studies } : {}),
+      ...(related_personas ? { personas: related_personas } : {}),
+    }
 
-  if (id) {
-    const result = await updateContent('algorithms', id, data, relationships)
-    if (result.error) throw new Error(result.error)
-    return { ...(result.data as TablesInsert<'algorithms'>), warning: result.warning }
-  }
+    const result = id
+      ? await updateContent('algorithms', id, data, relationships)
+      : await createContent('algorithms', data, relationships)
+    return toSaveResult<Tables<'algorithms'>>(result)
+  })
+)
 
-  const result = await createContent('algorithms', data, relationships)
-  if (result.error) throw new Error(result.error)
-  return { ...(result.data as TablesInsert<'algorithms'>), warning: result.warning }
-})
+export const publishAlgorithm = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to publish', async () => toActionResult(await publishContent('algorithms', id), 'Failed to publish'))
+)
 
-export const publishAlgorithm = withAdmin(async (id: string): Promise<void> => {
-  const result = await publishContent('algorithms', id)
-  if (!result.success) throw new Error(result.error || 'Failed to publish')
-})
-
-export const unpublishAlgorithm = withAdmin(async (id: string): Promise<void> => {
-  const result = await unpublishContent('algorithms', id)
-  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-})
+export const unpublishAlgorithm = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to unpublish', async () => toActionResult(await unpublishContent('algorithms', id), 'Failed to unpublish'))
+)

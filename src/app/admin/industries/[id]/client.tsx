@@ -62,26 +62,36 @@ export function IndustryForm({ industry, isNew }: IndustryFormProps) {
     startTransition(async () => {
       try {
         const result = await saveIndustry(values);
-        
+        if (!result.success) throw new Error(result.error);
+
         // If this was a new industry and we got an ID back, redirect to edit page
-        if (isNew && result?.id) {
-          router.push(`/admin/industries/${result.id}`);
+        if (isNew && result.data.id) {
+          router.push(`/admin/industries/${result.data.id}`);
         }
-        
+
         setIsDirty(false);
-        
-        toast({
-          title: 'Saved',
-          description: 'Industry saved successfully',
-          duration: 3000,
-        });
+
+        if (result.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: result.warning,
+            duration: 8000,
+          });
+        } else {
+          toast({
+            title: 'Saved',
+            description: 'Industry saved successfully',
+            duration: 3000,
+          });
+        }
       } catch (error) {
         console.error("Error in handleSave:", error);
-        
+
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save industry',
+          description: error instanceof Error ? error.message : 'Failed to save industry',
           duration: 5000,
         });
       }
@@ -103,25 +113,36 @@ export function IndustryForm({ industry, isNew }: IndustryFormProps) {
     startTransition(async () => {
       try {
         // First save the content
-        await saveIndustry(values);
-        
+        const saveResult = await saveIndustry(values);
+        if (!saveResult.success) throw new Error(`Save failed: ${saveResult.error}`);
+
         // Then publish it
-        await publishIndustry(values.id!);
-        
+        const publishResult = await publishIndustry(values.id!);
+        if (!publishResult.success) throw new Error(publishResult.error);
+
         setValues(prev => ({ ...prev, published: true }));
-        
+
         toast({
           title: 'Published',
           description: 'Industry is now published and visible to users',
           duration: 3000,
         });
+
+        if (saveResult.warning) {
+          toast({
+            variant: 'destructive',
+            title: 'Saved, but some links were not updated',
+            description: saveResult.warning,
+            duration: 8000,
+          });
+        }
       } catch (error) {
         console.error("Error in handlePublish:", error);
-        
+
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish industry',
+          description: error instanceof Error ? error.message : 'Failed to publish industry',
           duration: 5000,
         });
       }
@@ -134,7 +155,8 @@ export function IndustryForm({ industry, isNew }: IndustryFormProps) {
     
     startTransition(async () => {
       try {
-        await unpublishIndustry(values.id!);
+        const result = await unpublishIndustry(values.id!);
+        if (!result.success) throw new Error(result.error);
         
         setValues(prev => ({ ...prev, published: false }));
         
@@ -149,7 +171,7 @@ export function IndustryForm({ industry, isNew }: IndustryFormProps) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish industry',
+          description: error instanceof Error ? error.message : 'Failed to unpublish industry',
           duration: 5000,
         });
       }
