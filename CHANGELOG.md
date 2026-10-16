@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Trashed items in the admin dashboard and relationship pickers**: dashboard counts no longer include soft-deleted items, and edit pages no longer offer trashed items to link. Existing links to a trashed item are kept, so it comes back with its relationships if restored (#259).
 - **Publish date triggers (migration `20261002025045_published_at_triggers_insert_and_idempotent.sql`)**: the triggers now also fire on INSERT, so a row created already published gets a `published_at`, and the migration can be re-applied safely (every trigger is dropped-if-exists first). Supersedes the September trigger migration; apply to dev, then prod, after the three September migrations. If `db push` fails on the September migration with `trigger ... already exists`, mark it applied with `supabase migration repair --status applied 20260923161000` and push again.
 - **Header search** no longer opens an empty dropdown for whitespace-only input.
 - **Silent empty builds**: A database error while listing content for static generation, the sitemap or a public list now fails the Vercel production build (or, during ISR regeneration, keeps the previous page) instead of producing a green build with no pages. Errors are also reported to Sentry on a best-effort basis. Local and CI builds keep the empty fallback.

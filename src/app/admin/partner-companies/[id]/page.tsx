@@ -31,6 +31,7 @@ export default async function PartnerCompanyEditPage({ params }: PartnerCompanyE
       .from('case_studies')
       .select('id, title, slug')
       .eq('published', true)
+      .is('deleted_at', null)
       .order('title')
 
     if (caseStudiesError) {

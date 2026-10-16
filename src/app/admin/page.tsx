@@ -24,15 +24,15 @@ export default async function AdminDashboard() {
     quantumCompaniesResponse,
     partnerCompaniesResponse
   ] = await Promise.all([
-    supabase.from('case_studies').select('id', { count: 'exact', head: true }),
-    supabase.from('algorithms').select('id', { count: 'exact', head: true }),
-    supabase.from('industries').select('id', { count: 'exact', head: true }),
-    supabase.from('personas').select('id', { count: 'exact', head: true }),
-    supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
-    supabase.from('quantum_software').select('id', { count: 'exact', head: true }),
-    supabase.from('quantum_hardware').select('id', { count: 'exact', head: true }),
-    supabase.from('quantum_companies').select('id', { count: 'exact', head: true }),
-    supabase.from('partner_companies').select('id', { count: 'exact', head: true })
+    supabase.from('case_studies').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('algorithms').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('industries').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('personas').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('blog_posts').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('quantum_software').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('quantum_hardware').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('quantum_companies').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('partner_companies').select('id', { count: 'exact', head: true }).is('deleted_at', null)
   ]);
 
   const contentCounts = {
