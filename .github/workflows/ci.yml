@@ -77,9 +77,12 @@ jobs:
             exit 1
           fi
 
+      # Node 22+: supabase-js creates a realtime client on createClient(), which
+      # needs native WebSocket (Node 20 throws). The unit-test job above never
+      # builds a real client, so it can stay on 20.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
