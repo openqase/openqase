@@ -126,17 +126,46 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           // Content Security Policy
+          //
+          // Why script-src keeps 'unsafe-inline' (issue #266, checked on Next 16.3.6):
+          // - Every page is prerendered (SSG/ISR) and embeds inline scripts: the
+          //   RSC flight payload (`self.__next_f.push(...)`), React's streaming
+          //   bootstrap (`$RB`/`$RV`, `$RT`) and the next-themes script. Without
+          //   them pages don't hydrate (React error #412).
+          // - Nonces need a per-request render: Next reads the nonce from the
+          //   request's CSP header at render time, so every page would have to be
+          //   dynamic, losing SSG/ISR and CDN caching. See "Static vs Dynamic
+          //   Rendering with CSP" in node_modules/next/dist/docs/01-app/02-guides/
+          //   content-security-policy.md.
+          // - `experimental.sri` only adds `integrity` to external /_next/static
+          //   chunks; inline scripts get no nonce or hash. Tried with
+          //   `script-src 'self'`: the browser blocked all 11 inline scripts on a
+          //   case-study page and hydration failed.
+          // - Hashes don't fit either: the flight scripts differ per page (about
+          //   1,400 distinct hashes across 336 pages), change on every ISR
+          //   revalidation, and this header is one static value for all routes.
+          //   Adding any hash or nonce also makes browsers ignore 'unsafe-inline'.
+          // What would change this: Next emitting the flight data and bootstrap
+          // without inline scripts, or hashing them into a per-page CSP at
+          // prerender time. Until then, the main XSS defence for CMS content is
+          // DOMPurify in processMarkdown() (src/lib/markdown-server.ts).
+          //
+          // Script hosts: no GTM and no Sentry CDN loader (Sentry is bundled from
+          // npm). va.vercel-scripts.com serves Vercel Analytics/Speed Insights
+          // debug scripts in development; production uses same-origin /_vercel/*.
+          // vercel.live is the Vercel preview toolbar.
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://js.sentry-cdn.com https://vercel.live https://va.vercel-scripts.com",
+              "script-src 'self' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
               `connect-src ${connectSrc}`,
               "worker-src 'self' blob:",
               "frame-src 'self' https://vercel.live",
+              "object-src 'none'",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

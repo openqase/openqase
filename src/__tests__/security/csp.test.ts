@@ -26,4 +26,14 @@ describe('Content-Security-Policy source guard', () => {
     expect(src).toContain("\"base-uri 'self'\"")
     expect(src).toContain("\"form-action 'self'\"")
   })
+
+  it('blocks plugin content with object-src none', () => {
+    expect(src).toContain("\"object-src 'none'\"")
+  })
+
+  it('does not allowlist script hosts the app never loads (GTM, Sentry CDN loader)', () => {
+    const scriptSrc = src.match(/"script-src[^"]*"/)?.[0] ?? ''
+    expect(scriptSrc).not.toContain('googletagmanager.com')
+    expect(scriptSrc).not.toContain('sentry-cdn.com')
+  })
 })
