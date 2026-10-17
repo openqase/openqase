@@ -99,3 +99,26 @@ jobs:
           . "$RUNNER_TEMP/supabase.env"
           set +a
           npm run test:integration
+
+      # Admin CMS end-to-end smoke test (e2e/, issue #264). playwright.config.ts
+      # builds and starts the app (next build && next start) against the same
+      # local stack, creates a throwaway admin user and deletes it afterwards.
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E admin smoke test (local Supabase)
+        run: |
+          set -a
+          . "$RUNNER_TEMP/supabase.env"
+          set +a
+          npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

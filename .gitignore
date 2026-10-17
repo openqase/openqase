@@ -132,3 +132,9 @@ src/.cursor/
 
 # Local-only handover material (unpublished content analysis); never commit
 .local-handover/
+
+# playwright (e2e/)
+/e2e/.auth/
+/test-results/
+/playwright-report/
+/blob-report/

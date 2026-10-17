@@ -88,9 +88,16 @@ export default async function EditAlgorithmPage({ params }: AlgorithmPageProps) 
       relatedIndustryIds = indRelations.map((rel) => rel.industry_id).filter((id): id is string => Boolean(id));
     }
 
-    // Fetch related persona IDs (Note: No direct algorithm-persona relation in schema)
-    // If this relation exists, check schema for correct table name
-    relatedPersonaIds = [];
+    // Fetch related persona IDs. The form sends these back on save and
+    // saveAlgorithm replaces the persona links with them, so loading [] here
+    // deleted every persona link whenever an algorithm was saved.
+    const { data: personaRelations } = await supabase
+      .from('persona_algorithm_relations')
+      .select('persona_id')
+      .eq('algorithm_id', algorithm.id);
+    if (personaRelations) {
+      relatedPersonaIds = personaRelations.map((rel) => rel.persona_id).filter((id): id is string => Boolean(id));
+    }
   }
 
   if (!isNew && !algorithm) {
