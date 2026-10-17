@@ -92,10 +92,11 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
     startTransition(async () => {
       try {
         const result = await saveBlogPost(values);
-        
+        if (!result.success) throw new Error(result.error);
+
         // If this was a new blog post and we got an ID back, redirect to edit page
-        if (isNew && result?.id) {
-          router.push(`/admin/blog/${result.id}`);
+        if (isNew && result.data.id) {
+          router.push(`/admin/blog/${result.data.id}`);
         }
         
         setIsDirty(false);
@@ -120,7 +121,7 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save blog post',
+          description: error instanceof Error ? error.message : 'Failed to save blog post',
           duration: 5000,
         });
       }
@@ -153,9 +154,11 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
       try {
         // First save the content
         const saveResult = await saveBlogPost(values);
-        
+        if (!saveResult.success) throw new Error(`Save failed: ${saveResult.error}`);
+
         // Then publish it
-        await publishBlogPost(values.id!);
+        const publishResult = await publishBlogPost(values.id!);
+        if (!publishResult.success) throw new Error(publishResult.error);
         
         setValues(prev => ({ ...prev, published: true }));
         
@@ -179,7 +182,7 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish blog post',
+          description: error instanceof Error ? error.message : 'Failed to publish blog post',
           duration: 5000,
         });
       }
@@ -192,7 +195,8 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
     
     startTransition(async () => {
       try {
-        await unpublishBlogPost(values.id!);
+        const result = await unpublishBlogPost(values.id!);
+        if (!result.success) throw new Error(result.error);
         
         setValues(prev => ({ ...prev, published: false }));
         
@@ -207,7 +211,7 @@ export function BlogPostForm({ blogPost, relatedPosts, isNew }: BlogPostFormProp
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish blog post',
+          description: error instanceof Error ? error.message : 'Failed to unpublish blog post',
           duration: 5000,
         });
       }

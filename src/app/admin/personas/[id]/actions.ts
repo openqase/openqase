@@ -2,6 +2,8 @@
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
+import { runAction, toActionResult, toSaveResult, type ActionResult, type SaveActionResult } from '@/lib/admin-action-result'
+import type { Tables } from '@/types/supabase'
 
 interface PersonaFormData {
   id?: string
@@ -14,27 +16,22 @@ interface PersonaFormData {
   industry?: string[]  // relationship IDs sent from admin form
 }
 
-export const savePersona = withAdmin(async (values: PersonaFormData): Promise<Record<string, unknown> & { warning?: string }> => {
-  const { id, industry, ...data } = values
-  const relationships = industry ? { industries: industry } : undefined
+export const savePersona = withAdmin(async (values: PersonaFormData): Promise<SaveActionResult<Tables<'personas'>>> =>
+  runAction('Failed to save persona', async () => {
+    const { id, industry, ...data } = values
+    const relationships = industry ? { industries: industry } : undefined
 
-  if (id) {
-    const result = await updateContent('personas', id, data, relationships)
-    if (result.error) throw new Error(result.error)
-    return { ...result.data, warning: result.warning }
-  }
+    const result = id
+      ? await updateContent('personas', id, data, relationships)
+      : await createContent('personas', data, relationships)
+    return toSaveResult<Tables<'personas'>>(result)
+  })
+)
 
-  const result = await createContent('personas', data, relationships)
-  if (result.error) throw new Error(result.error)
-  return { ...result.data, warning: result.warning }
-})
+export const publishPersona = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to publish', async () => toActionResult(await publishContent('personas', id), 'Failed to publish'))
+)
 
-export const publishPersona = withAdmin(async (id: string): Promise<void> => {
-  const result = await publishContent('personas', id)
-  if (!result.success) throw new Error(result.error || 'Failed to publish')
-})
-
-export const unpublishPersona = withAdmin(async (id: string): Promise<void> => {
-  const result = await unpublishContent('personas', id)
-  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-})
+export const unpublishPersona = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to unpublish', async () => toActionResult(await unpublishContent('personas', id), 'Failed to unpublish'))
+)

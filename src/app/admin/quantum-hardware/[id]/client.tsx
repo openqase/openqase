@@ -91,15 +91,26 @@ export function QuantumHardwareForm({
 
   const persistAll = async () => {
     const result = await saveQuantumHardware(values)
+    if (!result.success) throw new Error(result.error)
 
-    const hardwareId = result?.id ?? values.id
+    const hardwareId = result.data.id
     if (!hardwareId) {
       throw new Error('Missing hardware id after save')
     }
 
-    await saveHardwareSpecs(hardwareId, specRows)
+    // Keep the id before saving specs: if the spec save fails, a retry must
+    // update this row rather than create it again and collide on the slug.
+    if (values.id !== hardwareId) {
+      setValues(prev => ({ ...prev, id: hardwareId }))
+    }
 
-    return { hardwareId: hardwareId as string, warning: result.warning }
+    const specResult = await saveHardwareSpecs(hardwareId, specRows)
+    if (!specResult.success) {
+      const linkWarning = result.warning ? ` (Links: ${result.warning})` : ''
+      throw new Error(`Saved, but specs were not updated: ${specResult.error}${linkWarning}`)
+    }
+
+    return { hardwareId, warning: result.warning }
   }
 
   const handleSave = async () => {
@@ -107,11 +118,8 @@ export function QuantumHardwareForm({
       try {
         const { hardwareId, warning } = await persistAll()
 
-        if (isNew || values.id !== hardwareId) {
-          setValues(prev => ({ ...prev, id: hardwareId }))
-          if (isNew) {
-            router.replace(`/admin/quantum-hardware/${hardwareId}`)
-          }
+        if (isNew) {
+          router.replace(`/admin/quantum-hardware/${hardwareId}`)
         }
         
         if (warning) {
@@ -134,7 +142,7 @@ export function QuantumHardwareForm({
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save quantum hardware',
+          description: error instanceof Error ? error.message : 'Failed to save quantum hardware',
           duration: 5000,
         })
       }
@@ -145,11 +153,11 @@ export function QuantumHardwareForm({
     startTransition(async () => {
       try {
         const { hardwareId, warning } = await persistAll()
-        setValues(prev => ({ ...prev, id: hardwareId }))
         if (isNew) {
           router.replace(`/admin/quantum-hardware/${hardwareId}`)
         }
-        await publishQuantumHardware(hardwareId)
+        const publishResult = await publishQuantumHardware(hardwareId)
+        if (!publishResult.success) throw new Error(publishResult.error)
         setValues(prev => ({ ...prev, published: true }))
         
         toast({
@@ -172,7 +180,7 @@ export function QuantumHardwareForm({
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish quantum hardware',
+          description: error instanceof Error ? error.message : 'Failed to publish quantum hardware',
           duration: 5000,
         })
       }
@@ -184,7 +192,8 @@ export function QuantumHardwareForm({
     
     startTransition(async () => {
       try {
-        await unpublishQuantumHardware(values.id!)
+        const result = await unpublishQuantumHardware(values.id!)
+        if (!result.success) throw new Error(result.error)
         setValues(prev => ({ ...prev, published: false }))
         
         toast({
@@ -198,7 +207,7 @@ export function QuantumHardwareForm({
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish quantum hardware',
+          description: error instanceof Error ? error.message : 'Failed to unpublish quantum hardware',
           duration: 5000,
         })
       }

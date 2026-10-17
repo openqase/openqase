@@ -62,9 +62,12 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
     startTransition(async () => {
       try {
         const result = await saveQuantumSoftware(values)
-        
-        if (isNew && result?.id) {
-          setValues(prev => ({ ...prev, id: result.id }))
+        if (!result.success) throw new Error(result.error)
+
+        // Keep the new id (even when links failed) so a retry updates instead of re-creating
+        const newId = result.data.id
+        if (isNew && newId) {
+          setValues(prev => ({ ...prev, id: newId }))
         }
         
         if (result.warning) {
@@ -87,7 +90,7 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save quantum software',
+          description: error instanceof Error ? error.message : 'Failed to save quantum software',
           duration: 5000,
         })
       }
@@ -108,7 +111,9 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
     startTransition(async () => {
       try {
         const saveResult = await saveQuantumSoftware(values)
-        await publishQuantumSoftware(values.id!)
+        if (!saveResult.success) throw new Error(`Save failed: ${saveResult.error}`)
+        const publishResult = await publishQuantumSoftware(values.id!)
+        if (!publishResult.success) throw new Error(publishResult.error)
         
         setValues(prev => ({ ...prev, published: true }))
         
@@ -132,7 +137,7 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish quantum software',
+          description: error instanceof Error ? error.message : 'Failed to publish quantum software',
           duration: 5000,
         })
       }
@@ -144,7 +149,8 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
     
     startTransition(async () => {
       try {
-        await unpublishQuantumSoftware(values.id!)
+        const result = await unpublishQuantumSoftware(values.id!)
+        if (!result.success) throw new Error(result.error)
         setValues(prev => ({ ...prev, published: false }))
         
         toast({
@@ -158,7 +164,7 @@ export function QuantumSoftwareForm({ quantumSoftware, caseStudies: _caseStudies
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish quantum software',
+          description: error instanceof Error ? error.message : 'Failed to unpublish quantum software',
           duration: 5000,
         })
       }

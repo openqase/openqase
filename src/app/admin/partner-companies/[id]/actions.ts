@@ -2,6 +2,7 @@
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
+import { runAction, toActionResult, toSaveResult, type ActionResult, type SaveActionResult } from '@/lib/admin-action-result'
 import type { Tables } from '@/types/supabase'
 
 // Shape sent by src/app/admin/partner-companies/[id]/client.tsx.
@@ -22,29 +23,25 @@ interface PartnerCompanyFormData {
   related_case_studies?: string[]
 }
 
-export const savePartnerCompany = withAdmin(async (values: PartnerCompanyFormData): Promise<Tables<'partner_companies'> & { warning?: string }> => {
-  const { id, related_case_studies, ...data } = values
+export const savePartnerCompany = withAdmin(async (values: PartnerCompanyFormData): Promise<SaveActionResult<Tables<'partner_companies'>>> =>
+  runAction('Failed to save partner company', async () => {
+    const { id, related_case_studies, ...data } = values
 
-  // Relationship keys match the relationship names in src/cms/types/<type>.ts.
-  // Omitted (undefined) leaves existing links untouched; an array (even an
-  // empty one) replaces them.
-  const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
-  if (id) {
-    const result = await updateContent('partner-companies', id, data, relationships)
-    if (result.error) throw new Error(result.error)
-    return { ...(result.data as Tables<'partner_companies'>), warning: result.warning }
-  }
-  const result = await createContent('partner-companies', data, relationships)
-  if (result.error) throw new Error(result.error)
-  return { ...(result.data as Tables<'partner_companies'>), warning: result.warning }
-})
+    // Relationship keys match the relationship names in src/cms/types/<type>.ts.
+    // Omitted (undefined) leaves existing links untouched; an array (even an
+    // empty one) replaces them.
+    const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
+    const result = id
+      ? await updateContent('partner-companies', id, data, relationships)
+      : await createContent('partner-companies', data, relationships)
+    return toSaveResult<Tables<'partner_companies'>>(result)
+  })
+)
 
-export const publishPartnerCompany = withAdmin(async (id: string): Promise<void> => {
-  const result = await publishContent('partner-companies', id)
-  if (!result.success) throw new Error(result.error || 'Failed to publish')
-})
+export const publishPartnerCompany = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to publish', async () => toActionResult(await publishContent('partner-companies', id), 'Failed to publish'))
+)
 
-export const unpublishPartnerCompany = withAdmin(async (id: string): Promise<void> => {
-  const result = await unpublishContent('partner-companies', id)
-  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-})
+export const unpublishPartnerCompany = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to unpublish', async () => toActionResult(await unpublishContent('partner-companies', id), 'Failed to unpublish'))
+)
