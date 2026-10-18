@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Draft preview for every content type**: Quantum hardware, software, companies and partner company pages now render drafts in preview mode, and every admin editor has a Preview button (previously only case studies).
 
 ### Changed
+- **`develop` branch retired**: every PR now targets `main` directly; CI no longer triggers on `develop`.
 - **Integration tests run in CI**: the `db` job now starts a local Supabase (database, API, PostgREST, auth), seeds it and runs `npm run test:integration`, including a new check that anonymous users cannot call the soft-delete/recover functions. The integration setup no longer reads `.env.local` and refuses any non-local database URL, so it can never touch the shared dev project (#263).
 - **Relationship architecture doc rewritten**: `docs/api-relationships-architecture.md` now describes the current registry, the two relationship-fetching patterns, draft/deleted filtering and the API routes that actually exist (down from 439 to 131 lines). Removed the unused `src/cms/parse-form-data.ts` and `getContentTypeByTableName`, and corrected the `published_at` comment in `publishContent` (#267).
 - **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
