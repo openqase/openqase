@@ -133,10 +133,11 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
     startTransition(async () => {
       try {
         const result = await saveAlgorithm(values);
-        
+        if (!result.success) throw new Error(result.error);
+
         // If this was a new algorithm and we got an ID back, redirect to edit page
-        if (isNew && result?.id) {
-          router.push(`/admin/algorithms/${result.id}`);
+        if (isNew && result.data.id) {
+          router.push(`/admin/algorithms/${result.data.id}`);
         }
         
         setIsDirty(false);
@@ -161,7 +162,7 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save algorithm',
+          description: error instanceof Error ? error.message : 'Failed to save algorithm',
           duration: 5000,
         });
       }
@@ -184,9 +185,11 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
       try {
         // First save the content
         const saveResult = await saveAlgorithm(values);
-        
+        if (!saveResult.success) throw new Error(`Save failed: ${saveResult.error}`);
+
         // Then publish it
-        await publishAlgorithm(values.id!);
+        const publishResult = await publishAlgorithm(values.id!);
+        if (!publishResult.success) throw new Error(publishResult.error);
         
         setValues(prev => ({ ...prev, published: true }));
         
@@ -210,7 +213,7 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish algorithm',
+          description: error instanceof Error ? error.message : 'Failed to publish algorithm',
           duration: 5000,
         });
       }
@@ -223,7 +226,8 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
     
     startTransition(async () => {
       try {
-        await unpublishAlgorithm(values.id!);
+        const result = await unpublishAlgorithm(values.id!);
+        if (!result.success) throw new Error(result.error);
         
         setValues(prev => ({ ...prev, published: false }));
         
@@ -238,7 +242,7 @@ export function AlgorithmForm({ algorithm, caseStudies, industries, personas, is
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish algorithm',
+          description: error instanceof Error ? error.message : 'Failed to unpublish algorithm',
           duration: 5000,
         });
       }

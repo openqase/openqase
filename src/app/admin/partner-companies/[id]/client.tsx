@@ -56,9 +56,12 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, 
     startTransition(async () => {
       try {
         const result = await savePartnerCompany(values)
-        
-        if (isNew && result?.id) {
-          setValues(prev => ({ ...prev, id: result.id }))
+        if (!result.success) throw new Error(result.error)
+
+        // Keep the new id (even when links failed) so a retry updates instead of re-creating
+        const newId = result.data.id
+        if (isNew && newId) {
+          setValues(prev => ({ ...prev, id: newId }))
         }
         
         if (result.warning) {
@@ -81,7 +84,7 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, 
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to save partner company',
+          description: error instanceof Error ? error.message : 'Failed to save partner company',
           duration: 5000,
         })
       }
@@ -102,7 +105,9 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, 
     startTransition(async () => {
       try {
         const saveResult = await savePartnerCompany(values)
-        await publishPartnerCompany(values.id!)
+        if (!saveResult.success) throw new Error(`Save failed: ${saveResult.error}`)
+        const publishResult = await publishPartnerCompany(values.id!)
+        if (!publishResult.success) throw new Error(publishResult.error)
         
         setValues(prev => ({ ...prev, published: true }))
         
@@ -126,7 +131,7 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, 
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to publish partner company',
+          description: error instanceof Error ? error.message : 'Failed to publish partner company',
           duration: 5000,
         })
       }
@@ -138,7 +143,8 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, 
     
     startTransition(async () => {
       try {
-        await unpublishPartnerCompany(values.id!)
+        const result = await unpublishPartnerCompany(values.id!)
+        if (!result.success) throw new Error(result.error)
         setValues(prev => ({ ...prev, published: false }))
         
         toast({
@@ -152,7 +158,7 @@ export function PartnerCompanyForm({ partnerCompany, caseStudies: _caseStudies, 
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to unpublish partner company',
+          description: error instanceof Error ? error.message : 'Failed to unpublish partner company',
           duration: 5000,
         })
       }

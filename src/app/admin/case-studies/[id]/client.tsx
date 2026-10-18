@@ -187,18 +187,14 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
     startTransition(async () => {
       try {
         const result = await saveCaseStudy(values);
-        
-        if (result?.error) {
+
+        if (!result.success) {
           throw new Error(result.error);
         }
-        
-        if (!result?.caseStudy) {
-          throw new Error('Save operation did not return case study data');
-        }
-        
+
         // If this was a new case study and we got an ID back, redirect to edit page
-        if (isNew && result.caseStudy?.id) {
-          router.push(`/admin/case-studies/${result.caseStudy.id}`);
+        if (isNew && result.data.id) {
+          router.push(`/admin/case-studies/${result.data.id}`);
         }
         
         setIsDirty(false);
@@ -249,15 +245,15 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
         // First save the content
         const saveResult = await saveCaseStudy(values);
         
-        if (saveResult?.error) {
+        if (!saveResult.success) {
           throw new Error(`Save failed: ${saveResult.error}`);
         }
-        
+
         // Then publish it
         const publishResult = await publishCaseStudy(values.id!, values.slug);
-        
-        if (publishResult?.error || !publishResult?.success) {
-          throw new Error(publishResult?.error || 'Publish operation failed');
+
+        if (!publishResult.success) {
+          throw new Error(publishResult.error);
         }
         
         setValues(prev => ({ ...prev, published: true }));
@@ -268,7 +264,7 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
           duration: 3000,
         });
 
-        if (saveResult?.warning) {
+        if (saveResult.warning) {
           toast({
             variant: 'destructive',
             title: 'Saved, but some links were not updated',
@@ -298,8 +294,8 @@ export function CaseStudyForm({ caseStudy, algorithms, industries, personas, qua
       try {
         const result = await unpublishCaseStudy(values.id!, values.slug);
         
-        if (result?.error || !result?.success) {
-          throw new Error(result?.error || 'Unpublish operation failed');
+        if (!result.success) {
+          throw new Error(result.error);
         }
         
         setValues(prev => ({ ...prev, published: false }));

@@ -2,6 +2,7 @@
 
 import { createContent, updateContent, revalidateContentType, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
+import { runAction, toActionResult, toSaveResult, type ActionResult, type SaveActionResult } from '@/lib/admin-action-result'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import type { Database, Tables } from '@/types/supabase'
 
@@ -37,33 +38,29 @@ interface QuantumHardwareFormData {
   related_case_studies?: string[]
 }
 
-export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<Tables<'quantum_hardware'> & { warning?: string }> => {
-  const { id, related_case_studies, ...data } = values
+export const saveQuantumHardware = withAdmin(async (values: QuantumHardwareFormData): Promise<SaveActionResult<Tables<'quantum_hardware'>>> =>
+  runAction('Failed to save quantum hardware', async () => {
+    const { id, related_case_studies, ...data } = values
 
-  // Relationship keys match the relationship names in src/cms/types/<type>.ts.
-  // Omitted (undefined) leaves existing links untouched; an array (even an
-  // empty one) replaces them.
-  const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
-  // '' → null for optional fields (e.g. technology_type) is handled by the CMS schema.
-  if (id) {
-    const result = await updateContent('quantum-hardware', id, data, relationships)
-    if (result.error) throw new Error(result.error)
-    return { ...(result.data as Tables<'quantum_hardware'>), warning: result.warning }
-  }
-  const result = await createContent('quantum-hardware', data, relationships)
-  if (result.error) throw new Error(result.error)
-  return { ...(result.data as Tables<'quantum_hardware'>), warning: result.warning }
-})
+    // Relationship keys match the relationship names in src/cms/types/<type>.ts.
+    // Omitted (undefined) leaves existing links untouched; an array (even an
+    // empty one) replaces them.
+    const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
+    // '' → null for optional fields (e.g. technology_type) is handled by the CMS schema.
+    const result = id
+      ? await updateContent('quantum-hardware', id, data, relationships)
+      : await createContent('quantum-hardware', data, relationships)
+    return toSaveResult<Tables<'quantum_hardware'>>(result)
+  })
+)
 
-export const publishQuantumHardware = withAdmin(async (id: string): Promise<void> => {
-  const result = await publishContent('quantum-hardware', id)
-  if (!result.success) throw new Error(result.error || 'Failed to publish')
-})
+export const publishQuantumHardware = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to publish', async () => toActionResult(await publishContent('quantum-hardware', id), 'Failed to publish'))
+)
 
-export const unpublishQuantumHardware = withAdmin(async (id: string): Promise<void> => {
-  const result = await unpublishContent('quantum-hardware', id)
-  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-})
+export const unpublishQuantumHardware = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to unpublish', async () => toActionResult(await unpublishContent('quantum-hardware', id), 'Failed to unpublish'))
+)
 
 export const loadHardwareSpecDefinitions = withAdmin(
   async (): Promise<HardwareSpecDefinition[]> => {
@@ -108,70 +105,72 @@ async function revalidateHardwarePages(supabase: ReturnType<typeof createService
 }
 
 export const saveHardwareSpecs = withAdmin(
-  async (hardwareId: string, rows: HardwareSpecInput[]): Promise<void> => {
-    const supabase = createServiceRoleSupabaseClient()
-    const cleaned = rows
-      .map((row) => ({
-        spec_key: normalizeSpecKey(row.spec_key),
-        value: row.value.trim(),
-        unit: row.unit?.trim() ? row.unit.trim() : null,
-      }))
-      .filter((row) => row.spec_key.length > 0 && row.value.length > 0)
+  async (hardwareId: string, rows: HardwareSpecInput[]): Promise<ActionResult> =>
+    runAction('Failed to save hardware specs', async (): Promise<ActionResult> => {
+      const supabase = createServiceRoleSupabaseClient()
+      const cleaned = rows
+        .map((row) => ({
+          spec_key: normalizeSpecKey(row.spec_key),
+          value: row.value.trim(),
+          unit: row.unit?.trim() ? row.unit.trim() : null,
+        }))
+        .filter((row) => row.spec_key.length > 0 && row.value.length > 0)
 
-    const keys = cleaned.map((row) => row.spec_key)
-    const seen = new Set<string>()
-    for (const key of keys) {
-      if (seen.has(key)) {
-        throw new Error(`Duplicate spec key "${key}". Each spec key must be unique.`)
+      const keys = cleaned.map((row) => row.spec_key)
+      const seen = new Set<string>()
+      for (const key of keys) {
+        if (seen.has(key)) {
+          return { success: false, error: `Duplicate spec key "${key}". Each spec key must be unique.` }
+        }
+        seen.add(key)
       }
-      seen.add(key)
-    }
 
-    if (keys.length === 0) {
-      const { error: deleteAllError } = await supabase
+      if (keys.length === 0) {
+        const { error: deleteAllError } = await supabase
+          .from('quantum_hardware_specs')
+          .delete()
+          .eq('hardware_id', hardwareId)
+        if (deleteAllError) return { success: false, error: deleteAllError.message }
+        await revalidateHardwarePages(supabase, hardwareId)
+        return { success: true }
+      }
+
+      const { data: existing, error: existingError } = await supabase
         .from('quantum_hardware_specs')
-        .delete()
+        .select('spec_key')
         .eq('hardware_id', hardwareId)
-      if (deleteAllError) throw new Error(deleteAllError.message)
+
+      if (existingError) return { success: false, error: existingError.message }
+
+      const keep = new Set(keys)
+      const toDelete = (existing ?? [])
+        .map((row) => row.spec_key)
+        .filter((key) => !keep.has(key))
+
+      if (toDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('quantum_hardware_specs')
+          .delete()
+          .eq('hardware_id', hardwareId)
+          .in('spec_key', toDelete)
+        if (deleteError) return { success: false, error: deleteError.message }
+      }
+
+      // verified_at is intentionally omitted from the payload: Supabase upserts
+      // only the columns provided, so existing verified_at values are preserved on
+      // update and left null on insert — rather than stamped to "now" on every save.
+      const { error: upsertError } = await supabase.from('quantum_hardware_specs').upsert(
+        cleaned.map((row) => ({
+          hardware_id: hardwareId,
+          spec_key: row.spec_key,
+          value: row.value,
+          unit: row.unit,
+        })),
+        { onConflict: 'hardware_id,spec_key' }
+      )
+
+      if (upsertError) return { success: false, error: upsertError.message }
       await revalidateHardwarePages(supabase, hardwareId)
-      return
-    }
-
-    const { data: existing, error: existingError } = await supabase
-      .from('quantum_hardware_specs')
-      .select('spec_key')
-      .eq('hardware_id', hardwareId)
-
-    if (existingError) throw new Error(existingError.message)
-
-    const keep = new Set(keys)
-    const toDelete = (existing ?? [])
-      .map((row) => row.spec_key)
-      .filter((key) => !keep.has(key))
-
-    if (toDelete.length > 0) {
-      const { error: deleteError } = await supabase
-        .from('quantum_hardware_specs')
-        .delete()
-        .eq('hardware_id', hardwareId)
-        .in('spec_key', toDelete)
-      if (deleteError) throw new Error(deleteError.message)
-    }
-
-    // verified_at is intentionally omitted from the payload: Supabase upserts
-    // only the columns provided, so existing verified_at values are preserved on
-    // update and left null on insert — rather than stamped to "now" on every save.
-    const { error: upsertError } = await supabase.from('quantum_hardware_specs').upsert(
-      cleaned.map((row) => ({
-        hardware_id: hardwareId,
-        spec_key: row.spec_key,
-        value: row.value,
-        unit: row.unit,
-      })),
-      { onConflict: 'hardware_id,spec_key' }
-    )
-
-    if (upsertError) throw new Error(upsertError.message)
-    await revalidateHardwarePages(supabase, hardwareId)
-  }
+      return { success: true }
+    })
 )

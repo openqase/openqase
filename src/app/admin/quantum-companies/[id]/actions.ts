@@ -2,6 +2,7 @@
 
 import { createContent, updateContent, publishContent, unpublishContent } from '@/cms/operations'
 import { withAdmin } from '@/lib/auth'
+import { runAction, toActionResult, toSaveResult, type ActionResult, type SaveActionResult } from '@/lib/admin-action-result'
 import type { Tables } from '@/types/supabase'
 
 // Shape sent by src/app/admin/quantum-companies/[id]/client.tsx. founded_year
@@ -22,29 +23,25 @@ interface QuantumCompanyFormData {
   related_case_studies?: string[]
 }
 
-export const saveQuantumCompany = withAdmin(async (values: QuantumCompanyFormData): Promise<Tables<'quantum_companies'> & { warning?: string }> => {
-  const { id, related_case_studies, ...data } = values
+export const saveQuantumCompany = withAdmin(async (values: QuantumCompanyFormData): Promise<SaveActionResult<Tables<'quantum_companies'>>> =>
+  runAction('Failed to save quantum company', async () => {
+    const { id, related_case_studies, ...data } = values
 
-  // Relationship keys match the relationship names in src/cms/types/<type>.ts.
-  // Omitted (undefined) leaves existing links untouched; an array (even an
-  // empty one) replaces them.
-  const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
-  if (id) {
-    const result = await updateContent('quantum-companies', id, data, relationships)
-    if (result.error) throw new Error(result.error)
-    return { ...(result.data as Tables<'quantum_companies'>), warning: result.warning }
-  }
-  const result = await createContent('quantum-companies', data, relationships)
-  if (result.error) throw new Error(result.error)
-  return { ...(result.data as Tables<'quantum_companies'>), warning: result.warning }
-})
+    // Relationship keys match the relationship names in src/cms/types/<type>.ts.
+    // Omitted (undefined) leaves existing links untouched; an array (even an
+    // empty one) replaces them.
+    const relationships = related_case_studies ? { case_studies: related_case_studies } : undefined
+    const result = id
+      ? await updateContent('quantum-companies', id, data, relationships)
+      : await createContent('quantum-companies', data, relationships)
+    return toSaveResult<Tables<'quantum_companies'>>(result)
+  })
+)
 
-export const publishQuantumCompany = withAdmin(async (id: string): Promise<void> => {
-  const result = await publishContent('quantum-companies', id)
-  if (!result.success) throw new Error(result.error || 'Failed to publish')
-})
+export const publishQuantumCompany = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to publish', async () => toActionResult(await publishContent('quantum-companies', id), 'Failed to publish'))
+)
 
-export const unpublishQuantumCompany = withAdmin(async (id: string): Promise<void> => {
-  const result = await unpublishContent('quantum-companies', id)
-  if (!result.success) throw new Error(result.error || 'Failed to unpublish')
-})
+export const unpublishQuantumCompany = withAdmin(async (id: string): Promise<ActionResult> =>
+  runAction('Failed to unpublish', async () => toActionResult(await unpublishContent('quantum-companies', id), 'Failed to unpublish'))
+)

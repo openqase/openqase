@@ -88,6 +88,32 @@ eval "$(npx supabase status -o env --override-name api.url=NEXT_PUBLIC_SUPABASE_
 npm run test:integration
 ```
 
+#### End-to-end admin smoke test
+
+With the same seeded stack and the same exported variables, `npm run test:e2e`
+drives the admin CMS in Chromium (`e2e/`, Playwright). It signs in, opens and
+saves an edit page for all nine content types, links and unlinks a case-study
+relationship, previews a draft, publishes, unpublishes, deletes, restores and
+permanently deletes.
+
+```bash
+npx playwright install chromium   # once
+npm run test:e2e
+```
+
+- It refuses to start unless `NEXT_PUBLIC_SUPABASE_URL` is local, the same
+  guard as the integration tests.
+- `playwright.config.ts` runs `npm run build && next start` on port 3264
+  (`E2E_PORT` to change it; `E2E_SKIP_BUILD=1` reuses an existing `.next`
+  built against the same stack). Keys from `.env.local` and the other `.env`
+  files are blanked for that server, so nothing points at the dev project.
+- A throwaway admin (`e2e-admin-*@openqase.test`, random password, plus a
+  `user_preferences` admin row) is created through the service-role key
+  before the run and deleted after it. All content the test creates has a
+  slug starting `e2e-smoke-` and is deleted afterwards too; seed rows are only
+  read.
+- CI runs it in the `db` job after the integration tests.
+
 ### 3. Apply to dev
 
 ```bash

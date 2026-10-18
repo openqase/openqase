@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin CMS browser smoke test**: `npm run test:e2e` runs a Playwright test against a local Supabase covering sign-in, a no-op save on all nine editors, linking/unlinking, draft preview, publish, unpublish, delete, restore and permanent delete. It runs in the CI `db` job (#264).
 - **Keyboard navigation in the header search**: arrow keys move through results (wrapping at either end), Enter opens the highlighted result, and Escape closes the list while keeping focus in the search box. The input and results now follow the WAI-ARIA combobox pattern, so screen readers announce the active result (#265).
 - **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
 - **Static page-count guard**: Vercel production builds run `npm run verify:build`, which fails the deploy if the prerendered route count drops below a floor.
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **All-or-nothing saves in the CMS**: an item and its relationship links are now saved in one database transaction (`save_content_with_relationships`, migration `20261016040311_atomic_content_save.sql`). If any link fails, nothing is saved and the editor sees the error, instead of a half-applied save. **Apply the migration to each database before deploying this code**, or admin saves will fail (#262).
+- **`develop` branch retired**: every PR now targets `main` directly; CI no longer triggers on `develop`.
 - **Integration tests run in CI**: the `db` job now starts a local Supabase (database, API, PostgREST, auth), seeds it and runs `npm run test:integration`, including a new check that anonymous users cannot call the soft-delete/recover functions. The integration setup no longer reads `.env.local` and refuses any non-local database URL, so it can never touch the shared dev project (#263).
 - **Relationship architecture doc rewritten**: `docs/api-relationships-architecture.md` now describes the current registry, the two relationship-fetching patterns, draft/deleted filtering and the API routes that actually exist (down from 439 to 131 lines). Removed the unused `src/cms/parse-form-data.ts` and `getContentTypeByTableName`, and corrected the `published_at` comment in `publishContent` (#267).
 - **Supabase CLI pinned** to one exact version in CI and `package.json` (2.117.0); `src/__tests__/ci-config.test.ts` fails if they drift. `.local-handover/` is now git-ignored from a fresh clone.
@@ -29,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Admin editors show the real save error**: all nine content editors now return the same result as case studies, so an editor sees the actual reason a save, publish or unpublish failed (or a warning when links were not updated) instead of a generic error. A new item keeps its id when links fail, so retrying no longer hits a slug collision (#261).
+- **Saving an algorithm deleted its persona links**: the algorithm editor loaded an empty persona list, so every save removed all `persona_algorithm_relations` rows for that algorithm. It now loads the existing links. Found by the new admin smoke test (#264).
 - **Database errors on detail pages no longer cached as 404s**: a failed query in the single-item and paged CMS fetchers now follows the same policy as the build (#256), instead of being treated as "not found" or an empty list that ISR could cache for 24 hours. In production it throws, so the previous page keeps being served; elsewhere it is reported to Sentry. Admin API routes now return a 500 on a database error instead of a 404 (#260).
 - **Trashed items in the admin dashboard and relationship pickers**: dashboard counts no longer include soft-deleted items, and edit pages no longer offer trashed items to link. Existing links to a trashed item are kept, so it comes back with its relationships if restored (#259).
 - **Publish date triggers (migration `20261002025045_published_at_triggers_insert_and_idempotent.sql`)**: the triggers now also fire on INSERT, so a row created already published gets a `published_at`, and the migration can be re-applied safely (every trigger is dropped-if-exists first). Supersedes the September trigger migration; apply to dev, then prod, after the three September migrations. If `db push` fails on the September migration with `trigger ... already exists`, mark it applied with `supabase migration repair --status applied 20260923161000` and push again.
@@ -72,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **Tighter Content Security Policy**: added `object-src 'none'` and removed two unused script hosts (Google Tag Manager, Sentry CDN). `'unsafe-inline'` stays in `script-src`: nonces would force every page to render dynamically, and Next's inline scripts can't be hashed per page; see the comment in `next.config.ts` (#266).
 - **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
 - **`user_preferences` read leak closed**: Signed-in users could read every admin's preference row. Policies now use a new `is_admin()` helper to check the *caller*, non-admins cannot promote themselves, and `anon` SELECT is revoked.
