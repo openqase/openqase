@@ -131,6 +131,25 @@ test.describe('every content type: open the edit page and save without changes',
   }
 })
 
+test('dashboard counts include drafts and exclude trash (#285)', async ({ page }) => {
+  // A draft of a type whose RLS policy only exposes published rows to the
+  // admin's session, so a session-scoped count would miss it.
+  await createDraftFixture(getContentType('algorithms')!)
+
+  await page.goto('/admin')
+  await streamed(page)
+  for (const ct of getAllContentTypes()) {
+    const { count, error } = await db
+      .from(ct.tableName)
+      .select('id', { count: 'exact', head: true })
+      .is('deleted_at', null)
+    if (error) throw new Error(`${ct.tableName}: ${error.message}`)
+    // The card is the dashboard link that holds a count; the sidebar link to
+    // the same page does not.
+    await expect(page.locator(`a[href="${ct.adminPath}"] p.text-3xl`), ct.slug).toHaveText(String(count))
+  }
+})
+
 /**
  * React streams Suspense content into hidden <div id="S:n"> segments and swaps them
  * in a little after load (reveals are batched), so for a moment the page holds a
