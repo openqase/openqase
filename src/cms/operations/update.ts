@@ -2,14 +2,19 @@ import { getContentType } from '../registry'
 import { generateZodSchema } from '../schema'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
 import { fromTable } from '@/lib/internal-queries'
-import { saveRelationships } from './relationships'
+import type { Json } from '@/types/supabase'
+import { buildRelationshipPayload, SAVE_CONTENT_RPC } from './relationships'
 import { revalidateContentType } from './revalidate'
 
 interface UpdateResult {
   data?: Record<string, unknown>
-  /** Set only when the row itself was not written. */
+  /** Set when nothing was written (neither the row nor any link). */
   error?: string
-  /** Set when the row was written but one or more relationship links failed. */
+  /**
+   * Kept for callers that surface it. updateContent no longer sets it: the
+   * row and its links are written in one transaction, so a relationship
+   * failure rolls back the row change too and is reported as `error`.
+   */
   warning?: string
 }
 
@@ -41,20 +46,18 @@ export async function updateContent(
     previousSlug = (current as { slug?: string } | null)?.slug
   }
 
-  const { data: result, error } = await fromTable(supabase, ct.tableName)
-    .update(parsed.data)
-    .eq('id', id)
-    .select()
-    .single()
+  // Row + junction links in one transaction (all or nothing): if any link
+  // fails, the row and every link stay as they were and `error` is set.
+  const { data: result, error } = await supabase.rpc(SAVE_CONTENT_RPC, {
+    p_table: ct.tableName,
+    p_id: id,
+    p_data: parsed.data as Json,
+    p_relationships: buildRelationshipPayload(ct, relationships),
+  })
 
   if (error) return { error: error.message }
 
   const record = result as Record<string, unknown>
-
-  let relError: string | undefined
-  if (relationships) {
-    relError = (await saveRelationships(ct, id, relationships)).error
-  }
 
   const newSlug = record.slug as string | undefined
   const slugs =
@@ -62,8 +65,5 @@ export async function updateContent(
       ? [newSlug, previousSlug].filter((s): s is string => typeof s === 'string')
       : newSlug
   revalidateContentType(typeSlug, slugs)
-  // The row exists regardless of the relationship outcome, so never report
-  // a relationship failure as `error`: callers treat `error` as "nothing was
-  // saved" and would make the editor retry, creating a duplicate row.
-  return relError ? { data: record, warning: relError } : { data: record }
+  return { data: record }
 }

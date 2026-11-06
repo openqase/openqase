@@ -1,15 +1,19 @@
 import { getContentType } from '../registry'
 import { generateZodSchema } from '../schema'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase-server'
-import { fromTable } from '@/lib/internal-queries'
-import { saveRelationships } from './relationships'
+import type { Json } from '@/types/supabase'
+import { buildRelationshipPayload, SAVE_CONTENT_RPC } from './relationships'
 import { revalidateContentType } from './revalidate'
 
 interface CreateResult {
   data?: Record<string, unknown>
-  /** Set only when the row itself was not written. */
+  /** Set when nothing was written (neither the row nor any link). */
   error?: string
-  /** Set when the row was written but one or more relationship links failed. */
+  /**
+   * Kept for callers that surface it. createContent no longer sets it: the
+   * row and its links are written in one transaction, so a relationship
+   * failure rolls back the row too and is reported as `error`.
+   */
   warning?: string
 }
 
@@ -27,24 +31,19 @@ export async function createContent(
     return { error: parsed.error.issues.map(i => i.message).join('; ') }
   }
 
+  // Row + junction links in one transaction (all or nothing): a failed link
+  // never leaves a half-saved item behind. On `error` nothing exists, so the
+  // editor can retry without creating a duplicate row.
   const supabase = createServiceRoleSupabaseClient()
-  const { data: result, error } = await fromTable(supabase, ct.tableName)
-    .insert(parsed.data)
-    .select()
-    .single()
+  const { data: result, error } = await supabase.rpc(SAVE_CONTENT_RPC, {
+    p_table: ct.tableName,
+    p_data: parsed.data as Json,
+    p_relationships: buildRelationshipPayload(ct, relationships),
+  })
 
   if (error) return { error: error.message }
 
   const record = result as Record<string, unknown>
-
-  let relError: string | undefined
-  if (relationships && record.id) {
-    relError = (await saveRelationships(ct, record.id as string, relationships)).error
-  }
-
   revalidateContentType(typeSlug, record.slug as string | undefined)
-  // The row exists regardless of the relationship outcome, so never report
-  // a relationship failure as `error`: callers treat `error` as "nothing was
-  // saved" and would make the editor retry, creating a duplicate row.
-  return relError ? { data: record, warning: relError } : { data: record }
+  return { data: record }
 }

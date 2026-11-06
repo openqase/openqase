@@ -1,22 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Junction-table mock for saveRelationships. Each builder method is a spy so
-// tests can assert which deletes/inserts happened and inject errors.
-const mockSelectEq = vi.fn()
-const mockDeleteIn = vi.fn()
-const mockInsert = vi.fn()
-const mockFrom = vi.fn((_table: string) => ({
-  select: () => ({ eq: mockSelectEq }),
-  delete: () => ({ eq: () => ({ in: mockDeleteIn }) }),
-  insert: mockInsert,
-}))
+import { readFileSync } from 'node:fs'
+import { glob } from 'glob'
+
+// saveRelationships applies every junction diff in one RPC call
+// (save_content_with_relationships). mockFrom must never be used.
+const mockRpc = vi.fn()
+const mockFrom = vi.fn()
 
 vi.mock('@/lib/supabase-server', () => ({
-  createServiceRoleSupabaseClient: () => ({ from: mockFrom }),
+  createServiceRoleSupabaseClient: () => ({ from: mockFrom, rpc: mockRpc }),
 }))
 
-import { buildRelationshipSelect, flattenRelationships, saveRelationships } from './relationships'
+import {
+  buildRelationshipPayload,
+  buildRelationshipSelect,
+  flattenRelationships,
+  saveRelationships,
+  SAVE_CONTENT_RPC,
+} from './relationships'
 import { defineContentType } from '../define'
+import { getAllContentTypes } from '../registry'
 
 const testType = defineContentType({
   slug: 'test',
@@ -189,77 +193,114 @@ describe('flattenRelationships draft filtering', () => {
   })
 })
 
+describe('buildRelationshipPayload', () => {
+  it('returns [] when no relationships map is given', () => {
+    expect(buildRelationshipPayload(testType, undefined)).toEqual([])
+  })
+
+  it('skips undefined keys, keeps empty arrays, drops falsy ids', () => {
+    expect(buildRelationshipPayload(testType, { industries: [], case_studies: ['cs', ''] })).toEqual([
+      { name: 'industries', junction: 'test_industry_relations', foreign_key: 'test_id', target_key: 'industry_id', target_ids: [], extra_fields: {} },
+      { name: 'case_studies', junction: 'test_case_study_relations', foreign_key: 'test_id', target_key: 'case_study_id', target_ids: ['cs'], extra_fields: {} },
+    ])
+    expect(buildRelationshipPayload(testType, { industries: ['a'] }).map(r => r.name)).toEqual(['industries'])
+  })
+})
+
 describe('saveRelationships', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSelectEq.mockResolvedValue({ data: [], error: null })
-    mockDeleteIn.mockResolvedValue({ error: null })
-    mockInsert.mockResolvedValue({ error: null })
+    mockRpc.mockResolvedValue({ data: { id: 'c1' }, error: null })
   })
 
   it('leaves relationships untouched when the key is undefined', async () => {
     const result = await saveRelationships(testType, 'c1', {})
     expect(result.error).toBeUndefined()
+    expect(mockRpc).not.toHaveBeenCalled()
     expect(mockFrom).not.toHaveBeenCalled()
   })
 
-  it('clears all links when given an empty array', async () => {
-    mockSelectEq.mockResolvedValue({
-      data: [{ industry_id: 'ind-1' }, { industry_id: 'ind-2' }],
-      error: null,
-    })
-    const result = await saveRelationships(testType, 'c1', { industries: [] })
+  it('applies all relationships in a single RPC call without touching the row', async () => {
+    const result = await saveRelationships(testType, 'c1', { industries: [], case_studies: ['cs'] })
     expect(result.error).toBeUndefined()
-    expect(mockDeleteIn).toHaveBeenCalledWith('industry_id', ['ind-1', 'ind-2'])
-    expect(mockInsert).not.toHaveBeenCalled()
-  })
-
-  it('only deletes removed ids and inserts added ids', async () => {
-    mockSelectEq.mockResolvedValue({
-      data: [{ industry_id: 'keep' }, { industry_id: 'remove' }],
-      error: null,
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+    expect(mockRpc).toHaveBeenCalledWith(SAVE_CONTENT_RPC, {
+      p_table: 'test',
+      p_id: 'c1',
+      p_relationships: [
+        { name: 'industries', junction: 'test_industry_relations', foreign_key: 'test_id', target_key: 'industry_id', target_ids: [], extra_fields: {} },
+        { name: 'case_studies', junction: 'test_case_study_relations', foreign_key: 'test_id', target_key: 'case_study_id', target_ids: ['cs'], extra_fields: {} },
+      ],
     })
-    const result = await saveRelationships(testType, 'c1', { industries: ['keep', 'add'] })
-    expect(result.error).toBeUndefined()
-    expect(mockDeleteIn).toHaveBeenCalledWith('industry_id', ['remove'])
-    expect(mockInsert).toHaveBeenCalledWith([{ test_id: 'c1', industry_id: 'add' }])
+    // no p_data: the function only syncs links
+    expect(mockRpc.mock.calls[0][1]).not.toHaveProperty('p_data')
+    expect(mockFrom).not.toHaveBeenCalled()
   })
 
-  it('does nothing when links are unchanged', async () => {
-    mockSelectEq.mockResolvedValue({ data: [{ industry_id: 'a' }], error: null })
-    await saveRelationships(testType, 'c1', { industries: ['a'] })
-    expect(mockDeleteIn).not.toHaveBeenCalled()
-    expect(mockInsert).not.toHaveBeenCalled()
-  })
-
-  it('returns an error when the insert fails', async () => {
-    mockInsert.mockResolvedValue({ error: { message: 'fk violation' } })
+  it('returns the database error (nothing was changed) when the RPC fails', async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'industries: could not save links, nothing was saved (fk violation)' },
+    })
     const result = await saveRelationships(testType, 'c1', { industries: ['x'] })
     expect(result.error).toContain('industries')
     expect(result.error).toContain('fk violation')
+    expect(result.error).not.toMatch(/^Saved/)
+  })
+})
+
+// The SQL function only accepts (table, junction, foreign key, target key)
+// tuples on its hard-coded allow-list. Keep it identical to the registry so a
+// new relationship in src/cms/types/*.ts can't silently fail at save time,
+// and the SQL can't allow more than the app declares.
+describe('save_content_with_relationships allow-list matches the content types', () => {
+  function latestFunctionSql(): string {
+    const files = glob.sync('supabase/migrations/*.sql').sort()
+    const defining = files.filter(f =>
+      /CREATE\s+OR\s+REPLACE\s+FUNCTION\s+"?public"?\."?save_content_with_relationships"?/i.test(readFileSync(f, 'utf8'))
+    )
+    expect(defining.length, 'no migration defines save_content_with_relationships').toBeGreaterThan(0)
+    return readFileSync(defining[defining.length - 1], 'utf8')
+  }
+
+  const sql = latestFunctionSql()
+
+  it('lists exactly the relationships declared in src/cms/types', () => {
+    const tupleRe = /\('(\w+)',\s*'(\w+)',\s*'(\w+)',\s*'(\w+)',\s*ARRAY\[([^\]]*)\]::text\[\]\)/g
+    const fromSql = [...sql.matchAll(tupleRe)]
+      .map(m => {
+        const extra = m[5].split(',').map(s => s.trim().replace(/'/g, '')).filter(Boolean).sort().join('+')
+        return `${m[1]}|${m[2]}|${m[3]}|${m[4]}|${extra}`
+      })
+      .sort()
+
+    const fromRegistry = getAllContentTypes()
+      .flatMap(ct =>
+        ct.relationships.map(rel => {
+          const extra = Object.keys(rel.extraJunctionFields ?? {}).sort().join('+')
+          return `${ct.tableName}|${rel.junction}|${rel.foreignKey}|${rel.targetKey}|${extra}`
+        })
+      )
+      .sort()
+
+    expect(fromRegistry.length).toBeGreaterThan(0)
+    expect(fromSql).toEqual(fromRegistry)
   })
 
-  it('reports clearly when delete succeeded but insert failed', async () => {
-    mockSelectEq.mockResolvedValue({ data: [{ industry_id: 'old' }], error: null })
-    mockInsert.mockResolvedValue({ error: { message: 'boom' } })
-    const result = await saveRelationships(testType, 'c1', { industries: ['new'] })
-    expect(result.error).toMatch(/removed links were deleted but adding new links failed/)
+  it('allows exactly the registry content tables', () => {
+    const m = sql.match(/allowed_tables\s+CONSTANT\s+text\[\]\s*:=\s*ARRAY\[([^\]]*)\]/i)
+    expect(m).not.toBeNull()
+    const fromSql = m![1].split(',').map(s => s.trim().replace(/'/g, '')).sort()
+    expect(fromSql).toEqual(getAllContentTypes().map(ct => ct.tableName).sort())
   })
 
-  it('returns an error and skips insert when the delete fails', async () => {
-    mockSelectEq.mockResolvedValue({ data: [{ industry_id: 'old' }], error: null })
-    mockDeleteIn.mockResolvedValue({ error: { message: 'delete denied' } })
-    const result = await saveRelationships(testType, 'c1', { industries: ['new'] })
-    expect(result.error).toContain('delete denied')
-    expect(mockInsert).not.toHaveBeenCalled()
-  })
-
-  it('still processes other relationships after one fails', async () => {
-    mockSelectEq
-      .mockResolvedValueOnce({ data: null, error: { message: 'read failed' } })
-      .mockResolvedValueOnce({ data: [], error: null })
-    const result = await saveRelationships(testType, 'c1', { industries: ['a'], case_studies: ['cs'] })
-    expect(result.error).toContain('read failed')
-    expect(mockInsert).toHaveBeenCalledWith([{ test_id: 'c1', case_study_id: 'cs' }])
+  it('is service-role only and SECURITY INVOKER with an empty search_path', () => {
+    expect(sql).toMatch(/SECURITY INVOKER/)
+    expect(sql).not.toMatch(/SECURITY DEFINER/)
+    expect(sql).toMatch(/SET "search_path" TO ''/)
+    for (const role of ['PUBLIC', '"anon"', '"authenticated"']) {
+      expect(sql).toMatch(new RegExp(`REVOKE ALL ON FUNCTION "public"\\."save_content_with_relationships"\\([^)]*\\) FROM ${role};`))
+    }
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION "public"\."save_content_with_relationships"\([^)]*\) TO "service_role";/)
   })
 })

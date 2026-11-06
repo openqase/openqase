@@ -90,12 +90,14 @@ Visibility is decided by the related item's own columns. Neither read path looks
 
 ## Writing relationships
 
-Admin forms submit through server actions in `src/app/admin/<type>/[id]/actions.ts`, which call `createContent()` / `updateContent()` from `@/cms/operations` with a `relationships` map of `{ [relationshipName]: string[] }`. Both then call `saveRelationships()`:
+Admin forms submit through server actions in `src/app/admin/<type>/[id]/actions.ts`, which call `createContent()` / `updateContent()` from `@/cms/operations` with a `relationships` map of `{ [relationshipName]: string[] }`. Both send the row and the links to one Postgres function, `public.save_content_with_relationships()` (migration `*_atomic_content_save.sql`), which runs as a single transaction. `saveRelationships()` calls the same function without row data to sync links only.
 
 - A key that is **omitted** (`undefined`) leaves that relationship untouched.
 - An **empty array** removes all links for that relationship.
-- Otherwise it reads the current target ids, deletes only removed ids and inserts only added ids. There is no moment where all links are gone, and a failed insert does not wipe unchanged links.
-- Errors are collected per relationship and returned. Because the parent row is already saved, `createContent()` / `updateContent()` report them as `warning`, not `error`, so the editor is not prompted to retry and create a duplicate.
+- Otherwise the function deletes only removed ids and inserts only added ids; unchanged links keep their rows.
+- **All or nothing.** If any step fails (for example a target id that does not exist), the whole call is rolled back: a new row is not created, an edited row keeps its old values, and every junction table is left as it was. `createContent()` / `updateContent()` then return `error` with no `data`, so retrying is safe and cannot create a duplicate. They no longer set `warning` (the field stays in the result type).
+- The function only accepts the (table, junction, foreign key, target key) tuples on an allow-list inside the SQL. A unit test in `src/cms/operations/relationships.test.ts` fails if that list and the `relationships` in `src/cms/types/*.ts` drift apart, so **adding a relationship needs a migration that updates the allow-list**.
+- It is `SECURITY INVOKER`, executable by `service_role` only.
 
 Unlinking hard-deletes the junction row. Soft-deleting an item (`deleteContent()`) sets `deleted_at` on its junction rows in the four `case_study_*` company/software/hardware tables that have that column (`JUNCTIONS_WITH_DELETED_AT` in `src/cms/operations/delete.ts`), `restoreContent()` clears it, and `permanentlyDeleteContent()` deletes all of the item's junction rows before deleting the item.
 
