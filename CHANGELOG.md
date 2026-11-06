@@ -76,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **Dependency security updates**: `vitest` 4.1.12 (fixes `@vitest/mocker` advisories) and `postcss-selector-parser` 6.1.5 everywhere, via a scoped override for `@tailwindcss/typography`, which pins an older version.
 - **Tighter Content Security Policy**: added `object-src 'none'` and removed two unused script hosts (Google Tag Manager, Sentry CDN). `'unsafe-inline'` stays in `script-src`: nonces would force every page to render dynamically, and Next's inline scripts can't be hashed per page; see the comment in `next.config.ts` (#266).
 - **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.

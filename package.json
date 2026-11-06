@@ -10,7 +10,10 @@
     "tar": "7.5.12",
     "vite": "^7.3.2",
     "uuid": "^14.0.0",
-    "postcss": "^8.5.28"
+    "postcss": "^8.5.28",
+    "@tailwindcss/typography": {
+      "postcss-selector-parser": "^6.1.5"
+    }
   },
   "scripts": {
     "dev": "next dev",
@@ -79,7 +82,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.2.0",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
     "autoprefixer": "^10.5.0",
     "chalk": "^5.6.2",
     "eslint": "^9.39.4",
@@ -94,7 +97,7 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.22.4",
     "typescript": "^5",
-    "vitest": "^4.1.11",
+    "vitest": "^4.1.12",
     "webpack-bundle-analyzer": "^5.3.0",
     "zod": "^4.4.3"
   }
