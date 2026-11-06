@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Admin dashboard counts include drafts**: the dashboard counted under the logged-in user's database permissions, which hide drafts for every type except case studies. It now counts with the server key like the admin lists (published and drafts, excluding trash) and renders on every request (#285).
 - **Weekly link check runs again**: the `--exclude-path` patterns in `.github/workflows/link-check.yml` were globs, which newer lychee versions reject as invalid regexes, so every run since September failed before checking a link. They are now regexes with the same coverage.
 - **Admin editors show the real save error**: all nine content editors now return the same result as case studies, so an editor sees the actual reason a save, publish or unpublish failed (or a warning when links were not updated) instead of a generic error. A new item keeps its id when links fail, so retrying no longer hits a slug collision (#261).
 - **Saving an algorithm deleted its persona links**: the algorithm editor loaded an empty persona list, so every save removed all `persona_algorithm_relations` rows for that algorithm. It now loads the existing links. Found by the new admin smoke test (#264).
