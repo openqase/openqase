@@ -1,8 +1,12 @@
 import { Metadata } from 'next';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServiceRoleSupabaseClient } from '@/lib/supabase-server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, BookOpen, Briefcase, Users, PenTool, Cpu, Building2, Handshake, Rocket } from 'lucide-react';
 import Link from 'next/link';
+
+// The service-role client reads no cookies, so without this Next would
+// prerender the counts once at build time.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - OpenQASE',
@@ -10,9 +14,13 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminDashboard() {
-  const supabase = await createServerSupabaseClient();
-  
-  // Fetch counts for all content types
+  // Admin access is enforced by src/proxy.ts (matcher '/admin/:path*'), as for
+  // the admin list pages. Count with the service-role client like those pages
+  // do: under RLS, most tables only expose published rows to the user's
+  // session, so drafts were missing from 8 of the 9 counts (#285).
+  const supabase = createServiceRoleSupabaseClient();
+
+  // Fetch counts for all content types (published + drafts, excluding trash)
   const [
     caseStudiesResponse,
     algorithmsResponse,

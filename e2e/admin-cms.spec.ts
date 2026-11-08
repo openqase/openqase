@@ -55,13 +55,15 @@ async function getRow(table: string, id: string): Promise<Record<string, unknown
 /**
  * Insert a draft of the given type, linked to one published seed row of each
  * related type that has one, so a no-op save also proves relationships are
- * not dropped.
+ * not dropped. Pass a `suffix` when a test needs a second draft of a type
+ * in the same run (slugs are unique per table).
  */
-async function createDraftFixture(ct: ContentTypeDefinition) {
+async function createDraftFixture(ct: ContentTypeDefinition, suffix = '') {
   const titleField = ct.metadata.titleField
+  const tag = suffix ? `-${suffix}` : ''
   const fields = {
-    [titleField]: `E2E ${ct.label.singular} ${runId()}`,
-    slug: `${E2E_SLUG_PREFIX}${runId()}-${ct.slug}`,
+    [titleField]: `E2E ${ct.label.singular} ${runId()}${tag}`,
+    slug: `${E2E_SLUG_PREFIX}${runId()}-${ct.slug}${tag}`,
     description: 'Created by the admin e2e smoke test.',
     published: false,
   }
@@ -128,6 +130,25 @@ test.describe('every content type: open the edit page and save without changes',
         expect(await linkExists(link, id), `${link.junction} link kept by a no-op save`).toBe(true)
       }
     })
+  }
+})
+
+test('dashboard counts include drafts and exclude trash (#285)', async ({ page }) => {
+  // A draft of a type whose RLS policy only exposes published rows to the
+  // admin's session, so a session-scoped count would miss it.
+  await createDraftFixture(getContentType('algorithms')!, 'dashboard')
+
+  await page.goto('/admin')
+  await streamed(page)
+  for (const ct of getAllContentTypes()) {
+    const { count, error } = await db
+      .from(ct.tableName)
+      .select('id', { count: 'exact', head: true })
+      .is('deleted_at', null)
+    if (error) throw new Error(`${ct.tableName}: ${error.message}`)
+    // The card is the dashboard link that holds a count; the sidebar link to
+    // the same page does not.
+    await expect(page.locator(`a[href="${ct.adminPath}"] p.text-3xl`), ct.slug).toHaveText(String(count))
   }
 })
 

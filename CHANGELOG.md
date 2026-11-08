@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security regression tests for the A1 findings** now assert against the baseline's effective grants and policies instead of the archived migration files.
 
 ### Fixed
+- **Admin dashboard counts include drafts**: the dashboard counted under the logged-in user's database permissions, which hide drafts for every type except case studies. It now counts with the server key like the admin lists (published and drafts, excluding trash) and renders on every request (#285).
+- **Weekly link check runs again**: the `--exclude-path` patterns in `.github/workflows/link-check.yml` were globs, which newer lychee versions reject as invalid regexes, so every run since September failed before checking a link. They are now regexes with the same coverage.
 - **Admin editors show the real save error**: all nine content editors now return the same result as case studies, so an editor sees the actual reason a save, publish or unpublish failed (or a warning when links were not updated) instead of a generic error. A new item keeps its id when links fail, so retrying no longer hits a slug collision (#261).
 - **Saving an algorithm deleted its persona links**: the algorithm editor loaded an empty persona list, so every save removed all `persona_algorithm_relations` rows for that algorithm. It now loads the existing links. Found by the new admin smoke test (#264).
 - **Database errors on detail pages no longer cached as 404s**: a failed query in the single-item and paged CMS fetchers now follows the same policy as the build (#256), instead of being treated as "not found" or an empty list that ISR could cache for 24 hours. In production it throws, so the previous page keeps being served; elsewhere it is reported to Sentry. Admin API routes now return a 500 on a database error instead of a 404 (#260).
@@ -75,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`publicQuery()` helper**: Fixed the sanctioned public-read helper, which filtered before selecting and would have thrown at runtime (it had no callers yet).
 
 ### Security
+- **Dependency security updates**: `vitest` 4.1.12 (fixes `@vitest/mocker` advisories) and `postcss-selector-parser` 6.1.5 everywhere, via a scoped override for `@tailwindcss/typography`, which pins an older version.
 - **Tighter Content Security Policy**: added `object-src 'none'` and removed two unused script hosts (Google Tag Manager, Sentry CDN). `'unsafe-inline'` stays in `script-src`: nonces would force every page to render dynamically, and Next's inline scripts can't be hashed per page; see the comment in `next.config.ts` (#266).
 - **CSP**: Removed the unused legacy `*.ingest.sentry.io` connect-src entry; only the regioned Sentry ingest host remains.
 - **Soft-delete RPCs locked down** (migration `20260923152216_lock_down_soft_delete_and_user_preferences.sql`): `soft_delete_content` and `recover_content` were callable with the public anon key and did not check the caller. Execute is now revoked from `anon`/`authenticated`, and both functions require the service role or an admin.
