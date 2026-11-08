@@ -55,13 +55,15 @@ async function getRow(table: string, id: string): Promise<Record<string, unknown
 /**
  * Insert a draft of the given type, linked to one published seed row of each
  * related type that has one, so a no-op save also proves relationships are
- * not dropped.
+ * not dropped. Pass a `suffix` when a test needs a second draft of a type
+ * in the same run (slugs are unique per table).
  */
-async function createDraftFixture(ct: ContentTypeDefinition) {
+async function createDraftFixture(ct: ContentTypeDefinition, suffix = '') {
   const titleField = ct.metadata.titleField
+  const tag = suffix ? `-${suffix}` : ''
   const fields = {
-    [titleField]: `E2E ${ct.label.singular} ${runId()}`,
-    slug: `${E2E_SLUG_PREFIX}${runId()}-${ct.slug}`,
+    [titleField]: `E2E ${ct.label.singular} ${runId()}${tag}`,
+    slug: `${E2E_SLUG_PREFIX}${runId()}-${ct.slug}${tag}`,
     description: 'Created by the admin e2e smoke test.',
     published: false,
   }
@@ -134,7 +136,7 @@ test.describe('every content type: open the edit page and save without changes',
 test('dashboard counts include drafts and exclude trash (#285)', async ({ page }) => {
   // A draft of a type whose RLS policy only exposes published rows to the
   // admin's session, so a session-scoped count would miss it.
-  await createDraftFixture(getContentType('algorithms')!)
+  await createDraftFixture(getContentType('algorithms')!, 'dashboard')
 
   await page.goto('/admin')
   await streamed(page)
