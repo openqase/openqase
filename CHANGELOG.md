@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Case study drafts from the scraper**: `POST /api/case-studies/drafts` lets the openqase-scraper review UI create an unpublished case study draft when a maintainer approves a candidate; the team finishes and publishes it in the admin CMS. Authenticated with a bearer token, and disabled unless `SCRAPER_API_TOKEN` is set. Slugs are generated from the title, with `-2`, `-3` on a clash.
 - **Admin CMS browser smoke test**: `npm run test:e2e` runs a Playwright test against a local Supabase covering sign-in, a no-op save on all nine editors, linking/unlinking, draft preview, publish, unpublish, delete, restore and permanent delete. It runs in the CI `db` job (#264).
 - **Keyboard navigation in the header search**: arrow keys move through results (wrapping at either end), Enter opens the highlighted result, and Escape closes the list while keeping focus in the search box. The input and results now follow the WAI-ARIA combobox pattern, so screen readers announce the active result (#265).
 - **Listing page search**: the case study, algorithm, industry and persona listings show a live result count and, when nothing matches, a "no results" panel with suggestions and clear-search / clear-filters actions. Results update instantly as you type.
