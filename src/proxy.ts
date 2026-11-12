@@ -33,7 +33,9 @@ export async function proxy(req: NextRequest) {
   if (isApiRoute) {
     // Define public API routes that don't need authentication
     const publicApiRoutes = [
-      '/api/newsletter'
+      '/api/newsletter',
+      // Machine-to-machine: the route checks a bearer token (SCRAPER_API_TOKEN) itself
+      '/api/case-studies/drafts'
     ]
     
     const isPublicApiRoute = publicApiRoutes.some(route => 
