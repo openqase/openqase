@@ -48,7 +48,7 @@ describe('POST /api/case-studies/drafts', () => {
     expect(res.status).toBe(201)
     expect(await res.json()).toEqual({ id: 'cs-1', slug: 'bank-x-prices-bonds-with-qaoa', admin_url: '/admin/case-studies/cs-1' })
     expect(createContent).toHaveBeenCalledWith('case-studies', expect.objectContaining({
-      title: VALID.title, year: 2026, slug: 'bank-x-prices-bonds-with-qaoa', academic_references: '- https://example.com/paper',
+      title: VALID.title, year: 2026, slug: 'bank-x-prices-bonds-with-qaoa', academic_references: '[^1]: https://example.com/paper',
     }))
   })
 

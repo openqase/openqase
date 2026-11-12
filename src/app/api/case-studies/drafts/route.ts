@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     result = await createContent('case-studies', {
       ...fields,
       slug: n === 1 ? base : `${base}-${n}`,
-      academic_references: source_url ? `- ${source_url}` : undefined,
+      academic_references: source_url ? `[^1]: ${source_url}` : undefined,
     })
     if (!result.error?.includes('duplicate key')) break
   }
